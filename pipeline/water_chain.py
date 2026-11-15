@@ -49,20 +49,25 @@ HYDROCRON = "https://soto.podaac.earthdatacloud.nasa.gov/hydrocron/v1/timeseries
 # the dataset version and why we use the service instead of a downloaded file).
 EPA_SERVICE_AREAS = ("https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/"
                      "Water_System_Boundaries/FeatureServer/0/query")
-NO_MATCH = "self_supplied_check"  # label set in CLAUDE.md decision rules
+NO_MATCH = "self_supplied_check"
+SA_FIELDS = "PWSID,PWS_Name,Population_Served_Count,Service_Area_Type,Symbology_Field"
+NEAR_M = 2000  # search radius for a nearest-candidate note on unmatched sites (not a match)  # label set in CLAUDE.md decision rules
 
 
-def _query_service_areas(lat: float, lon: float, retries: int = 4) -> list:
-    """Return the attribute dicts of every service area polygon that contains (lat, lon)."""
+def _query_service_areas(lat: float, lon: float, retries: int = 4, distance_m: float = 0) -> list:
+    """Attribute dicts of every service area polygon that contains (lat, lon), or that lies
+    within distance_m of it when distance_m > 0."""
     params = {
         "geometry": f"{lon},{lat}",
         "geometryType": "esriGeometryPoint",
         "inSR": 4326,
         "spatialRel": "esriSpatialRelIntersects",
-        "outFields": f"{COLS['service_area_pwsid']},{COLS['service_area_name']}",
+        "outFields": SA_FIELDS,
         "returnGeometry": "false",
         "f": "json",
     }
+    if distance_m:
+        params.update({"distance": distance_m, "units": "esriSRUnit_Meter"})
     for attempt in range(retries):
         try:
             r = requests.get(EPA_SERVICE_AREAS, params=params, timeout=60)
@@ -78,25 +83,82 @@ def _query_service_areas(lat: float, lon: float, retries: int = 4) -> list:
             time.sleep(2 ** attempt)
 
 
-def match_utilities(registry_csv: str, out_csv: str = "data/site_utility_matches.csv") -> pd.DataFrame:
-    sites = pd.read_csv(registry_csv)
+def build_site_points(precedent_csv: str, announced_csv: str,
+                      out_csv: str = "data/water/site_points.csv") -> pd.DataFrame:
+    """One point per site for the utility match.
+
+    Built sites: a point inside the Phase 2 campus outline (data/footprint/<id>_campus.geojson),
+    because 8 registry points are town centroids up to 12 km from the campus. Sites without an
+    outline keep the registry point. Announced sites keep the registry point, which is a
+    town/county centroid (location_basis says so); their matches are flagged location_approx.
+    """
+    import geopandas as gpd
+    rows = []
+    for _, s in pd.read_csv(precedent_csv).iterrows():
+        geo = Path(f"data/footprint/{s.site_id}_campus.geojson")
+        if geo.exists():
+            pt = gpd.read_file(geo).to_crs(4326).union_all().representative_point()
+            rows.append({"site_id": s.site_id, "list": "precedent", "lat": round(pt.y, 6), "lon": round(pt.x, 6),
+                         "point_basis": f"inside OSM campus outline ({geo})", "location_approx": False})
+        else:
+            rows.append({"site_id": s.site_id, "list": "precedent", "lat": s.lat, "lon": s.lon,
+                         "point_basis": f"registry point ({s.geocode_precision})",
+                         "location_approx": s.geocode_precision in ("town", "none")})
+    for _, s in pd.read_csv(announced_csv).iterrows():
+        rows.append({"site_id": s.site_id, "list": "announced", "lat": s.lat, "lon": s.lon,
+                     "point_basis": f"registry point: {s.location_basis}",
+                     "location_approx": "not the campus" in str(s.location_basis)})
+    out = pd.DataFrame(rows)
+    Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(out_csv, index=False)
+    print(f"Wrote {out_csv}: {len(out)} sites, {int(out.location_approx.sum())} with approximate location")
+    return out
+
+
+SELLERS = ("https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/"
+           "Water_System_Boundaries/FeatureServer/2/query")
+
+
+def _sellers(pwsid: str) -> list:
+    """Seller systems listed for a buyer PWSID in EPA's Buyer_Seller table."""
+    r = requests.get(SELLERS, params={"where": f"Buyer_PWSID='{pwsid}'", "outFields": "SELLER_PWSID,SELLER_NAME",
+                                      "returnGeometry": "false", "f": "json"}, timeout=60)
+    r.raise_for_status()
+    return [f["attributes"] for f in r.json().get("features", [])]
+
+
+def match_utilities(points_csv: str, out_csv: str = "data/water/site_utility_matches.csv") -> pd.DataFrame:
+    sites = pd.read_csv(points_csv)
     rows = []
     for _, site in sites.iterrows():
+        if pd.isna(site["lat"]):
+            rows.append({"site_id": site["site_id"], "match_status": "no_coordinates"})
+            print(f"{site['site_id']}: no coordinates")
+            continue
         hits = _query_service_areas(site["lat"], site["lon"])
-        # One polygon can be split into several features with the same PWSID; count it once.
-        pwsids = list(dict.fromkeys(h[COLS["service_area_pwsid"]] for h in hits if h.get(COLS["service_area_pwsid"])))
-        names = {h[COLS["service_area_pwsid"]]: h.get(COLS["service_area_name"]) for h in hits}
-        if not pwsids:
-            # Sites outside every polygon are probably self-supplied (own wells). Flag them for a manual check.
-            rows.append({"site_id": site["site_id"], "pwsid": np.nan, "match_status": NO_MATCH})
-        # A site inside overlapping polygons gets several rows; keep them all and review by hand.
-        for pwsid in pwsids:
-            rows.append({"site_id": site["site_id"], "pwsid": pwsid, "match_status": "matched"})
-        print(f"{site['site_id']}: {', '.join(f'{p} ({names[p]})' for p in pwsids) or 'no match'}")
-    # Merge back onto the registry so every registry column keeps its original type.
-    out = sites.merge(pd.DataFrame(rows), on="site_id", how="left")
+        seen = {}
+        for h in hits:  # one PWSID can be split into several polygons; count it once
+            if h.get("PWSID") and h["PWSID"] not in seen:
+                seen[h["PWSID"]] = h
+        if not seen:
+            # Outside every polygon: probably self-supplied (own wells). Flag for a manual check.
+            near = _query_service_areas(site["lat"], site["lon"], distance_m=NEAR_M)
+            near = list(dict.fromkeys(f"{h['PWSID']} ({h.get('PWS_Name')}, {h.get('Service_Area_Type')})" for h in near))
+            rows.append({"site_id": site["site_id"], "match_status": NO_MATCH,
+                         "candidates_within_2km": "; ".join(near)})
+        for pwsid, h in seen.items():
+            sel = _sellers(pwsid)
+            rows.append({"site_id": site["site_id"], "pwsid": pwsid, "pws_name": h.get("PWS_Name"),
+                         "sa_population": h.get("Population_Served_Count"),
+                         "service_area_type": h.get("Service_Area_Type"),
+                         "boundary_basis": h.get("Symbology_Field"),
+                         "epa_sellers": "; ".join(f"{x['SELLER_PWSID']} ({x['SELLER_NAME']})" for x in sel),
+                         "match_status": "matched_approx_location" if site["location_approx"] else "matched"})
+        print(f"{site['site_id']}: " + (", ".join(f"{p} ({h.get('PWS_Name')})" for p, h in seen.items()) or "no match"))
+    out = sites[["site_id", "list", "lat", "lon", "point_basis", "location_approx"]].merge(
+        pd.DataFrame(rows), on="site_id", how="left")
+    out["match_source"] = EPA_SERVICE_AREAS.rsplit("/query", 1)[0]
     out.to_csv(out_csv, index=False)
-    print(out[["site_id", "pwsid", "match_status"]].to_string(index=False))
     return out
 
 
@@ -182,13 +244,17 @@ def aquifer_trend(wellfield_geojson: str, frame_files: list) -> dict:
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
-    m = sub.add_parser("match"); m.add_argument("--registry", required=True); m.add_argument("--out", default="data/site_utility_matches.csv")
+    pt = sub.add_parser("points"); pt.add_argument("--precedent", default="data/precedent_sites.csv")
+    pt.add_argument("--announced", default="data/announced_sites.csv"); pt.add_argument("--out", default="data/water/site_points.csv")
+    m = sub.add_parser("match"); m.add_argument("--points", default="data/water/site_points.csv"); m.add_argument("--out", default="data/water/site_utility_matches.csv")
     l = sub.add_parser("lookup"); l.add_argument("--pwsid", required=True)
     s = sub.add_parser("swot"); s.add_argument("--lake-id", required=True)
     s.add_argument("--start", required=True); s.add_argument("--end", required=True)
     a = p.parse_args()
-    if a.cmd == "match":
-        match_utilities(a.registry, a.out)
+    if a.cmd == "points":
+        build_site_points(a.precedent, a.announced, a.out)
+    elif a.cmd == "match":
+        match_utilities(a.points, a.out)
     elif a.cmd == "lookup":
         lookup_sources(a.pwsid)
     elif a.cmd == "swot":
