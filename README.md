@@ -7,8 +7,9 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 |---|---|
 | `pipeline/projection.py` (F2–F8) | Calibrated on real data (Phase 4); the demo CSVs still work for a quick test but are not shipped |
 | `pipeline/build_map.py` (Phase 7) | Builds `map/data.js` from the real CSVs: all 54 campuses, 25 water sources, projection, radar, trends, land cover, exposure |
-| `map/index.html` | Real-data map on a satellite globe with 3D terrain (MapLibre GL 5, Esri World Imagery), tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
-| `pipeline/map_overlays.py` | Turns the F1 converted-pixel masks into transparent overlays (`map/overlays/`, `map/overlays.js`) that the map drapes on the imagery |
+| `map/index.html` | Real-data dashboard over muted satellite imagery of the US (MapLibre GL 4, Esri World Imagery) with a timeline Play control; tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
+| `pipeline/conversion_dates.py` | Re-runs F1 per built campus and saves the month each converted pixel first changed (`data/footprint/masks/<id>_first_converted.tif`); refuses to write unless the final mask equals the committed one and monthly acres match the area curve |
+| `pipeline/map_timeline.py` | Turns those months into the map's Play data: per-campus pixel polygons (`map/pixels/`) and the measured area curves (`map/timeline.js`) |
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
@@ -23,7 +24,8 @@ shipped map is built from real data only. `UTILIZATION` and per-capita use are s
 ```
 pip install -r requirements.txt
 python pipeline/build_map.py      # real data -> map/data.js
-python pipeline/map_overlays.py   # radar change masks -> map/overlays/
+python pipeline/conversion_dates.py --skip-done   # month each radar pixel changed (re-runs F1, ~80 s per campus)
+python pipeline/map_timeline.py                   # -> map/pixels/, map/timeline.js
 python -m http.server 8000        # then open http://localhost:8000/map/
 # demo only (overwrites map/data.js with invented data; do not commit):
 # python pipeline/projection.py --registry data/site_registry_demo.csv --sources data/sources_demo.csv

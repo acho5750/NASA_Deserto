@@ -1,0 +1,30 @@
+site_id,status,detail,run_at
+GOOGLE-THE-DALLES,ok,"5171 px, curve match within 0.00 ac",2026-11-15 20:12
+GOOGLE-PAPILLION,ok,"16959 px, curve match within 0.00 ac",2026-11-15 20:15
+MICROSOFT-GOODYEAR,ok,"17272 px, curve match within 0.00 ac",2026-11-15 20:16
+META-QTS-HILLSBORO-2,ok,"5784 px, curve match within 0.00 ac",2026-11-15 20:17
+GOOGLE-LANCASTER,ok,"5905 px, curve match within 0.00 ac",2026-11-15 20:19
+QTS-RICHMOND-1,ok,"6087 px, curve match within 0.00 ac",2026-11-15 20:20
+GOOGLE-NEW-ALBANY,ok,"14251 px, curve match within 0.00 ac",2026-11-15 20:21
+GOOGLE-BRISTOW,ok,"6905 px, curve match within 0.00 ac",2026-11-15 20:22
+MICROSOFT-SAT40,ok,"9690 px, curve match within 0.00 ac",2026-11-15 20:24
+MICROSOFT-SAT14,ok,"1890 px, curve match within 0.00 ac",2026-11-15 20:25
+QTS-RICHMOND-2,ok,"5989 px, curve match within 0.00 ac",2026-11-15 20:27
+GOOGLE-MESA,ok,"9151 px, curve match within 0.00 ac",2026-11-15 20:28
+MICROSOFT-FAIRWATER-ATLANTA,ok,"18616 px, curve match within 0.00 ac",2026-11-15 20:30
+META-EAGLE-MOUNTAIN,ok,"19421 px, curve match within 0.00 ac",2026-11-15 20:31
+META-TEMPLE,ok,"12335 px, curve match within 0.00 ac",2026-11-15 20:32
+META-HUNTSVILLE,ok,"19069 px, curve match within 0.00 ac",2026-11-15 20:33
+MICROSOFT-NEBIUS-NEW-JERSEY,ok,"5766 px, curve match within 0.00 ac",2026-11-15 20:34
+GOOGLE-MIDLOTHIAN,ok,"7081 px, curve match within 0.00 ac",2026-11-15 20:35
+META-KUNA,ok,"19675 px, curve match within 0.00 ac",2026-11-15 20:37
+GOOGLE-ARCOLA,ok,"5387 px, curve match within 0.00 ac",2026-11-15 20:38
+META-ROSEMOUNT,ok,"10304 px, curve match within 0.00 ac",2026-11-15 20:38
+GOOGLE-KANSAS-CITY-EAST,ok,"11175 px, curve match within 0.00 ac",2026-11-15 20:39
+META-SARPY,ok,"10072 px, curve match within 0.00 ac",2026-11-15 20:40
+META-AIKEN,ok,"7173 px, curve match within 0.00 ac",2026-11-15 20:41
+META-GALLATIN,ok,"7472 px, curve match within 0.00 ac",2026-11-15 20:42
+GOOGLE-STOREY-COUNTY,ok,"21509 px, curve match within 0.00 ac",2026-11-15 20:45
+MICROSOFT-PROJECT-OSMIUM,ok,"12159 px, curve match within 0.00 ac",2026-11-15 20:47
+GOOGLE-COUNCIL-BLUFFS-EAST,ok,"5928 px, curve match within 0.00 ac",2026-11-15 20:48
+STARGATE-ABILENE,skipped,"final mask differs from committed mask (254 pixels; shapes (461, 523) vs (461, 523))",2026-11-15 20:49

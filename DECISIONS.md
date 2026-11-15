@@ -664,3 +664,35 @@ The three announced Stargate sites have no F1 mask, so they show only their outl
 past zoom ~12 where the outline and radar pixels take over. Campus-to-source lines appear only for the selected campus or
 source, to keep the imagery clear. Source color = F7 pressure index (blue-yellow-red). Imagery dates vary by place, and the
 About box says so.
+
+## 2026-11-15: Map redesign, third version (replaces the globe design above)
+
+**Why.** The person found the globe slow and too literal, and asked for a clean corporate dashboard (ivory/linen
+palette, analyst-console feel) on real imagery, US only, where Play visibly changes the map. Data, formulas, sites and
+water wording are unchanged.
+
+**Base.** MapLibre GL 4.7.1 in Web Mercator, limited to the US (no globe, no terrain, rotation off). Esri World Imagery
+desaturated with an ivory wash at national zoom that fades out as you zoom in; Esri place labels. `map/overlays/`,
+`map/overlays.js` and `pipeline/map_overlays.py` are removed.
+
+**What Play animates, and why it is real.** F1 already computes, for every pixel, the cumulative "converted" state at each
+monthly composite, but only the final mask was saved. New `pipeline/conversion_dates.py` re-runs F1 per built campus
+exactly as `footprint_batch.py` did (same window, orbit and recorded threshold) and saves the first month each pixel became
+converted. It writes nothing unless (1) the orbit equals the summary's, (2) the final mask equals the committed
+`<id>_converted.tif` pixel for pixel, and (3) counting pixels by month reproduces `<id>_area_curve.csv` within 0.02 acres.
+`pipeline/map_timeline.py` turns those months into polygons (`map/pixels/<id>.json`, loaded only when a campus is opened)
+and re-checks (3). On the map, pixels that changed in the last 3 months are drawn bright orange, older ones ochre.
+
+**Timeline.** Measured months (2017-01 to the last radar month, sum of `acres_site` over the 32 campuses with an area
+curve) and projected years (Dec 31 of 2026-2030, sum over the 46 projected campuses, low/median/high) are two different
+populations, so the chart draws them as two labelled series with their own y scales and never joins them.
+
+**Activity log.** Events are read from existing columns only: the construction start and operation dates already in
+`map/data.js` (written by `pipeline/projection.py` from the CSVs in `data/`), and "half of the final acres changed" = first
+month the area curve reaches 50% of its last value (campuses over 20 acres only).
+
+Result of the run: 28 of 29 built campuses passed all three checks (curve match within 0.00 acres). STARGATE-ABILENE was
+skipped twice: the re-run's final mask differs from the committed one by 254 of ~44,000 pixels, most likely because
+Planetary Computer reprocessed some scenes since F1 ran. Rather than guess months for it, Abilene shows its measured area
+curve and outline but no animated pixels; its committed F1 numbers are unchanged.
+
