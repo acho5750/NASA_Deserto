@@ -14,6 +14,7 @@ Per aquifer
     too_noisy    pair s.d. > NOISY_SD_MM or a pair with under MIN_GOOD of the window usable: not read
     no_clear     |change| < 2 x noise: no movement NISAR can tell apart from noise yet
     toward/away  |change| >= 2 x noise
+map/gunw.js holds only the aquifers that are not too_noisy; the CSV keeps all of them.
 Run: python pipeline/gunw_story.py   (after gunw_aquifer.py)
 """
 import json
@@ -58,6 +59,8 @@ def main():
                "file": str(f), "source": "https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html ; "
                                          "https://cmr.earthdata.nasa.gov/search/concepts/C3622247503-ASF.html"}
         rows.append(row)
+        if verdict == "too_noisy":   # kept in the CSV for the record, not shown on the map
+            continue
         js[s.source_id] = {**{k: row[k] for k in ("water_body", "track", "frame", "first_date", "last_date", "days",
                                                   "n_pairs", "change_mm", "noise_mm", "verdict", "opera_rate_mm_yr",
                                                   "opera_same_span_mm")},

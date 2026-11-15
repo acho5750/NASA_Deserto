@@ -55,6 +55,7 @@
   .mapwrap { position: relative; min-height: 0; background: #D9D2C2; overflow: hidden; }
   #map, #mapB { position: absolute; inset: 0; }
   #mapB { pointer-events: none; display: none; z-index: 2; }
+  .center.nobar .timebar { display: none; }
   #mapB.on { display: block; }
 
   /* sensor chips */
@@ -207,7 +208,7 @@
   <nav class="chapters" aria-label="Chapters">
     <button data-ch="land"><b>1</b><span>Land<small>2017-2026 · Sentinel-1</small></span></button>
     <button data-ch="nisar"><b>2</b><span>NISAR now<small>2026 · NASA NISAR</small></span></button>
-    <button data-ch="water"><b>3</b><span>Water<small>SWOT · OPERA</small></span></button>
+    <button data-ch="water"><b>3</b><span>Water<small>SWOT · OPERA · NISAR</small></span></button>
     <button data-ch="future"><b>4</b><span>2035<small>Projection</small></span></button>
   </nav>
   <button class="aboutbtn" id="aboutBtn">About the data</button>
@@ -215,7 +216,7 @@
 
 <div class="main">
   <aside id="story" aria-live="polite"></aside>
-  <section class="center">
+  <section class="center" id="center">
     <div class="mapwrap" id="mapwrap">
       <div id="map" role="region" aria-label="Satellite map of US data center campuses and water sources"></div>
       <div id="mapB" aria-hidden="true"></div>
@@ -372,7 +373,7 @@ function nisarPair(sid) {
       <figcaption class="note" style="margin-top:3px">NISAR · ${f1.date} · <b style="color:var(--nisar)">purple = much brighter</b></figcaption></figure></div>`;
 }
 /* NISAR ground motion (GUNW) over a linked aquifer: cumulative mm, with the +/- 2 sigma noise band growing pair by pair. */
-const GW_TXT = { too_noisy: "Too noisy to read", no_clear: "No clear movement", toward: "Moved toward the satellite", away: "Moved away from the satellite" };
+const GW_TXT = { no_clear: "No clear movement", toward: "Moved toward the satellite", away: "Moved away from the satellite" };
 function gwChart(g, big) {
   const W = big ? 360 : 92, H = big ? 110 : 30, L0 = big ? 40 : 1, R0 = big ? 8 : 1, T0 = big ? 8 : 2, B0 = big ? 18 : 2;
   const sd = g.noise_mm / Math.sqrt(g.n_pairs), t = g.t.map(Date.parse), t0 = t[0], t1 = t[t.length - 1];
@@ -381,16 +382,15 @@ function gwChart(g, big) {
   const X = x => L0 + (x - t0) / (t1 - t0) * (W - L0 - R0), Y = v => T0 + (m - v) / (2 * m) * (H - T0 - B0);
   const band = t.map((x, k) => `${X(x).toFixed(1)},${Y(env[k]).toFixed(1)}`).join(" ") + " " + t.map((x, k) => `${X(x).toFixed(1)},${Y(-env[k]).toFixed(1)}`).reverse().join(" ");
   const line = g.v.map((v, k) => `${k ? "L" : "M"}${X(t[k]).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const col = g.verdict === "too_noisy" ? "#A39A8B" : "#8A2BE2";
+  const col = "#8A2BE2";
   const tx = (x, y, s, a = "end") => `<text x="${x}" y="${y}" font-size="9.5" text-anchor="${a}" fill="#6F675A" font-family="IBM Plex Mono">${s}</text>`;
   return `<svg class="${big ? "chart" : "spark"}" viewBox="0 0 ${W} ${H}" ${big ? 'role="img" aria-label="NISAR ground motion over the aquifer"' : 'aria-hidden="true"'}>
-    ${g.verdict === "too_noisy" ? "" : `<polygon points="${band}" fill="#8A2BE2" opacity=".10"/>`}<line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
+    <polygon points="${band}" fill="#8A2BE2" opacity=".10"/><line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
     <path d="${line}" fill="none" stroke="${col}" stroke-width="${big ? 2 : 1.5}"/>${big ? g.v.map((v, k) => `<circle cx="${X(t[k])}" cy="${Y(v)}" r="2.2" fill="${col}"/>`).join("") : ""}
     ${big ? tx(L0 - 5, Y(0) + 3, "0") + tx(L0 - 5, Y(m * .9) + 3, "+" + (m * .9 / 10).toFixed(1) + " cm") + tx(L0 - 5, Y(-m * .9) + 3, "-" + (m * .9 / 10).toFixed(1) + " cm")
       + tx(X(t0), H - 4, g.first_date.slice(5), "start") + tx(X(t1), H - 4, g.last_date.slice(5)) : ""}</svg>`;
 }
-const gwWords = g => g.verdict === "too_noisy" ? "nothing readable: much of the area lost the radar signal between passes (often wet ground or crops)"
-  : g.verdict === "no_clear" ? `no movement it can tell apart from its noise (${(g.change_mm / 10).toFixed(1)} cm, noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`
+const gwWords = g => g.verdict === "no_clear" ? `no movement it can tell apart from its noise (${(g.change_mm / 10).toFixed(1)} cm, noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`
   : `${(Math.abs(g.change_mm) / 10).toFixed(1)} cm ${g.verdict === "toward" ? "toward" : "away from"} the satellite (noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`;
 function chNisar() {
   const N = ST.nisar, sv = ST.sensors.nisar, ids = Object.keys(N);
@@ -407,7 +407,6 @@ function chNisar() {
       ${nisarPair(sid)}
       <details style="margin-top:8px"><summary class="note" style="cursor:pointer">Brightness over time, Sentinel-1 vs NISAR</summary>${radarChart(n, s)}</details>
       ${srcline(["data/radar/nisar_change.csv", "data/radar/nisar_series.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`; }).join("");
-  const gws = Object.entries(GW).map(([id, g]) => ({ id, ...g })).sort((a, b) => (a.verdict === "too_noisy") - (b.verdict === "too_noisy") || a.noise_mm - b.noise_mm), noisy = gws.filter(g => g.verdict === "too_noisy").length, moved = gws.filter(g => g.verdict === "toward" || g.verdict === "away").length;
   return `<div class="ch">
     <div class="kicker"><span class="n" style="background:var(--nisar)">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
     <h1>NISAR checks whether the announced money is turning into buildings, every 12 days</h1>
@@ -420,16 +419,6 @@ function chNisar() {
     ${srcline([sv.file, "data/radar/nisar_change.csv"], ["https://search.asf.alaska.edu"])}
     <h3>What NISAR saw, first image vs. latest</h3>
     ${cards}
-    <h3>NISAR's second job: watching the ground over the aquifers</h3>
-    <p>${gws.length} of the campuses' water sources are aquifers (underground water). Pumping too much water out of an aquifer can make the ground above it sink, slowly. NISAR measures that too: it compares the timing of its radar echoes pass after pass and turns them into millimeters of ground movement (interferometry, the GUNW product).</p>
-    <div class="card nis" style="margin-top:6px"><p style="margin:0"><b>So what?</b> ${moved ? `NISAR saw clear movement at ${moved} of the ${gws.length - noisy} aquifers we could read.` : `At all ${gws.length - noisy} aquifers we could read, NISAR saw <b>no sinking it can tell apart from its noise</b> in its first ${Math.round(Math.max(...gws.filter(g => g.verdict !== "too_noisy").map(g => g.days)) / 30)} months.`}
-      ${noisy ? `At the other ${noisy}, too much of the area lost the radar signal between some passes (often wet ground or growing crops), so we don't read them.` : ""}
-      The 10-year Sentinel-1 record (OPERA) says why: at these places the ground moves at most about 1 cm a year, less than NISAR's noise over one season. NISAR would already have caught fast sinking of several centimeters.
-      What it gives us now is a <b>starting line</b>: if campuses and towns pump more from these aquifers, NISAR's record from 2026 on is the "before".</p></div>
-    ${gws.map(g => `<button class="rank" data-src="${g.id}" style="grid-template-columns:1fr 92px"><span class="nm">${esc(g.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${g.verdict === "too_noisy" ? "var(--muted)" : "var(--nisar)"}">${GW_TXT[g.verdict]}${g.verdict === "too_noisy" ? "" : `: ${(g.change_mm / 10).toFixed(1)} cm, noise ±${(2 * g.noise_mm / 10).toFixed(1)} cm`}</small><small>${chip("opera")} 10-yr rate ${g.opera_rate_mm_yr > 0 ? "+" : ""}${g.opera_rate_mm_yr} mm/yr</small></span><span>${gwChart(g)}</span></button>`).join("")}
-    ${srcline(["data/water/gunw/gunw_summary.csv", "data/sources.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html", "https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1"])}
-    <p class="note" style="margin-top:6px">Movement of a 6 km x 6 km window over each aquifer relative to the 40 km around it, along the radar's line of sight, adding up back-to-back 12-day pairs. Noise = 2 x the pair-to-pair spread x the square root of the number of pairs. A movement of the ground does not by itself say why it moved, and a campus being linked to an aquifer does not mean it caused any change.</p>
-    <p class="note">We also checked NISAR soil moisture: it exists only as a provisional/beta product so far, and topsoil wetness does not tell how much water a utility has, so we left it out.</p>
     ${nextBtn("nisar")}</div>`;
 }
 
@@ -453,9 +442,10 @@ function chWater() {
   const ranked = D.sources.filter(s => shareState(s) === "ok").sort((a, b) => b.share.median[LAST] - a.share.median[LAST]);
   const top = ranked.slice(0, 8), maxS = Math.max(...top.map(s => s.share.median[LAST]), 1);
   const over = ranked.filter(s => s.share.median[LAST] >= 1);
-  const trends = D.sources.filter(s => s.trend_status === "ok").sort((a, b) => (a.trend_value / Math.abs(a.trend_unit === "m/yr" ? .1 : 5)) - (b.trend_value / Math.abs(b.trend_unit === "m/yr" ? .1 : 5)));
+  const ok = D.sources.filter(s => s.trend_status === "ok").sort((a, b) => a.trend_value - b.trend_value);
+  const swot = ok.filter(s => s.trend_unit === "m/yr"), aq = ok.filter(s => s.trend_unit !== "m/yr");
   return `<div class="ch">
-    <div class="kicker"><span class="n">3</span>${chip("swot")}${chip("opera")}</div>
+    <div class="kicker"><span class="n">3</span>${chip("swot")}${chip("opera")}${chip("nisar")}</div>
     <h1>Some campuses depend on small towns' water</h1>
     <p class="lede">We followed each campus to the public water utility whose service area it sits in, then to the river, lake or aquifer that utility draws from (EPA records). Then we compared the campuses' estimated water use with what the utility supplies to its own customers.</p>
     <div class="big" style="color:var(--crimson)">${over.length}<small>water utilities</small></div>
@@ -468,12 +458,19 @@ function chWater() {
         <span class="barw"><i style="--c:${SHARE_C(x)};width:${Math.min(100, x / maxS * 100)}%"></i><u style="left:${Math.min(100, 1 / maxS * 100)}%"></u></span></button>`; }).join("")}
     ${srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"])}
     <p class="note" style="margin-top:6px">F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.</p>
-    <h3>Is the water body already changing? · from space</h3>
-    <p class="note" style="margin-top:-2px">${chip("swot")} measures river and lake water levels. ${chip("opera")} measures tiny ground movement from Sentinel-1, which can show an aquifer being drawn down.</p>
-    ${trends.map(s => { const w = trendWords(s), col = w.k === "swot" ? "#12808F" : "#6F8FB0";
-      return `<button class="rank" data-src="${s.id}" style="grid-template-columns:1fr 92px"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${esc(w.txt)}</small><small>${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)} · ${CHIP[w.k]}</small></span>
-        <span>${sparkline(s.series, col)}</span></button>`; }).join("")}
-    ${srcline(["data/sources.csv", "data/water/swot/", "data/water/disp/"], ["https://podaac.github.io/hydrocron/intro.html", "https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1"])}
+    <h3>Rivers and lakes: is the water level changing?</h3>
+    <p class="note" style="margin-top:-2px">${chip("swot")} measures river and lake water levels from space.</p>
+    ${swot.map(s => { const w = trendWords(s);
+      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${esc(w.txt)}</small><small>${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)}</small></span>
+        <span>${sparkline(s.series, "#12808F")}</span></button>`; }).join("")}
+    ${srcline(["data/sources.csv", "data/water/swot/"], ["https://podaac.github.io/hydrocron/intro.html"])}
+    <h3>Aquifers: is the ground above them sinking?</h3>
+    <p class="note" style="margin-top:-2px">Pumping a lot of water out of an aquifer (underground water) can make the ground above it sink. ${chip("opera")} has measured this from Sentinel-1 since 2016. ${chip("nisar")} started measuring it in 2026, with its own L-band radar.</p>
+    ${aq.map(s => { const w = trendWords(s), g = GW[s.id];
+      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">OPERA ${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)}: ${esc(w.txt)}</small>${g ? `<small style="color:var(--nisar)">NISAR 2026: ${g.verdict === "no_clear" ? "no clear movement yet" : GW_TXT[g.verdict].toLowerCase() + " " + (Math.abs(g.change_mm) / 10).toFixed(1) + " cm"} (${(g.change_mm / 10).toFixed(1)} cm, noise ±${(2 * g.noise_mm / 10).toFixed(1)} cm)</small>` : ""}</span>
+        <span>${sparkline(s.series, "#6F8FB0")}${g ? gwChart(g) : ""}</span></button>`; }).join("")}
+    ${srcline(["data/sources.csv", "data/water/disp/", "data/water/gunw/gunw_summary.csv"], ["https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1", "https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}
+    <p class="note" style="margin-top:6px">Both measure a window over the aquifer against its surroundings, along the radar's line of sight. NISAR adds up back-to-back 12-day image pairs (GUNW product); noise = 2 x the pair-to-pair spread x the square root of the number of pairs. NISAR is shown where its 2026 record was clear enough to read (${Object.keys(GW).length} of ${aq.length} aquifers).</p>
     <p class="note" style="margin-top:6px">A trend describes the water body. It does not show what caused the change, and a campus being linked to a source does not mean it caused any change in it.</p>
     ${nextBtn("water")}</div>`;
 }
@@ -947,6 +944,18 @@ function zoomGate() {
   document.getElementById("mapwrap").classList.toggle("far", !(photoSite && near));
 }
 map.on("zoom", zoomGate);
+/* The timeline bar is for the national view. Close up (a site or source open, or zoomed in past 9) it hides, and a site's own
+   "Replay" button is the one way to play there. */
+let barHidden = false;
+function barGate() {
+  const hide = !!state.detail || map.getZoom() >= 9;
+  if (hide === barHidden) return;
+  barHidden = hide;
+  if (hide && state.playing && !state.detail) stopPlay();
+  document.getElementById("center").classList.toggle("nobar", hide);
+  map.resize(); if (mapB) mapB.resize(); if (photoSite) setSwipe(swipeX);
+}
+map.on("zoomend", barGate);
 /* NISAR radar frames as images draped on the map (map/nisar/, written by pipeline/nisar_overlays.py). */
 let nisarShown = null, nisarUrl = null, forcedFrame = null;
 function nisarFrameAt(n, t) { let k = 0; n.frames.forEach((f, i) => { if (tOf(f.date) <= t) k = i; }); return k; }
@@ -1018,12 +1027,12 @@ function goChapter(ch, t, keepT) {
 }
 function setT(t) { state.t = t; drawMap(); renderHeadline(); renderLanes(); if (state.ch === "future") refreshFuture();
   const ac = document.getElementById("acurve"); if (ac && state.detail && state.detail[0] === "site") ac.innerHTML = curveChart(siteById[state.detail[1]]); }
-function render() { applyChapterLayers(); drawMap(); renderStory(); renderHeadline(); renderLegend(); renderLanes(); }
+function render() { applyChapterLayers(); drawMap(); renderStory(); renderHeadline(); renderLegend(); renderLanes(); barGate(); }
 
 /* ---------------- play ---------------- */
 let timer = null;
 const playBtn = document.getElementById("play");
-function setPlayUI(on) { document.getElementById("playLbl").textContent = on ? "Pause" : "Play"; document.getElementById("playIcon").innerHTML = on ? '<path d="M1 0h3v10H1zM6 0h3v10H6z"/>' : '<path d="M1 0v10l9-5z"/>'; }
+function setPlayUI(on) { document.querySelectorAll("[data-replay]").forEach(b => { if (!b.dataset.lbl) b.dataset.lbl = b.innerHTML; b.innerHTML = on ? "&#10074;&#10074; Pause" : b.dataset.lbl; }); document.getElementById("playLbl").textContent = on ? "Pause" : "Play"; document.getElementById("playIcon").innerHTML = on ? '<path d="M1 0h3v10H1zM6 0h3v10H6z"/>' : '<path d="M1 0v10l9-5z"/>'; }
 function stopPlay() { forcedFrame = null; if (timer) clearInterval(timer); timer = null; state.playing = false; setPlayUI(false); }
 function startPlay(t0, t1, step, tick) {
   stopPlay(); state.playing = true; setPlayUI(true);
@@ -1044,6 +1053,7 @@ playBtn.addEventListener("click", () => {
   const [a, b, st, tk] = playRange(); startPlay(a, b, st, tk);
 });
 function replaySite() {
+  if (state.playing) return stopPlay();
   const s = siteById[state.detail[1]];
   if (replayKind(s) === "nisar") {   // one NISAR image every 12 days, then hold on the last with the change in purple
     const n = NI[s.id]; let k = 0; stopPlay(); state.playing = true; setPlayUI(true);

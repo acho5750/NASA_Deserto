@@ -800,3 +800,14 @@ noise, so this is framed as a baseline, not a finding of no change.
 **Other NISAR products checked and not used:** soil moisture (NISAR_L3_SME2) exists only as PROVISIONAL and BETA collections,
 and topsoil wetness does not measure a utility's supply. Vegetation (HV) clearing at the campuses is feasible from the same
 GCOV files but would repeat the "something was built" message, so it was left for later.
+
+## 2026-11-15: Map v5 round 4 (person's review of PR 23)
+
+- **Aquifers that were too noisy to read are no longer on the map.** These are Montgomery County, West Memphis and Boling. They stay in `data/water/gunw/gunw_summary.csv` with verdict `too_noisy`, but `map/gunw.js` holds only the 5 readable aquifers. The "So what?" paragraph about the aquifers was removed.
+- **Regrouped by what is measured, not by satellite.** Chapter 2 (NISAR now) is only about construction. Chapter 3 (Water: SWOT, OPERA, NISAR) has three parts:
+  - utility shares
+  - rivers and lakes (SWOT water level)
+  - aquifers, where each row shows the OPERA 10-year rate and, where readable, NISAR 2026 together
+
+  NISAR ground motion is a water measurement, so it sits beside OPERA's.
+- **Timeline bar only in the national view.** It hides when a site or source is open or the map is zoomed in to 9 or more. Up close, the site's own Replay button is the only way to play, and it now toggles to Pause.
