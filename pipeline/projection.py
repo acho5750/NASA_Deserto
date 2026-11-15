@@ -20,10 +20,19 @@ YEARS = list(range(2026, 2031))       # values are "as of December 31" of each y
 SCENARIOS = ["low", "median", "high"]
 PCT = {"low": 25, "median": 50, "high": 75}
 
-# ---- Parameters to set from real sources before using real data ----
-UTILIZATION = 0.7           # average power draw / capacity. Confirm against Epoch's methodology notes.
-PER_CAPITA_L_PER_DAY = 400  # DEMO PLACEHOLDER. Replace with USGS public-supply per-capita use per state.
-DEFAULT_WUE_L_PER_KWH = None  # used only if no site has a withdrawal figure for calibration
+# ---- Sourced parameters (Phase 4; see DECISIONS.md and data/calibration/) ----
+# Utilization u = average power draw / IT capacity. Epoch: "the average power consumption of these
+# data centers is typically 60-80% of capacity, due to idle time and maintenance"
+# (https://epoch.ai/data/ai-data-centers). More draw = more water, so high uses 0.8.
+UTILIZATION = {"low": 0.6, "median": 0.7, "high": 0.8}
+# F5 per-capita use comes per source from data/sources.csv (column per_capita_l_per_day, USGS 2015
+# public-supply withdrawals / population served, by state: data/calibration/per_capita_by_state.csv).
+# This national value from the same USGS file is used only for a source without a state value.
+PER_CAPITA_L_PER_DAY = 521.3
+# WUE comes from data/calibration/wue_google_2025.csv (Google 2025 withdrawals by location matched to
+# Epoch IT MW averaged over 2025) plus any withdrawal_ml_per_yr in the registry.
+WUE_CALIBRATION = "data/calibration/wue_google_2025.csv"
+DEFAULT_WUE_L_PER_KWH = None  # no default: calibration must have at least one site
 
 
 def months_between(a: pd.Timestamp, b: pd.Timestamp) -> float:
@@ -38,7 +47,7 @@ def build_fraction(months_since_start: float, tau: float) -> float:
     return 1.0 / (1.0 + math.exp(-(months_since_start - tau / 2) / s))
 
 
-def calibrate(sites: pd.DataFrame) -> dict:
+def calibrate(sites: pd.DataFrame, wue_calibration: str = WUE_CALIBRATION) -> dict:
     """F2: ratios from built sites, as percentiles so every scenario has its own value."""
     built = sites[sites.status == "built"].copy()
     a = (built.a_max_acres / built.mw).dropna()
@@ -46,8 +55,16 @@ def calibrate(sites: pd.DataFrame) -> dict:
     tau = built.build_months.dropna()
     lag = built.apply(lambda r: months_between(r.construction_start, r.operation_date)
                       if pd.notna(r.operation_date) else np.nan, axis=1).dropna()
-    energy_kwh = built.mw * UTILIZATION * 8760 * 1000
+    # F2 WUE = withdrawal / (MW x u x 8760 x 1000), with the MW running in the withdrawal year and
+    # the median utilization (the year's real draw is not known, only its range).
+    u = UTILIZATION["median"]
+    energy_kwh = built.mw * u * 8760 * 1000
     wue = (built.withdrawal_ml_per_yr * 1e6 / energy_kwh).dropna()   # liters per kWh
+    if wue_calibration and Path(wue_calibration).exists():
+        w = pd.read_csv(wue_calibration)
+        w = w[w.use_for_wue.astype(str).str.lower() == "true"]
+        w_wue = w.withdrawal_ml_2025 * 1e6 / (w.epoch_it_mw_2025_mean * u * 8760 * 1000)
+        wue = pd.concat([wue, w_wue.dropna()], ignore_index=True)
 
     if len(a) == 0 or len(tau) == 0:
         raise ValueError("Need at least one built site with a_max_acres, mw, and build_months.")
@@ -67,6 +84,7 @@ def calibrate(sites: pd.DataFrame) -> dict:
         "lag_months": float(np.median(lag)) if len(lag) else float(np.median(tau)),
         "n_built": int(len(built)),
         "n_wue_calibration": int(len(wue)),
+        "wue_values_l_per_kwh": [round(float(x), 3) for x in wue],
     }
     return cal
 
@@ -86,7 +104,7 @@ def project_sites(sites: pd.DataFrame, cal: dict) -> list:
             if pd.notna(r.withdrawal_ml_per_yr):
                 water_full = r.withdrawal_ml_per_yr
             else:
-                water_full = mw * UTILIZATION * 8760 * 1000 * cal["wue_l_per_kwh"][scn] / 1e6
+                water_full = mw * UTILIZATION[scn] * 8760 * 1000 * cal["wue_l_per_kwh"][scn] / 1e6
             tau = r.build_months if pd.notna(r.build_months) else cal["tau_months"]
             acres_y, water_y = [], []
             for y in YEARS:
@@ -107,7 +125,9 @@ def project_sources(sources: pd.DataFrame, site_recs: list) -> list:
     sources["decline_score"] = sources.groupby("type")["trend_value"].rank(pct=True, ascending=False)
     for _, s in sources.iterrows():
         # F5: supply estimate from population served. Replace with the utility's own figure if known.
-        supply_ml = s.population_served * PER_CAPITA_L_PER_DAY * 365 / 1e6
+        per_capita = s.get("per_capita_l_per_day", np.nan)
+        per_capita = per_capita if pd.notna(per_capita) else PER_CAPITA_L_PER_DAY
+        supply_ml = s.population_served * per_capita * 365 / 1e6
         linked = [r for r in site_recs if r["source_id"] == s.source_id]
         share = {}
         for scn in SCENARIOS:
@@ -129,11 +149,12 @@ def main():
     p.add_argument("--registry", required=True)
     p.add_argument("--sources", required=True)
     p.add_argument("--out", default="map/data.js")
+    p.add_argument("--wue-calibration", default=WUE_CALIBRATION, help="'' to use registry withdrawals only")
     a = p.parse_args()
 
     sites = pd.read_csv(a.registry, parse_dates=["construction_start", "operation_date"])
     sources = pd.read_csv(a.sources)
-    cal = calibrate(sites)
+    cal = calibrate(sites, a.wue_calibration)
     site_recs = project_sites(sites, cal)
     source_recs = project_sources(sources, site_recs)
 

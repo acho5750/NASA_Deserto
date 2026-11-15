@@ -366,3 +366,56 @@ LOS). Missing: 11 rows `swot_lake_id_unavailable`, 3 `insufficient_swot` (Colora
 Hickory).
 
 **Aqueduct stress** is left blank (`aqueduct_pending`) for Phase 4.
+
+## 2026-11-15 · Phase 4: calibration values replace the placeholders in projection.py
+
+No formula changed. Every value below is in a committed file with its source link.
+
+**Utilization u (F2, F4).** Epoch: "the average power consumption of these data centers is
+typically 60-80% of capacity, due to idle time and maintenance" (https://epoch.ai/data/ai-data-centers,
+read 2026-11-15). The single 0.7 placeholder becomes low 0.6 / median 0.7 / high 0.8, following the
+"every scenario value comes in low / median / high" convention; more draw means more water, so the
+high scenario uses 0.8. WUE calibration uses the median 0.7, because the real draw in the year the
+withdrawal was measured is not known.
+
+**WUE (F2), `data/calibration/wue_google_2025.csv`.** Google's 2026 Environmental Report (FY2025,
+p. 96 "Water use by data center location") gives 2025 withdrawals by location. Nine locations match
+built sites; five are used, four are not:
+- Used: Lancaster OH (307.1 Mgal), New Albany OH (1,008.1), Bristow VA (359.6), Mesa AZ (19.4),
+  Storey County NV (66.7). Each is the only Google campus at that location and the Epoch site is
+  that campus.
+- Not used: Midlothian (Epoch shows 0 MW in 2025 but Google reports water and a PUE since 2023, so
+  Epoch tracks a later building), Papillion and The Dalles (Epoch does not track the older buildings
+  on the campus), Council Bluffs (Epoch site is the east expansion; Google's figure covers all
+  campuses). Using them would divide a whole campus's water by part of its MW.
+- MW is Epoch's IT power averaged over calendar 2025 (timeline rows held as steps until the next
+  row), because the withdrawal is a 2025 total and every used site grew during 2025. Results, in
+  L per IT kWh at u = 0.7: Lancaster 2.38, New Albany 2.91, Bristow 1.52, Mesa 0.26 (first building
+  online July 2025), Storey County 0.34. Low / median / high (25th / 50th / 75th percentile) =
+  0.34 / 1.52 / 2.38.
+- `withdrawal_ml_per_yr` in the registry stays blank: no site ran at its full 2026 MW through all of
+  2025, so the 2025 total is not its full-build withdrawal. F4 uses MW x u x 8760 x WUE for all sites.
+- `projection.py` reads the table through `--wue-calibration` (default the file above) and adds
+  those values to any registry withdrawals. `DEFAULT_WUE_L_PER_KWH` stays `None`.
+
+**Per-capita use (F5), `data/calibration/per_capita_by_state.csv`.** USGS 2015 county data
+(Dieter et al. 2018, https://doi.org/10.5066/F7TB15V5, the latest national compilation): total
+public-supply withdrawals (`PS-Wtotl`, Mgal/d) divided by population served by public supply
+(`PS-TOPop`), summed by state. This counts everything a utility withdraws (homes, businesses, losses),
+which is the right denominator for "share of the utility's supply". Each row of `data/sources.csv`
+now has `state` and `per_capita_l_per_day`, and F5 uses that. The single 400 L placeholder is
+replaced by the national value from the same file (521.3 L/person/day), used only for a source with
+no state value (the demo CSV).
+
+**Aqueduct stress (F7), `aqueduct_stress` in `data/sources.csv`.** WRI Aqueduct 4.0 baseline annual
+`bws_score` (0-5), from the downloaded geodatabase (`Aqueduct40_waterrisk_download_Y2023M07D05`),
+taken at the source's point: the SWORD reach location for SWOT sources, otherwise a point inside the
+utility's service area. `aqueduct_label`, `aqueduct_pfaf_id` and `aqueduct_string_id` are kept for
+tracing. Note: the Colorado/CAP rows take Lake Mead's own catchment, which Aqueduct scores Low (0.67),
+while the Mesa and Goodyear service areas score higher; the point rule is applied as written.
+
+**Run on real data (precedent + announced, 45 sites with coordinates, a start date and MW or capex).**
+WUE n = 5; acres/MW 0.80 / 1.32 / 1.77; tau 47.9 months. The largest 2030 median shares are small
+rural utilities matched to large announced campuses at county-centroid points (Fort Griffin SUD 25x
+its supply, Camino Real 8.9x, Hawley WSC 6.0x). These rows are flagged `location_approx` and need real
+campus locations before the map shows them as shares.

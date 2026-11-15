@@ -295,6 +295,9 @@ def reservoir_trend(feature_id: str, feature: str = "Reach", start: str = SWOT_S
         good = df[(df["wse"] > -1000) & df["time"].notna() & (df[qcol] <= (1 if feature == "Reach" else 0))]
         if len(good) >= 4:
             break
+    if feature == "Reach":  # prior reach location, kept even when the trend cannot be computed
+        result.update({"feature_lat": float(df["p_lat"].iloc[0]), "feature_lon": float(df["p_lon"].iloc[0]),
+                       "feature_name": df["river_name"].iloc[0]})
     if len(good) < 4:
         return {**result, "trend_status": "insufficient_swot", "trend_n": len(good)}
     slope, n, dropped = _fit_trend(good["time"], good["wse"])
@@ -305,9 +308,6 @@ def reservoir_trend(feature_id: str, feature: str = "Reach", start: str = SWOT_S
            "trend_n": n, "trend_outliers_dropped": dropped,
            "trend_start": good["time"].min().date().isoformat(), "trend_end": good["time"].max().date().isoformat(),
            "trend_series_file": str(series)}
-    if feature == "Reach":
-        out.update({"feature_lat": float(df["p_lat"].iloc[0]), "feature_lon": float(df["p_lon"].iloc[0]),
-                    "feature_name": df["river_name"].iloc[0]})
     print(json.dumps(out, indent=2))
     return out
 
@@ -507,6 +507,9 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
         pd.DataFrame(trends.values()).to_csv(trends_cache, index=False)
     tr = pd.DataFrame(trends.values()).set_index("water_body_id")
 
+    from calibration import aqueduct_lookup, USGS_LINK, AQ_LINK
+    pc_csv = Path("data/calibration/per_capita_by_state.csv")
+    per_capita = pd.read_csv(pc_csv).set_index("state").to_dict("index") if pc_csv.exists() else {}
     rows = []
     for a in assign.itertuples(index=False):
         t = tr.loc[a.water_body_id] if a.water_body_id in tr.index else pd.Series(dtype=object)
@@ -517,8 +520,11 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
             links += [HYDROCRON_LINK, SWORD_LINK]
         else:
             links += [DISP_LINK]
+        links += [USGS_LINK, AQ_LINK]
         sites = m[m.pwsid == a.pwsid].site_id.tolist()
         lat, lon = t.get("feature_lat"), t.get("feature_lon")
+        state = "UT" if a.pwsid.startswith("UTAH") else a.pwsid[:2]
+        pc = per_capita.get(state, {})
         if pd.notna(lat) and a.trend_method.startswith("swot"):
             loc_basis = "SWORD reach prior location (Hydrocron p_lat/p_lon)"
         elif pd.notna(lat):
@@ -537,12 +543,12 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
             "trend_feature_id": t.get("trend_feature_id", a.trend_feature_id),
             "trend_n": t.get("trend_n"), "trend_start": t.get("trend_start"), "trend_end": t.get("trend_end"),
             "trend_series_file": t.get("trend_series_file"),
-            "aqueduct_stress": np.nan,  # Phase 4
+            "state": state, "per_capita_l_per_day": pc.get("l_per_person_day", np.nan),
+            **aqueduct_lookup(lat, lon),
             "sites": "; ".join(sites), "identification_basis": a.basis, "confidence": a.confidence,
             "flags": ";".join(f for f in [
                 "population_missing" if not (pop and pop > 0) else "",
-                "location_approx" if m[m.pwsid == a.pwsid].location_approx.any() else "",
-                "aqueduct_pending"] if f),
+                "location_approx" if m[m.pwsid == a.pwsid].location_approx.any() else ""] if f),
             "sdwa_quarter": u.sdwa_quarter, "source": " ; ".join(dict.fromkeys(links)),
         })
     src = pd.DataFrame(rows)
