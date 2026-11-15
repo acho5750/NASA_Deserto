@@ -1,6 +1,6 @@
 # Data center growth and the water it depends on (prototype)
 
-A starter repo for Option 2: footprint from radar, water supply chain, projection to 2030, map.
+A starter repo for Option 2: footprint from radar, water supply chain, projection to 2035, map.
 
 ## What runs today
 | Piece | Status |
@@ -71,3 +71,4 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 - **F6** decline score = percentile rank of the source trend within its type.
 - **F7** pressure = weighted mean of normalized share, decline score, Aqueduct stress (weights set on the map).
 - **F8** build fraction B(t) logistic with τ; water ramps on the same curve centred on the operation date.
+- **F9** (past the announced list, national only) pace = MW of projected announced campuses announced in the 24 months before the data date ÷ 2 years. One cohort of that many MW is announced (and starts) on July 1 of each year from 2027; each cohort follows F2, F4 and F8. Shown as a separate dashed "if the pace continues" line, never added into site values (decided by the person, 2026-11-15).

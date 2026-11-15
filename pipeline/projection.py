@@ -2,7 +2,7 @@
 Projection engine (formulas F2-F8).
 
 Reads the site registry and source table, calibrates ratios from built sites, projects every
-site's acres and water draw for 2026-2030 in low / median / high scenarios, computes each
+site's acres and water draw for 2026-2035 in low / median / high scenarios, computes each
 source's demand share and trend score, and writes map/data.js for the prototype map.
 
 Run:
@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-YEARS = list(range(2026, 2031))       # values are "as of December 31" of each year
+YEARS = list(range(2026, 2036))       # values are "as of December 31" of each year (horizon 2035, decided 2026-11-15)
 SCENARIOS = ["low", "median", "high"]
 PCT = {"low": 25, "median": 50, "high": 75}
 
@@ -115,6 +115,47 @@ def project_sites(sites: pd.DataFrame, cal: dict) -> list:
             rec["acres"][scn] = acres_y
             rec["water_ml"][scn] = water_y
         out.append(rec)
+    return out
+
+
+def project_pace(site_recs: list, announced_dates: dict, cal: dict, as_of: str,
+                 window_months: int = 24, first_year: int = 2027) -> dict:
+    """F9 (horizon past the announced list): if new projects keep being announced at the recent pace.
+
+    rate = MW of the projected announced campuses announced in the `window_months` before `as_of`,
+    divided by the window in years (per scenario, F3 MW). From `first_year` on, one cohort of `rate`
+    MW is announced on July 1 of each year and starts construction that day (the precedent median
+    announcement-to-start gap is -0.6 months, so no shift). Each cohort follows F2 (acres per MW),
+    F4 (water) and F8 (build and water ramp) with the calibrated tau and lag. National totals only:
+    the cohorts are not placed on the map.
+    """
+    end = pd.Timestamp(as_of)
+    start = end - pd.DateOffset(months=window_months)
+    win = [r for r in site_recs
+           if r["status"] == "announced" and pd.notna(announced_dates.get(r["id"]))
+           and start < pd.Timestamp(announced_dates[r["id"]]) <= end]
+    years_in_window = window_months / 12
+    out = {"window": [start.date().isoformat(), end.date().isoformat()], "n_sites": len(win),
+           "site_ids": [r["id"] for r in win], "first_year": first_year,
+           "rate_mw_per_yr": {}, "acres": {}, "water_ml": {}}
+    for scn in SCENARIOS:
+        rate = sum(r["mw"][scn] for r in win) / years_in_window
+        out["rate_mw_per_yr"][scn] = round(rate, 1)
+        acres_y, water_y = [], []
+        for y in YEARS:
+            a = w = 0.0
+            for c in range(first_year, YEARS[-1] + 1):
+                t = months_between(pd.Timestamp(f"{c}-07-01"), pd.Timestamp(f"{y}-12-31"))
+                if t <= 0:
+                    continue
+                tau = cal["tau_months"]
+                a += cal["acres_per_mw"][scn] * rate * build_fraction(t, tau)
+                w += (rate * UTILIZATION[scn] * 8760 * 1000 * cal["wue_l_per_kwh"][scn] / 1e6
+                      * build_fraction(t - cal["lag_months"] + tau / 2, tau))
+            acres_y.append(round(a, 1))
+            water_y.append(round(w, 1))
+        out["acres"][scn] = acres_y
+        out["water_ml"][scn] = water_y
     return out
 
 
