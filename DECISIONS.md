@@ -146,3 +146,10 @@ announced sites give low/high. Script: `pipeline/precedent_k.py`; inputs: `data/
 - **Basis warning.** Announced capex excludes chips (Meta's $800M for ~150-180 MW), so k is about a
   sixth of Epoch's 37.88 (which includes compute). F3 on an announced figure that includes compute
   would overstate MW about 6x. Raised with the person.
+
+## 2026-11-15 · k revised to 6 facility-only sites (owner decision)
+The owner dropped Osmium (range) and Abilene (financing) and removed the fewer-than-8 fallback,
+because Epoch's 37.88 $M/MW includes compute. k = **4.49 / 4.88 / 6.43 $M per IT MW**
+(p10/p50/p90, n=6, low confidence), labeled in METHODS.md. `k_use` column added to
+`data/precedent_capex.csv`. Sent to the announced-projects thread. Supersedes the "Case A"
+numbers in the entry above.

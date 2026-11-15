@@ -47,8 +47,8 @@ first source Epoch cites for that site.
    at every site (s.d. 0.00), and construction cost is 11.77 $M/MW at every site. So k in F2 has
    no spread from these data, and F3 (MW = capex / k) would just invert Epoch's own constant.
    Superseded 2026-11-15: k now comes from announced capex (`data/precedent_capex.csv`,
-   `pipeline/precedent_k.py`): 8 sites, low / median / high 4.49 / 5.73 / 11.91 $M per IT MW
-   (case A). Median announcement-to-construction gap -0.6 months over 8 sites.
+   `pipeline/precedent_k.py`): 6 facility-only sites, low / median / high 4.49 / 4.88 / 6.43 $M per IT MW
+   (low confidence). Median announcement-to-construction gap -0.6 months over 8 sites.
 2. **Lag (construction start to first operation):** median 28.3 months, IQR 24.3-35.2, range
    4.9 (QTS Richmond 1, an expansion of a running campus) to 64.8 (Microsoft SAT40). Flagged
    `long_lag_*` where over 48 months: SAT40, Meta Huntsville, Google Storey County.

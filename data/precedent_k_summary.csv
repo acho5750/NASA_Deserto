@@ -1,5 +1,5 @@
 parameter,scenario,value,n_sites,case,source
-k_musd_per_it_mw,low,4.49,8,A,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
-k_musd_per_it_mw,median,5.73,8,A,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
-k_musd_per_it_mw,high,11.91,8,A,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
+k_musd_per_it_mw,low,4.49,6,facility_only_n6_low_confidence,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
+k_musd_per_it_mw,median,4.88,6,facility_only_n6_low_confidence,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
+k_musd_per_it_mw,high,6.43,6,facility_only_n6_low_confidence,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
 announcement_to_start_months,median,-0.6,8,,data/precedent_capex.csv ; data/precedent_sites.csv ; https://epoch.ai/data/data-centers
