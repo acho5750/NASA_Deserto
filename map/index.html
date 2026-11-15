@@ -50,6 +50,14 @@
   #detail h2 { font-size: 1rem; margin: 0 0 4px; }
   #detail p { margin: 0 0 4px; }
   .muted { color: var(--muted); }
+  .rbadge { width: 12px; height: 12px; transform: rotate(45deg); border: 2px solid var(--water);
+            background: var(--paper); display: inline-block; }
+  .radar-icon div { width: 14px; height: 14px; transform: rotate(45deg); border: 2.5px solid var(--water);
+                    background: var(--paper); box-sizing: border-box; }
+  #detail figure { margin: 10px 0 0; }
+  #detail figure img { width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  #detail figcaption { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+  .real { font-size: .78rem; color: var(--water); margin-bottom: 4px; }
   @media (max-width: 760px) {
     body { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
     #map { grid-row: 1; } aside { grid-row: 2; border-right: 0; border-top: 1px solid var(--rule); }
@@ -85,6 +93,7 @@
     <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"></div>
     <div class="key">Lower pressure <span class="ramp" aria-hidden="true"></span> Higher pressure</div>
     <div class="key"><span class="dot" aria-hidden="true"></span> Built campus <span class="ring" aria-hidden="true"></span> Announced campus</div>
+    <div class="key"><span class="rbadge" aria-hidden="true"></span> Radar view (real satellite data)</div>
   </div>
 
   <div id="detail"><p class="muted">Select a campus or water source on the map to see its numbers.</p></div>
@@ -93,6 +102,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="data.js"></script>
+<script src="radar_panels.js"></script>
 <script>
 const D = window.PROTO_DATA;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -107,6 +117,7 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 const layer = L.layerGroup().addTo(map);
+const radarLayer = L.layerGroup().addTo(map);   // drawn once; not tied to the year or scenario
 
 function mix(a, b, t) {
   const h = s => s.replace("#", "").match(/../g).map(x => parseInt(x, 16));
@@ -139,6 +150,33 @@ function showSource(src) {
      ${src.share_wholesale ? `<p>${pct(src.share_wholesale[c][i])} of the estimated supply of the wholesale system it buys from (${src.wholesale_sellers})</p>` : ""}
      <p>Trend: ${src.trend_value} ${src.trend_unit}</p>
      <p>${n} linked campus${n === 1 ? "" : "es"} · pressure index ${pressure(src).toFixed(2)}</p>`;
+}
+
+const IMG_LABEL = {
+  radar: "Sentinel-1 C-band: before construction vs. latest months",
+  nisar: "NISAR L-band: first vs. latest date in 2026 (top HH, bottom HV)",
+  timeseries: "Average brightness inside the outline over time",
+  ground_motion: "Ground motion: Sentinel-1 (left) and NISAR (right)"
+};
+function showRadar(p) {
+  const figs = p.images.map(src => {
+    const k = Object.keys(IMG_LABEL).find(k => src.includes("_" + k));
+    return `<figure><a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="${IMG_LABEL[k] || ""}, ${p.name}" loading="lazy"></a>
+            <figcaption>${IMG_LABEL[k] || ""}</figcaption></figure>`;
+  }).join("");
+  const links = p.source.split(" ; ").map(s => s.startsWith("http")
+    ? `<a href="${s}" target="_blank" rel="noopener">${new URL(s).hostname}</a>` : `<code>${s}</code>`).join(" · ");
+  document.getElementById("detail").innerHTML =
+    `<div class="real">Real satellite data</div><h2>${p.name}</h2><p>${p.caption}</p>${figs}
+     <p class="muted" style="font-size:.75rem;margin-top:8px">Sources: ${links}</p>`;
+  document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+for (const p of (window.RADAR_PANELS || [])) {
+  L.marker([p.lat, p.lon], {
+    icon: L.divIcon({ className: "radar-icon", html: "<div></div>", iconSize: [14, 14] }),
+    keyboard: true, title: `Radar view: ${p.name}`
+  }).bindTooltip(`Radar view: ${p.name}`)
+    .on("click", () => { state.selected = null; showRadar(p); }).addTo(radarLayer);
 }
 
 function render() {

@@ -29,3 +29,6 @@ META-SARPY,way/1312801355,,,osm_unnamed_parcel,"unnamed OSM landuse=construction
 META-AIKEN,way/1312295357,,,,"OSM 'Meta Aiken Data Center'; registry point is a town centroid 11 km away"
 META-GALLATIN,way/1213758201,,,,"OSM 'Gallatin Data Center' operator=Meta; registry point is a town centroid 7 km away"
 GOOGLE-STOREY-COUNTY,way/936537527,,,osm_unnamed_parcel,"unnamed OSM landuse=industrial parcel that contains the 'Google Data Center' building way/1116775099"
+JUPITER-DONAANA,way/1476734418,,,outline_partial_campus,"OSM 'Project Jupiter' landuse=construction (operator Santa Teresa Land LLC; BorderPlex; Stargate LLC), 612.6 ac; graded land west of it (visible on Sentinel-2 2026-11-03) is outside OSM's outline; Phase 5 site, Baxtel point 1.6 km away"
+LORDSTOWN,way/473431363,,,outline_existing_building,"OSM 'Stargate Project' building=industrial (43.4 ac), the existing plant building being converted; checked on Sentinel-2 2025-05-10 and 2026-10-24; Phase 5 site"
+FRONTIER-SHACKELFORD,,,data/footprint/FRONTIER-SHACKELFORD_campus.geojson,hand_drawn_no_osm,"no OSM object within 8 km; hand-drawn around the cleared campus on Sentinel-2 L2A S2B_MSIL2A_20261008T172209_R012_T14SMB (1,440 ac; Vantage reports 1,200 ac); Phase 5 site"
