@@ -1,0 +1,48 @@
+epoch_name,reason,epoch_first_row
+Google Pryor (North),no construction start: Epoch timeline begins at operation,"2024-07-19: Building 1 is operational, based on default roof-to-operational time."
+Anthropic Lake Mariner,"shared campus: same address as Core42 Lake Mariner (7725 Lake Rd, Barker NY)",2025-06-11: Land clearing begins for Building 1 (AKA CB3).
+Colossus 1,"conversion: retrofit of a former Electrolux factory, little new land converted","2024-04-24: Construction starts with a road added on site, retrofitting a former Electrolux building."
+CoreWeave Denton TX,conversion: existing Bitcoin-mining buildings,"2024-11-01: Construction start - The [Texas Department of Licensing and Regulation](https://www.tdlr.texas.gov/TABS/Search/Print/TABS2025005706) reports Core Scientific is converting existing Bitcoin mining buildings into AI data centers, planning to build AROUND the existing Denton Energy Center."
+Coreweave Helios,"conversion: former crypto-mining site, first building converted","2025-05-31: Land clearing: The former [crypto mining](https://web.archive.org/web/20250423225644/https://investor.galaxy.com/news/news-details/2025/Galaxy-Announces-Commitment-with-CoreWeave-to-Host-Additional-Artificial-Intelligence-and-High-Performance-Computing-Infrastructure-at-Helios-Data-Center-Campus/default.aspx) Helios site begins converting the first building and expanding, with land cleared for additional buildings."
+CoreWeave Chester VA,conversion: existing Capital One data center refit,"2023-09-18: Conversion starts at CTP-01 (Building 1). The data center was formerly owned by Capital One, now leased to CoreWeave. Source: https://www.datacenterdynamics.com/en/news/chirisa-secures-200-million-loan-to-fit-out-virginia-data-center-for-coreweave/"
+CoreWeave Marble NC,conversion: existing Core Scientific crypto-mining site,2024-06-25: Core Scientific announced that CoreWeave would receive about 70 MW of HPC infrastructure from 100 MW of owned infrastructure. Site modifications were expected to begin in H2 2024.
+Core42 Lake Mariner,"shared campus: same address as Anthropic Lake Mariner (7725 Lake Rd, Barker NY)","2024-10-01: Land clearing begins for Building 1, also known as CB-1, the first large AI/HPC building on the site."
+Stream Phoenix,conversion: renovation of existing building PX1,"2022-10-30: Construction beginning, as can be seen on satellite. Major renovations on western side of the non AI building (PX1), including adding generators and cooling towers. "
+CoreWeave Dalton 1 & 2,conversion: existing Core Scientific crypto-mining buildings,"2024-06-03: According to a [few](https://investors.corescientific.com/news-events/press-releases/detail/74/core-scientific-to-provide-approximately-200-mw-of-infrastructure-to-host-coreweaves-high-performance-computing-services-capturing-significant-ai-compute-opportunity) [sources](https://www.sec.gov/Archives/edgar/data/1839341/000162828025008302/core-20241231.htm), Core Scientific announced that they're rebuilding their existing Dalton 1 (and we're assuming 2) datacenter to run AI using CoreWeave's GPUs, of which contract was first signed on this date. According to the press release, ""The site modifications are expected to commence early in the second half of 2024 and achieve operational status in the first half of 2025."""
+xAI QTS Atlanta,conversion: hardware installed in an existing Atlanta data center,2024-01-23: X Corp's $700 million investment in AI training hardware for the Atlanta data center is approved by the Development Authority of Fulton County ([bond resolution fact sheet](https://www.developfultoncounty.com/meetings-and-minutes_239_547601452.pdf)).
+Anthropic Barber Lake,not operational by 2026-11-15 (first power 2026-12-30),
+CoreWeave Lancaster Greenfield site,not operational by 2026-11-15 (first power 2027-06-30),
+CoreWeave Muskogee OK,not operational by 2026-11-15 (first power 2026-12-31),
+Crusoe Abilene Expansion,not operational by 2026-11-15 (first power 2027-09-17),
+Goodnight,not operational by 2026-11-15 (first power 2027-03-15),
+Google Cedar Rapids,not operational by 2026-11-15 (first power 2026-12-31),
+Google Fort Wayne,not operational by 2026-11-15 (first power 2026-12-01),
+Meta Bowling Green,not operational by 2026-11-15 (first power 2027-02-01),
+Meta Hyperion,not operational by 2026-11-15 (first power 2028-01-01),
+OpenAI Stargate Lordstown,not operational by 2026-11-15 (first power 2027-03-01),
+OpenAI Stargate Michigan,not operational by 2026-11-15 (first power 2028-12-31),
+OpenAI Stargate Milam,not operational by 2026-11-15 (first power 2028-12-31),
+OpenAI Stargate New Mexico,not operational by 2026-11-15 (first power 2028-12-31),
+OpenAI Stargate Shackelford,not operational by 2026-11-15 (first power 2027-08-15),
+OpenAI Stargate Wisconsin,not operational by 2026-11-15 (first power 2028-12-31),
+QTS Cedar Rapids,not operational by 2026-11-15 (first power 2026-12-31),
+QTS Eagle Mountain,not operational by 2026-11-15 (first power 2026-12-31),
+Google Columbus,"beyond --max-sites 30 (buildout_complete=False, operation 2024-04-01)",
+Google Omaha,"beyond --max-sites 30 (buildout_complete=False, operation 2024-04-08)",
+STACK Infrastructure NVA02,"beyond --max-sites 30 (buildout_complete=False, operation 2024-10-01)",
+AWS New Albany,"beyond --max-sites 30 (buildout_complete=False, operation 2024-12-01)",
+Anthropic-Amazon New Carlisle,"beyond --max-sites 30 (buildout_complete=False, operation 2025-06-23)",
+Amazon Madison Mega Site,"beyond --max-sites 30 (buildout_complete=False, operation 2025-06-23)",
+Google Red Oak,"beyond --max-sites 30 (buildout_complete=False, operation 2025-08-25)",
+AWS Berwick,"beyond --max-sites 30 (buildout_complete=False, operation 2025-09-09)",
+Meta Prometheus,"beyond --max-sites 30 (buildout_complete=False, operation 2025-10-14)",
+Colossus 2,"beyond --max-sites 30 (buildout_complete=False, operation 2025-10-19)",
+CoreWeave Ellendale ND,"beyond --max-sites 30 (buildout_complete=False, operation 2025-10-27)",
+QTS Richmond 3,"beyond --max-sites 30 (buildout_complete=False, operation 2026-02-13)",
+Vantage TX1,"beyond --max-sites 30 (buildout_complete=False, operation 2026-02-15)",
+Meta Los Lunas,"beyond --max-sites 30 (buildout_complete=False, operation 2026-03-01)",
+Microsoft Fairwater Wisconsin,"beyond --max-sites 30 (buildout_complete=False, operation 2026-04-16)",
+Google Lincoln,"beyond --max-sites 30 (buildout_complete=False, operation 2026-05-12)",
+Amazon Ridgeland,"beyond --max-sites 30 (buildout_complete=False, operation 2026-05-15)",
+Meta Montgomery,"beyond --max-sites 30 (buildout_complete=False, operation 2026-06-18)",
+Meta Cheyenne,"beyond --max-sites 30 (buildout_complete=False, operation 2026-07-25)",
