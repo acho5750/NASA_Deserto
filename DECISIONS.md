@@ -107,3 +107,21 @@ no-match the same way as before. Pick one name before the projection reads this 
 - **Logistic fit without scipy.** Grid search over (k, t0) with A_max solved in closed form by least
   squares; build_months = ln(81)/k (10% -> 90%). Result for Abilene: A_max 1,163 acres,
   t0 = +15.4 months after construction start, build_months 22.1.
+
+## 2026-11-15 · Precedent sites from Epoch AI (Phase 1a)
+
+Details and per-site table: `data/precedent_sites_notes.md`. Script: `pipeline/precedent_sites.py`.
+- **construction_start = first Epoch timeline row; operation_date = first row with Power > 0.**
+  Epoch's timelines are satellite-image logs whose first row is land clearing; this is the closest
+  thing to a construction start the dataset has. Row text kept in `*_evidence` columns.
+- **mw = Epoch IT power as of 2026-11-15**, facility power kept in `mw_facility`. WUE is per IT kWh.
+- **Greenfield only.** Conversions of existing buildings convert little land and would bias acres/MW
+  down. Two sites at one address (Lake Mariner) both dropped: one footprint cannot be split.
+- **30 sites, buildout-complete first.** Sites still expanding after 2026-11-15 mix finished and
+  unfinished buildings in one footprint. Storey County (expanding) fills slot 30.
+- **Coordinates**: Epoch's own Google Earth links first, then Nominatim street hit, then Census
+  geocoder, then town centroid; a geocode must name the address's state or it is rejected.
+- **withdrawal_ml_per_yr left blank** although Epoch has "Water use (MGD)" for 10 of the 30 sites: Epoch
+  doesn't say whether it is withdrawal or consumption. Kept raw in `epoch_water_use_mgd`.
+- **Open:** Epoch capex is a constant 37.88 $M per IT MW (modeled), so k has no spread. Asked the
+  person how to source k.
