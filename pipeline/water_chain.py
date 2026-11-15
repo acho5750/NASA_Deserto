@@ -135,6 +135,26 @@ def _sellers(pwsid: str) -> list:
     return [f["attributes"] for f in r.json().get("features", [])]
 
 
+def wholesale_population(sellers: list) -> tuple:
+    """F5 wholesale denominator: people served by the seller systems' water, one level down.
+
+    The sellers' own retail population plus the retail population of every active system that SDWA
+    lists as buying from them (an active CC facility whose SELLER_PWSID is the seller), each PWSID
+    counted once. Buyers of buyers are not followed. Returns (population, PWSIDs counted)."""
+    d = _sdwa()
+    fac = d["fac"]
+    cc = fac[(fac.FACILITY_TYPE_CODE == "CC") & (fac.FACILITY_ACTIVITY_CODE == "A")]
+    pwsids = []
+    for sp in sellers:
+        pwsids += [sp] + list(cc[cc.SELLER_PWSID == sp].PWSID)
+    pwsids = list(dict.fromkeys(pwsids))
+    sysd = d["sys"][~d["sys"].index.duplicated(keep="last")]
+    act = sysd.reindex(pwsids)
+    act = act[act.PWS_ACTIVITY_CODE == "A"]
+    pops = pd.to_numeric(act.POPULATION_SERVED_COUNT, errors="coerce").fillna(0)
+    return float(pops.sum()), list(act.index)
+
+
 def match_utilities(points_csv: str, out_csv: str = "data/water/site_utility_matches.csv") -> pd.DataFrame:
     sites = pd.read_csv(points_csv)
     rows = []
@@ -547,12 +567,18 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
         else:
             lat, lon = _service_area_point(a.pwsid)
             loc_basis = "point inside the utility's EPA service area (water body location not in data)"
+        ws = str(getattr(a, "wholesale_sellers", "") or "")
+        ws = [x.strip() for x in ws.split(";") if x.strip() and x.strip().lower() != "nan"]
+        wpop, wcounted = wholesale_population(ws) if ws else (np.nan, [])
         rows.append({
             "source_id": f"SRC-{a.pwsid}", "name": f"{a.water_body} for {u['name'].title()}",
             "water_body_id": a.water_body_id, "water_body": a.water_body, "type": a.type,
             "lat": lat, "lon": lon, "location_basis": loc_basis,
             "utility_pwsid": a.pwsid, "utility_name": u["name"],
             "population_served": pop if pop and pop > 0 else np.nan,
+            "wholesale_sellers": "; ".join(ws),
+            "wholesale_population": wpop if wpop and wpop > 0 else np.nan,
+            "wholesale_systems": "; ".join(wcounted),
             "trend_value": t.get("trend_value"), "trend_unit": t.get("trend_unit"),
             "trend_status": t.get("trend_status"), "trend_method": a.trend_method,
             "trend_feature_id": t.get("trend_feature_id", a.trend_feature_id),

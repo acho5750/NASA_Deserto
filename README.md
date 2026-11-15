@@ -55,6 +55,7 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 - **F3** MW = stated MW, else capex / k.
 - **F4** water (L/yr) = MW × u × 8760 × 1000 × WUE.
 - **F5** share = water / (population served × per-capita use × 365).
+  For a utility that buys its water, a second share uses the wholesale system instead: water / (population served by the sellers and their direct buyers × per-capita use × 365). The map shows both (decided by the person, 2026-11-15).
 - **F6** decline score = percentile rank of the source trend within its type.
 - **F7** pressure = weighted mean of normalized share, decline score, Aqueduct stress (weights set on the map).
 - **F8** build fraction B(t) logistic with τ; water ramps on the same curve centred on the operation date.

@@ -128,11 +128,21 @@ def project_sources(sources: pd.DataFrame, site_recs: list) -> list:
         per_capita = s.get("per_capita_l_per_day", np.nan)
         per_capita = per_capita if pd.notna(per_capita) else PER_CAPITA_L_PER_DAY
         supply_ml = s.population_served * per_capita * 365 / 1e6
+        # F5 (wholesale): the same water over the supply of the systems that sell this utility its
+        # water (sellers + their direct buyers, data/sources.csv wholesale_population). Shown next to
+        # the local share for utilities that buy their water; None where there is no seller.
+        wpop = s.get("wholesale_population", np.nan)
+        wsupply_ml = wpop * per_capita * 365 / 1e6 if pd.notna(wpop) and wpop > 0 else None
         linked = [r for r in site_recs if r["source_id"] == s.source_id]
-        share = {}
+        # Every site linked to any utility inside the wholesale system counts toward its share.
+        wsys = {x.strip() for x in str(s.get("wholesale_systems", "") or "").split(";") if x.strip() and x.strip() != "nan"}
+        linked_w = [r for r in site_recs if str(r["source_id"]).replace("SRC-", "") in wsys]
+        share, share_w = {}, {}
         for scn in SCENARIOS:
-            share[scn] = [round(sum(r["water_ml"][scn][i] for r in linked) / supply_ml, 4)
-                          for i in range(len(YEARS))]
+            tot = [sum(r["water_ml"][scn][i] for r in linked) for i in range(len(YEARS))]
+            share[scn] = [round(x / supply_ml, 4) for x in tot]
+            tot_w = [sum(r["water_ml"][scn][i] for r in linked_w) for i in range(len(YEARS))]
+            share_w[scn] = [round(x / wsupply_ml, 4) for x in tot_w] if wsupply_ml else None
         out.append({
             "id": s.source_id, "name": s["name"], "type": s.type, "lat": s.lat, "lon": s.lon,
             "pwsid": s.utility_pwsid, "supply_ml": round(supply_ml, 1),
@@ -140,6 +150,9 @@ def project_sources(sources: pd.DataFrame, site_recs: list) -> list:
             "decline_score": round(float(s.decline_score), 3),
             "stress_norm": round(float(s.aqueduct_stress) / 5.0, 3),   # Aqueduct score 0-5
             "share": share,
+            "wholesale_sellers": s.get("wholesale_sellers") if pd.notna(s.get("wholesale_sellers", np.nan)) else None,
+            "wholesale_supply_ml": round(wsupply_ml, 1) if wsupply_ml else None,
+            "share_wholesale": share_w if wsupply_ml else None,
         })
     return out
 
