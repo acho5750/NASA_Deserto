@@ -14,3 +14,4 @@ pillow
 earthaccess
 asf_search
 earthengine-api
+matplotlib
