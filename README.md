@@ -10,6 +10,7 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 | `map/index.html` | Real-data dashboard over muted satellite imagery of the US (MapLibre GL 4, Esri World Imagery) with a timeline Play control; tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
 | `pipeline/conversion_dates.py` | Re-runs F1 per built campus and saves the month each converted pixel first changed (`data/footprint/masks/<id>_first_converted.tif`); refuses to write unless the final mask equals the committed one and monthly acres match the area curve |
 | `pipeline/map_timeline.py` | Turns those months into the map's Play data: per-campus pixel polygons (`map/pixels/`) and the measured area curves (`map/timeline.js`) |
+| `pipeline/map_wayback.py` | Lists the dated aerial photos of each campus in Esri World Imagery Wayback (`data/wayback_captures.csv`, `map/wayback.js`), so Play swaps in the photo taken before each date |
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
@@ -26,6 +27,7 @@ pip install -r requirements.txt
 python pipeline/build_map.py      # real data -> map/data.js
 python pipeline/conversion_dates.py --skip-done   # month each radar pixel changed (re-runs F1, ~80 s per campus)
 python pipeline/map_timeline.py                   # -> map/pixels/, map/timeline.js
+python pipeline/map_wayback.py                    # dated aerial photos per campus -> map/wayback.js
 python -m http.server 8000        # then open http://localhost:8000/map/
 # demo only (overwrites map/data.js with invented data; do not commit):
 # python pipeline/projection.py --registry data/site_registry_demo.csv --sources data/sources_demo.csv

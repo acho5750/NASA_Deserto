@@ -52,7 +52,7 @@
   #results small { display: block; color: var(--muted); font-size: 11.5px; }
   .asof { font: 500 10.5px var(--mono); color: var(--muted); letter-spacing: .08em; white-space: nowrap; }
 
-  .main { display: grid; grid-template-columns: 296px 1fr 372px; min-height: 0; }
+  .main { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
   .col { min-height: 0; overflow-y: auto; background: var(--ivory); scrollbar-width: thin; scrollbar-color: var(--rule2) transparent; }
   .col.left { border-right: 1px solid var(--rule); }
   .col.right { border-left: 1px solid var(--rule); }
@@ -172,13 +172,40 @@
   .chain .l { width: 1px; margin: 0 auto; background: var(--rule2); min-height: 14px; }
   .chain .t { color: var(--ink2); padding-bottom: 4px; }
 
+
+  /* headline card: the one thing to read */
+  .headline { position: absolute; z-index: 6; top: 14px; left: 14px; width: 330px; background: rgba(250, 248, 243, .96); border: 1px solid var(--rule2);
+              box-shadow: 0 8px 28px rgba(40, 30, 10, .16); padding: 14px 16px 12px; }
+  .headline .when { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .headline .big { font: 600 34px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .headline .big small { font: 500 13px var(--sans); color: var(--muted); letter-spacing: 0; margin-left: 6px; }
+  .headline .lbl { font-size: 12px; color: var(--ink2); margin: 4px 0 0; }
+  .headline .now { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--rule); font-size: 12.5px; line-height: 1.4; min-height: 36px; }
+  .headline .now b { display: block; font: 600 9.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--rust); margin-bottom: 2px; }
+  .headline .now.flash { animation: flash .6s ease-out; }
+  @keyframes flash { from { background: rgba(255, 90, 31, .14); } to { background: transparent; } }
+  .hud .photo-tag { display: none; } .hud .photo-tag.on { display: inline-block; background: var(--ink) !important; color: var(--ivory); border-color: var(--ink) !important; }
+  .legendchip { position: absolute; z-index: 5; left: 12px; bottom: 34px; background: rgba(250, 248, 243, .94); border: 1px solid var(--rule2); padding: 8px 10px; font-size: 11.5px; color: var(--ink2); max-width: 300px; }
+  .legendchip div { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .steps { counter-reset: st; margin: 4px 0 0; padding: 0; list-style: none; }
+  .steps li { counter-increment: st; display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); }
+  .steps li::before { content: counter(st); font: 600 12px/24px var(--mono); width: 24px; height: 24px; text-align: center; background: var(--ink); color: var(--ivory); }
+  .steps p { margin: 2px 0 6px; color: var(--ink2); font-size: 12.5px; }
+  .steps .btn { margin: 0; }
+  .film { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }
+  .film button { flex: none; border: 2px solid transparent; padding: 0; background: none; cursor: pointer; width: 74px; text-align: left; }
+  .film button img { width: 70px; height: 70px; object-fit: cover; display: block; background: var(--linen); }
+  .film button span { display: block; font: 500 10px var(--mono); color: var(--muted); padding: 2px 1px 0; }
+  .film button.on { border-color: var(--ember); } .film button.on span { color: var(--ink); }
+  .opts summary { cursor: pointer; padding: 12px 18px; border-top: 1px solid var(--rule); }
+  .opts > div { padding: 0 18px 14px; }
   .maplibregl-ctrl-attrib { background: rgba(250, 248, 243, .85) !important; font: 10px var(--sans); }
   .maplibregl-ctrl-scale { background: rgba(250, 248, 243, .85); border-color: var(--ink2); color: var(--ink2); font: 10px var(--mono); }
   .maplibregl-popup-content { border-radius: 0; padding: 8px 10px; background: var(--ink); color: var(--ivory); font: 12px/1.4 var(--sans); box-shadow: none; }
   .maplibregl-popup-content small { display: block; color: #CFC6B4; font: 11px var(--mono); margin-top: 2px; }
   .maplibregl-popup-tip { display: none; }
 
-  @media (max-width: 1100px) { .main { grid-template-columns: 260px 1fr 330px; } #search { width: 180px; } .asof { display: none; } }
+  @media (max-width: 1100px) { .main { grid-template-columns: 1fr 340px; } #search { width: 180px; } .asof { display: none; } }
   @media (max-width: 860px) {
     body { overflow: auto; }
     .app { height: auto; display: block; }
@@ -186,7 +213,9 @@
     .search { order: 5; flex-basis: 100%; } #search { width: 100%; } #results { left: 0; width: auto; }
     .main { display: flex; flex-direction: column; }
     .center { order: 1; grid-template-rows: 56vh auto; } .col.right { order: 2; border-left: 0; border-top: 1px solid var(--rule); }
-    .col.left { order: 3; border-right: 0; border-top: 1px solid var(--rule); }
+    .headline { top: 8px; left: 8px; right: 8px; width: auto; padding: 8px 10px; } .headline .big { font-size: 22px; } .headline .lbl { font-size: 11.5px; margin-top: 2px; } .headline .now { display: none; } .headline .when { margin-bottom: 2px; }
+    .hud.tr { display: none; }
+    .legendchip { display: none; }
     .timeline { grid-template-columns: 1fr; } .tctl { flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--rule); }
     .tchart { height: 130px; }
     .col { overflow: visible; }
@@ -214,50 +243,20 @@
 </header>
 
 <div class="main">
-  <aside class="col left" aria-label="Summary">
-    <div class="blk">
-      <h4><span class="cap">Status at</span><span class="phase m" id="phase"><i></i>Measured</span></h4>
-      <div class="kpi"><b id="kAcres">0</b><span id="kAcresL">acres converted</span></div>
-      <div class="kpi"><b id="kSites">0</b><span id="kSitesL">campuses under way</span></div>
-      <div class="kpi"><b id="kWater">—</b><span id="kWaterL">ML of water per year</span></div>
-    </div>
-    <div class="blk">
-      <h4><span class="cap">Activity log</span><span class="cap" id="feedCount" style="color:var(--faint)"></span></h4>
-      <ul id="feed" aria-live="off"></ul>
-    </div>
-    <div class="blk legend">
-      <h4><span class="cap">Legend</span></h4>
-      <div><svg class="sw" width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="#1D1C1A" stroke="#FAF8F3" stroke-width="1.5"/></svg>Campus, sized by acres converted</div>
-      <div><svg class="sw" width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="#1D1C1A" stroke-width="1.5" stroke-dasharray="2 1.5"/></svg>Announced, not yet measured</div>
-      <div><svg class="sw" width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="#FF5A1F"/></svg>Radar: changed in the last 3 months</div>
-      <div><svg class="sw" width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="#C08A2B" opacity=".7"/></svg>Radar: changed earlier</div>
-      <div><svg class="sw" width="14" height="14"><path d="M7 1 13 7 7 13 1 7z" fill="#C08A2B" stroke="#FAF8F3" stroke-width="1.2"/></svg>Water source, color = pressure index</div>
-      <div style="padding-left:23px;flex-direction:column;align-items:stretch;gap:0"><div class="ramp"></div><div style="display:flex;justify-content:space-between;margin:0" class="note"><span>Lower</span><span>Higher</span></div></div>
-      <div><svg class="sw" width="14" height="14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="#5F7F5A" stroke-width="2"/></svg>Marsh or swamp within 100 m (when on)</div>
-      <div><svg class="sw" width="14" height="14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="#6E4F7E" stroke-width="2"/></svg>Protected land within 1 km (when on)</div>
-    </div>
-    <div class="blk">
-      <h4><span class="cap">Layers</span></h4>
-      <label class="tog"><input type="checkbox" id="lyrPixels" checked> Radar change pixels</label>
-      <label class="tog"><input type="checkbox" id="lyrSites" checked> Campuses and outlines</label>
-      <label class="tog"><input type="checkbox" id="lyrWater" checked> Water sources</label>
-      <label class="tog"><input type="checkbox" id="lyrExposure"> Nearby wetlands and protected land</label>
-      <label class="tog"><input type="checkbox" id="lyrLabels" checked> Place names</label>
-    </div>
-    <div class="blk">
-      <h4><span class="cap">Pressure index weights</span></h4>
-      <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"><output id="w1o">1</output></div>
-      <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"><output id="w2o">1</output></div>
-      <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"><output id="w3o">1</output></div>
-    </div>
-  </aside>
 
   <section class="center">
     <div class="mapwrap">
       <div id="map" role="region" aria-label="Satellite map of US data center campuses and water sources"></div>
       <span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span>
-      <div class="hud tl"><span class="tag" id="hudView"><b>CONUS</b> · Esri World Imagery</span><br><span class="tag" id="hudLayer">Sentinel-1 C-band change · 10 m</span></div>
-      <div class="hud tr"><span class="tag" id="hudXY">39.8283°N  98.5795°W</span><br><span class="tag" id="hudZ"></span></div>
+      <div class="headline" id="headline">
+        <div class="when"><span class="cap" id="hWhen">2017-01</span><span class="phase m" id="phase"><i></i>Measured</span></div>
+        <div class="big"><span id="kAcres">0</span><small>acres</small></div>
+        <p class="lbl" id="kAcresL">of land changed so far at US data center campuses</p>
+        <div class="now" id="now"><b>Press Play</b>Watch the radar record a decade of construction, then the projection to 2030.</div>
+      </div>
+      <div class="legendchip" id="legendchip"></div>
+      <div class="hud tl" style="display:none"><span class="tag" id="hudView"><b>CONUS</b> · Esri World Imagery</span><br><span class="tag" id="hudLayer">Sentinel-1 C-band change · 10 m</span></div>
+      <div class="hud tr"><span class="tag photo-tag" id="photoTag"></span><br><span class="tag" id="hudXY">39.8283°N  98.5795°W</span></div>
       <div class="mapbtns"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button><button id="homeBtn" aria-label="Whole country" title="Whole country">&#8962;</button></div>
     </div>
     <div class="timeline">
@@ -272,7 +271,20 @@
     </div>
   </section>
 
-  <aside class="col right" aria-label="Details"><div id="detail"></div></aside>
+  <aside class="col right" aria-label="Details"><div id="detail"></div>
+    <details class="opts"><summary class="cap" style="color:var(--ink)">Map settings</summary><div>
+      <label class="tog"><input type="checkbox" id="lyr3d" checked> 3D blocks for changed land</label>
+      <label class="tog"><input type="checkbox" id="lyrPhotos" checked> Dated photos when a campus is open</label>
+      <label class="tog"><input type="checkbox" id="lyrPixels" checked> Radar change pixels</label>
+      <label class="tog"><input type="checkbox" id="lyrSites" checked> Campuses and outlines</label>
+      <label class="tog"><input type="checkbox" id="lyrWater" checked> Water sources</label>
+      <label class="tog"><input type="checkbox" id="lyrExposure"> Nearby wetlands and protected land</label>
+      <label class="tog"><input type="checkbox" id="lyrLabels" checked> Place names</label>
+      <p class="cap" style="margin:12px 0 4px">Pressure index weights</p>
+      <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"><output id="w1o">1</output></div>
+      <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"><output id="w2o">1</output></div>
+      <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"><output id="w3o">1</output></div>
+    </div></details></aside>
 </div>
 </div>
 
@@ -280,8 +292,9 @@
 <script src="data.js"></script>
 <script src="radar_panels.js"></script>
 <script src="timeline.js"></script>
+<script src="wayback.js"></script>
 <script>
-const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [];
+const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [], WB = window.WAYBACK || { sites: {} };
 const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-US");
 const fmt1 = n => n == null ? "n/a" : (Math.abs(n) < 10 ? n.toFixed(1) : Math.round(n).toLocaleString("en-US"));
 const pct = n => n == null ? "n/a" : (n >= 10 ? Math.round(n * 100).toLocaleString("en-US") + "%" : (n * 100).toFixed(n < 0.01 ? 2 : 1) + "%");
@@ -310,6 +323,17 @@ const state = { t: TL.t0, scn: "median", w: [1, 1, 1], selected: null, playing: 
 const isProj = () => state.t > T_MEAS1;
 const yIdx = () => { if (!isProj()) return 0; let k = 0; PROJ_T.forEach((pt, i) => { if (state.t >= pt) k = i; }); return k; };
 function curveAt(c, t) { if (!c) return null; let v = 0; for (const [ct, a] of c) { if (ct <= t) v = a; else break; } return v; }
+/* Dated aerial photos (Esri World Imagery Wayback): the latest photo captured on or before t, else the earliest. */
+function photoAt(s, t) { const ph = WB.sites[s.id]; if (!ph || !ph.length) return null; let cur = ph[0]; for (const p of ph) if (p[0] <= t) cur = p; return cur; }
+function wbTile(r, s, z) { const n = 2 ** z, x = Math.floor((s.lon + 180) / 360 * n), la = s.lat * Math.PI / 180,
+  y = Math.floor((1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n);
+  return WB.url.replace("{release}", r).replace("{z}", z).replace("{y}", y).replace("{x}", x); }
+function playRange(s) {
+  const cv = curveOf(s), ph = WB.sites[s.id];
+  if (cv) return [cv[0][0], Math.min(T_MEAS1, Math.max(cv[cv.length - 1][0], ph && ph.length ? ph[ph.length - 1][0] : 0))];
+  if (ph && ph.length) return [Math.max(TL.t0, ph[0][0]), T_END];
+  return null;
+}
 
 /* ---------------- F7 pressure index ---------------- */
 function pressure(src) {
@@ -411,12 +435,17 @@ function showSite(s) {
     <h2>${esc(s.name)}</h2><p class="sub">${[s.construction_start ? "Construction from " + s.construction_start : "", s.mw_stated ? fmt(s.mw_stated) + " MW stated" : ""].filter(Boolean).join(" · ")}</p>`;
   if (s.location.precision && !["osm_outline", "image_outline"].includes(s.location.precision) && s.status !== "built")
     h += `<p class="note" style="margin-top:6px">Location: ${esc(s.location.basis || s.location.precision)}</p>`;
-  if (cv) h += `<p style="margin:12px 0 0"><button class="btn solid" data-playsite="1">&#9654; Play construction, ${tlabel(cv[0][0])} to ${tlabel(cv[cv.length - 1][0])}</button></p>`;
+  if (playRange(s)) h += `<p style="margin:12px 0 0"><button class="btn solid" data-playsite="1">&#9654; Watch it being built, ${tlabel(playRange(s)[0])} to ${tlabel(playRange(s)[1])}</button></p>`;
   h += `</div>`;
+  const ph = WB.sites[s.id];
+  if (ph && ph.length) { const cur = photoAt(s, state.t);
+    h += `<div class="sec"><h3>Aerial photos, by capture date</h3><div class="film">${ph.map(([t, r, d]) => `<button data-photo="${t}" class="${cur && cur[1] === r ? "on" : ""}" title="Photo captured ${d}">
+      <img loading="lazy" alt="Aerial photo captured ${d}" src="${wbTile(r, s, 15)}"><span>${d}</span></button>`).join("")}</div>
+      <p class="note">Esri World Imagery Wayback. The map shows the latest photo taken before the timeline date; click one to jump there.</p></div>`; }
   if (s.projected) h += `<div class="stats"><div><b>${fmt(s.mw[c])}</b><span>MW, ${c}</span></div><div><b>${fmt(s.acres[c][y])}</b><span>acres, ${YEARS[y]} projection</span></div>
       <div><b>${fmt(s.water_ml[c][y])}</b><span>ML water/yr, ${YEARS[y]}</span></div></div>`;
   if (cv) h += `<div class="sec"><h3>Land changed, measured by radar</h3>${curveChart(cv, s)}
-      <p class="note">Sentinel-1 acres changed inside the campus outline + 200 m, by month. ${(TL.pixels || []).includes(curveId(s)) ? "The map's orange pixels follow this curve: each lights up in the month it first changed." : "Pixel-by-pixel months are not shown for this campus: re-running the radar steps today no longer reproduces the saved mask exactly, so only the curve is shown."}</p></div>`;
+      <p class="note">Sentinel-1 acres changed inside the campus outline + 200 m, by month. ${(TL.pixels || []).includes(curveId(s)) ? "The map's orange pixels follow this curve: each lights up in the month it first changed." : s.status === "built" ? "Pixel-by-pixel months are not shown for this campus: re-running the radar steps today no longer reproduces the saved mask exactly. On the map, the outline rises with this curve instead." : "This announced campus has no saved radar mask, so on the map its outline rises with this curve, then with the projection."}</p></div>`;
   const fp = s.footprint;
   if (fp && s.status === "built") {
     h += `<div class="sec"><h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
@@ -500,23 +529,30 @@ function showRadar(p) {
     ${linkList(p.source.split(" ; ").filter(s => s.startsWith("http")))}`);
 }
 function showHome() {
-  const y = yIdx(), top = D.sources.map(s => [s, pressure(s)]).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const big = placed.filter(s => curveOf(s)).map(s => [s, curveAt(curveOf(s), T_MEAS1)]).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const y = yIdx(), top = D.sources.map(s => [s, pressure(s)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const big = placed.filter(s => curveOf(s)).map(s => [s, curveAt(curveOf(s), T_MEAS1)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const missing = D.sites.filter(s => s.location.missing);
-  setDetail(`<div class="pad"><span class="cap">Overview</span><h1 style="margin-top:6px">Data center growth and the water it depends on</h1>
-    <p class="sub" style="margin-top:6px;color:var(--ink2)">Land converted by US data center campuses, measured month by month with Sentinel-1 radar, and the reservoirs, rivers and aquifers
-      their water utilities draw from. Press Play to watch the radar record construction from ${tlabel(TL.t0).slice(0, 4)}, then the projection of built and announced campuses to 2030.</p></div>
+  setDetail(`<div class="pad"><span class="cap">Start here</span><h1 style="margin-top:6px">How much land US data centers took, and the water they depend on</h1>
+    <ol class="steps">
+      <li><div><b>Watch the country</b><p>Press Play. The counter on the map adds up land the radar saw change, month by month since ${tlabel(TL.t0).slice(0, 4)}, then the projection to 2030.</p>
+        <button class="btn" data-act="playall">&#9654; Play 2017 to 2030</button></div></li>
+      <li><div><b>Watch one campus being built</b><p>Real dated aerial photos switch as time passes, and the land the radar saw change rises as 3D blocks.</p>
+        <button class="btn solid" data-act="demo">&#9654; Google Storey County, Nevada</button></div></li>
+      <li><div><b>Follow the water</b><p>Each campus links to the reservoir, river or aquifer its utility draws from.</p>
+        <button class="btn" data-src="${top[0][0].id}">${esc(top[0][0].water_body)}</button></div></li>
+    </ol></div>
     <div class="sec"><h3>Largest land change, measured</h3></div>${big.map(([s, a]) => `<button class="row" data-site="${s.id}"><span class="sq" style="background:#C2461B"></span>
       <span class="nm">${esc(s.name)}<small>${s.status === "built" ? "Built" : "Announced"} · construction from ${esc(s.construction_start || "n/a")}</small></span><span class="v">${fmt(a)} ac</span></button>`).join("")}
     <div class="sec"><h3>Highest water pressure index, ${YEARS[y]}</h3></div>${top.map(([s, p]) => `<button class="row" data-src="${s.id}">
       <span class="sq" style="background:${pcolor(p)};transform:rotate(45deg) scale(.85)"></span><span class="nm">${esc(s.water_body)}<small>${title(s.utility)}</small></span>
       <span class="bar"><i style="width:${Math.round(p * 100)}%;background:${pcolor(p)}"></i></span><span class="v">${p.toFixed(2)}</span></button>`).join("")}
-    <div class="sec"><h3>Radar views · Sentinel-1 and NISAR</h3></div>${RADAR.map(p => { const img = p.images.find(x => x.includes("_nisar")) || p.images[0];
-      return `<button class="row" data-radar="${p.id}"><span class="th"><img src="${esc(img)}" alt="" loading="lazy"></span><span class="nm">${esc(p.name.replace(/\s*\(.*\)/, ""))}
-      <small>${p.kind === "site" ? "Construction seen by NISAR L-band" : "Ground motion over an aquifer"}</small></span></button>`; }).join("")}
     <div class="sec" style="padding-bottom:18px"><details class="about"><summary class="cap" style="color:var(--ink)">About the data and methods</summary>
       <p><b>Footprints.</b> Converted acres at built campuses come from Sentinel-1 radar (Planetary Computer <code>sentinel-1-rtc</code>): a pixel counts as converted once its
         backscatter changes by more than a threshold for two months in a row, inside the campus outline plus 200 m. Play shows each pixel in the month it first changed.</p>
+      <p><b>Photos.</b> When a campus is open, the map shows the Esri World Imagery Wayback photo captured most recently before the date on the timeline. Capture dates come from Esri's
+        imagery metadata (<code>data/wayback_captures.csv</code>).</p>
+      <p><b>3D blocks.</b> Changed radar pixels rise as blocks so growth is easy to see. Their height is for display only and is not a measured building height.
+        Announced campuses without radar pixels show their outline as a block that grows with measured or projected acres.</p>
       <p><b>Projection.</b> Acres and water for 2026-2030 use ratios measured at built sites (acres per MW, water per kWh from Google's per-site reports, build time) and each
         campus's stated MW or investment. Low, median and high use the 25th, 50th and 75th percentiles.</p>
       <p><b>Water sources.</b> Each campus is matched to the EPA water service area it sits in, then to the utility's source (EPA SDWA). Trends are SWOT water surface elevation
@@ -525,7 +561,8 @@ function showHome() {
         the "wholesale share" divides by the supply of the whole system it buys from.</p>
       <p><b>Exposure.</b> Land cover before construction: NLCD. Wetlands: USFWS NWI. Protected land: USGS PAD-US 4.1 (GAP status 1-3).</p>
       <p><b>Timeline.</b> Measured totals add the ${Object.keys(TL.curves).length} campuses with a Sentinel-1 area curve. Projected totals add the ${D.sites.filter(s => s.projected).length} campuses with
-        enough data to project. The two groups differ, so the chart draws them as separate series. Imagery: Esri World Imagery (date varies by place).</p>
+        enough data to project. The two groups differ, so the chart draws them as separate series.</p>
+      <p><b>Radar views.</b> ${RADAR.map(p => `<button class="linkbtn" data-radar="${p.id}">${esc(p.name.replace(/\s*\(.*\)/, ""))}</button>`).join(", ")}.</p>
       ${missing.length ? `<p>Not on the map because their campus location could not be found: ${missing.map(s => esc(s.name)).join("; ")}.</p>` : ""}
       <p>Every number traces to a CSV in the project's <code>data/</code> folder, and each panel lists its sources. Data built ${esc(D.built || "")}.</p></details></div>`);
 }
@@ -537,6 +574,9 @@ function setDetail(h) {
   el.querySelectorAll("[data-radar]").forEach(b => b.addEventListener("click", () => select("radar", b.dataset.radar)));
   el.querySelectorAll("[data-home]").forEach(b => b.addEventListener("click", goHome));
   el.querySelectorAll("[data-playsite]").forEach(b => b.addEventListener("click", playSite));
+  el.querySelectorAll("[data-photo]").forEach(b => b.addEventListener("click", () => { stopPlay(); setT(+b.dataset.photo); }));
+  el.querySelectorAll("[data-act=playall]").forEach(b => b.addEventListener("click", () => { stopPlay(); setT(TL.t0, false); startPlay(null); }));
+  el.querySelectorAll("[data-act=demo]").forEach(b => b.addEventListener("click", () => { select("site", "GOOGLE-STOREY-COUNTY"); setTimeout(playSite, still ? 0 : 2400); }));
 }
 function objOf(kind, id) { return kind === "site" ? siteById[id] : kind === "src" ? srcById[id] : radarById[id]; }
 function showDetail() {
@@ -571,7 +611,7 @@ const map = new maplibregl.Map({
       { id: "places", type: "raster", source: "places", paint: { "raster-opacity": .7, "raster-saturation": -1 } }
     ]
   },
-  bounds: US, maxBounds: [[-140, 12], [-52, 58]], minZoom: innerWidth < 700 ? 1.6 : 3, maxZoom: 17.5, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false,
+  bounds: US, maxBounds: [[-140, 12], [-52, 58]], minZoom: innerWidth < 700 ? 1.6 : 3, maxZoom: 17.5, maxPitch: 65, attributionControl: { compact: true },
   fadeDuration: 0
 });
 map.touchZoomRotate.disableRotation();
@@ -614,6 +654,12 @@ map.on("load", () => {
     paint: { "fill-color": "#C08A2B", "fill-opacity": .42, "fill-antialias": false } }, "places");
   map.addLayer({ id: "pixels-new", type: "fill", source: "pixels", filter: ["<=", ["get", "t"], -1],
     paint: { "fill-color": "#FF5A1F", "fill-opacity": .9, "fill-antialias": false } }, "places");
+  map.addLayer({ id: "pixels-3d", type: "fill-extrusion", source: "pixels", minzoom: 10, filter: ["<=", ["get", "t"], -1],
+    paint: { "fill-extrusion-color": "#C08A2B", "fill-extrusion-opacity": .72, "fill-extrusion-height": 0 } });
+  map.addSource("mass", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addLayer({ id: "mass", type: "fill-extrusion", source: "mass", minzoom: 10, filter: [">", ["get", "frac"], 0],
+    paint: { "fill-extrusion-color": "#C08A2B", "fill-extrusion-opacity": .7, "fill-extrusion-height": ["+", 4, ["*", 46, ["get", "frac"]]],
+             "fill-extrusion-height-transition": { duration: 600 } } });
   map.addSource("outlines", { type: "geojson", data: outlinesFC });
   map.addLayer({ id: "outline-fill", type: "fill", source: "outlines", minzoom: 10, paint: { "fill-color": "#000", "fill-opacity": 0 } });
   map.addLayer({ id: "outline", type: "line", source: "outlines", minzoom: 10, paint: { "line-color": "#FAF8F3", "line-width": 1.6, "line-dasharray": [3, 2] } });
@@ -659,8 +705,6 @@ map.on("load", () => {
   applyLayers(); drawMap();
 });
 map.on("mousemove", e => { document.getElementById("hudXY").textContent = `${Math.abs(e.lngLat.lat).toFixed(4)}°${e.lngLat.lat >= 0 ? "N" : "S"}  ${Math.abs(e.lngLat.lng).toFixed(4)}°${e.lngLat.lng >= 0 ? "E" : "W"}`; });
-map.on("load", () => { document.getElementById("hudZ").textContent = `Zoom ${map.getZoom().toFixed(1)}`; });
-map.on("zoom", () => { document.getElementById("hudZ").textContent = `Zoom ${map.getZoom().toFixed(1)}`; });
 
 const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14 });
 let hovered = null;
@@ -675,9 +719,67 @@ function drawMap() {
   if (!map.getSource("sites")) return;
   map.getSource("sites").setData(sitesFC());
   map.getSource("sources").setData(sourcesFC());
-  const T = isProj() ? 1e9 : state.t;
-  map.setFilter("pixels", ["<=", ["get", "t"], T - 3]);
+  const T = isProj() ? 1e9 : state.t, d3 = document.getElementById("lyr3d").checked;
+  const flat3d = d3 && map.getPitch() > 5;
+  // In 3D, blocks show the last two years of change; older change is a light tint so the photo shows what was built.
+  map.setFilter("pixels", ["<=", ["get", "t"], T - (flat3d ? 24 : 3)]);
   map.setFilter("pixels-new", ["all", ["<=", ["get", "t"], T], [">", ["get", "t"], T - 3]]);
+  map.setFilter("pixels-3d", ["all", ["<=", ["get", "t"], T], [">", ["get", "t"], T - 24]]);
+  // Display only: a changed pixel rises as a block for its first year, then settles to a thin layer so the photo shows
+  // what was built. The newest (last 3 months) are ember.
+  map.setPaintProperty("pixels-3d", "fill-extrusion-height", ["interpolate", ["linear"], ["-", T, ["get", "t"]], 0, 8, 3, 16, 12, 16, 24, 0]);
+  map.setPaintProperty("pixels-3d", "fill-extrusion-color", ["case", ["<", ["-", T, ["get", "t"]], 3], "#FF5A1F", "#C08A2B"]);
+  map.setPaintProperty("pixels", "fill-opacity", flat3d ? .2 : .42);
+  map.setPaintProperty("pixels-new", "fill-opacity", flat3d ? 0 : .9);
+  map.getSource("mass").setData(massFC());
+  drawPhotos(); legendChip();
+}
+/* Campuses without per-pixel months: the outline rises with the share of land changed (radar) or projected. Display only. */
+function massFC() {
+  const y = yIdx(), c = state.scn;
+  return { type: "FeatureCollection", features: placed.filter(s => s.outline && !(TL.pixels || []).includes(curveId(s))).map(s => {
+    const cv = curveOf(s); let frac = 0;
+    if (isProj() && s.projected) frac = s.acres[c][y] / Math.max(...s.acres.high, 1e-9);
+    else if (cv) frac = curveAt(cv, Math.min(state.t, T_MEAS1)) / Math.max(cv[cv.length - 1][1], 1e-9);
+    return { type: "Feature", properties: { id: s.id, frac: Math.max(0, Math.min(1, frac)) }, geometry: s.outline }; }) };
+}
+let photoSite = null, photoShown = null;
+function clearPhotos() {
+  if (!photoSite) return;
+  for (const [, r] of WB.sites[photoSite] || []) { if (map.getLayer("wb" + r)) map.removeLayer("wb" + r); if (map.getSource("wb" + r)) map.removeSource("wb" + r); }
+  photoSite = photoShown = null; document.getElementById("photoTag").classList.remove("on");
+}
+function drawPhotos() {
+  const sel = state.selected, s = sel && sel[0] === "site" ? siteById[sel[1]] : sel && sel[0] === "radar" ? siteById[SITE_FOR_RADAR[sel[1]]] : null;
+  const on = document.getElementById("lyrPhotos").checked;
+  if (!s || !on || !WB.sites[s.id]) { clearPhotos(); document.getElementById("photoTag").classList.remove("on"); return; }
+  if (photoSite !== s.id) {
+    clearPhotos(); photoSite = s.id;
+    for (const [, r] of WB.sites[s.id]) {
+      map.addSource("wb" + r, { type: "raster", tileSize: 256, maxzoom: 18, tiles: [WB.url.replace("{release}", r)], attribution: "Photos &copy; Esri World Imagery Wayback" });
+      map.addLayer({ id: "wb" + r, type: "raster", source: "wb" + r, minzoom: 9,
+        paint: { "raster-opacity": 0, "raster-opacity-transition": { duration: still ? 0 : 450 }, "raster-saturation": -0.3, "raster-fade-duration": 0 } }, "wash");
+    }
+  }
+  const cur = photoAt(s, state.t);
+  if (cur && cur[1] !== photoShown) {
+    for (const [, r] of WB.sites[s.id]) map.setPaintProperty("wb" + r, "raster-opacity", r === cur[1] ? 1 : 0);
+    photoShown = cur[1];
+    document.querySelectorAll(".film button").forEach(b => b.classList.toggle("on", +b.dataset.photo === cur[0]));
+  }
+  const tag = document.getElementById("photoTag");
+  tag.textContent = cur ? `Photo captured ${cur[2]}` : ""; tag.classList.toggle("on", !!cur);
+}
+function legendChip() {
+  const el = document.getElementById("legendchip"), site = state.selected && state.selected[0] !== "src";
+  const sq = c => `<svg class="sw" width="12" height="12"><rect width="12" height="12" fill="${c}"/></svg>`;
+  el.innerHTML = site
+    ? `<div>${sq("#FF5A1F")}Land the radar saw change in the last 3 months</div><div>${sq("#C08A2B")}Changed in the last 2 years (block height is for display only)</div><div>${sq("rgba(192,138,43,.35)")}Changed earlier</div>
+       <div><svg class="sw" width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="#1D1C1A" stroke-dasharray="2 1.5"/></svg>Campus outline</div>`
+    : `<div><svg class="sw" width="12" height="12"><circle cx="6" cy="6" r="5" fill="#1D1C1A" stroke="#FAF8F3"/></svg>Campus, size = acres changed</div>
+       <div><svg class="sw" width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#1D1C1A" stroke-dasharray="2 1.5"/></svg>Announced, not started</div>
+       <div><svg class="sw" width="12" height="12"><path d="M6 1 11 6 6 11 1 6z" fill="#C08A2B"/></svg>Water source, color = pressure</div>
+       <div class="ramp" style="width:150px;margin-left:20px"></div>`;
 }
 
 /* selection */
@@ -705,13 +807,14 @@ function select(kind, id) {
   const site = kind === "site" ? o : kind === "radar" ? siteById[SITE_FOR_RADAR[id]] : null;
   if (site) {
     const pts = site.outline ? flatten(site.outline) : [];
-    if (pts.length) map.fitBounds(bbox(pts), { padding: pad() + 40, maxZoom: 15.6, duration: still ? 0 : 2200, essential: true });
-    else map.flyTo({ center: [site.lon, site.lat], zoom: 13.5, duration: still ? 0 : 2200, essential: true });
+    const d3 = document.getElementById("lyr3d").checked;
+    const cam = pts.length ? map.cameraForBounds(bbox(pts), { padding: pad() + 30, maxZoom: 15.6 }) : { center: [site.lon, site.lat], zoom: 13.5 };
+    map.flyTo({ ...cam, zoom: Math.min(cam.zoom, 15.6) - (d3 ? .15 : 0), pitch: d3 ? 52 : 0, bearing: d3 ? -12 : 0, duration: still ? 0 : 2400, essential: true });
     loadPixels(site); setReticle(null);
     document.getElementById("hudView").innerHTML = `<b>${esc(site.name)}</b> · ${Math.abs(site.lat).toFixed(3)}°N ${Math.abs(site.lon).toFixed(3)}°W`;
   } else if (kind === "src") {
     const linked = placed.filter(s => s.source_id === id);
-    map.fitBounds(bbox([[o.lon, o.lat], ...linked.map(s => [s.lon, s.lat])]), { padding: pad() + 60, maxZoom: 11, duration: still ? 0 : 2200, essential: true });
+    map.fitBounds(bbox([[o.lon, o.lat], ...linked.map(s => [s.lon, s.lat])]), { padding: pad() + 60, maxZoom: 11, pitch: 0, bearing: 0, duration: still ? 0 : 2200, essential: true });
     setReticle(o, o.water_body);
     document.getElementById("hudView").innerHTML = `<b>${esc(o.water_body)}</b> · water source`;
   } else {
@@ -720,12 +823,12 @@ function select(kind, id) {
   let f = ["==", ["get", "site"], "__none__"];
   if (kind === "site") f = ["==", ["get", "site"], id]; else if (kind === "src") f = ["==", ["get", "src"], id]; else if (site) f = ["==", ["get", "site"], site.id];
   map.setFilter("link", f);
-  showDetail();
+  showDetail(); render(false);
 }
 function goHome() {
   state.selected = null; setReticle(null); map.setFilter("link", ["==", ["get", "site"], "__none__"]);
   document.getElementById("hudView").innerHTML = `<b>CONUS</b> · Esri World Imagery`;
-  map.fitBounds(US, { padding: 10, duration: still ? 0 : 1800, essential: true }); showHome();
+  map.fitBounds(US, { padding: 10, pitch: 0, bearing: 0, duration: still ? 0 : 1800, essential: true }); showHome(); render(false);
 }
 
 /* ---------------- KPIs, feed and timeline chart ---------------- */
@@ -741,34 +844,42 @@ function countTo(id, val, text) {
   const t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / 260); el.textContent = fmt(from + (val - from) * k); if (k < 1 && tween[id] === val) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
+function selSite() { const x = state.selected; return x && x[0] === "site" ? siteById[x[1]] : x && x[0] === "radar" ? siteById[SITE_FOR_RADAR[x[1]]] : null; }
 function kpis() {
-  const ph = document.getElementById("phase");
-  if (isProj()) {
-    const y = yIdx();
-    ph.className = "phase p"; ph.innerHTML = "<i></i>Projected";
-    countTo("kAcres", PROJ[state.scn][y]); document.getElementById("kAcresL").textContent = `acres converted, ${P.length} campuses projected (${state.scn})`;
-    countTo("kSites", P.filter(s => s.acres[state.scn][y] > 0).length); document.getElementById("kSitesL").textContent = `campuses with land converted by Dec 31, ${YEARS[y]}`;
-    countTo("kWater", P.reduce((a, s) => a + s.water_ml[state.scn][y], 0)); document.getElementById("kWaterL").textContent = `ML of water per year, ${YEARS[y]} (${state.scn})`;
+  const ph = document.getElementById("phase"), s = selSite(), proj = isProj(), y = yIdx();
+  document.getElementById("hWhen").textContent = proj ? `Dec 31, ${YEARS[y]} · projected` : `${tlabel(state.t)} · measured by radar`;
+  ph.className = proj ? "phase p" : "phase m"; ph.innerHTML = proj ? "<i></i>Projected" : "<i></i>Measured";
+  if (s) {
+    const cv = curveOf(s), a = proj ? (s.projected ? s.acres[state.scn][y] : (cv ? curveAt(cv, T_MEAS1) : null)) : (cv ? curveAt(cv, state.t) : null);
+    if (a == null) countTo("kAcres", 0, "n/a"); else countTo("kAcres", a);
+    document.getElementById("kAcresL").textContent = `${proj ? "projected to be converted" : "changed so far"} at ${s.name}`;
+  } else if (proj) {
+    countTo("kAcres", PROJ[state.scn][y]);
+    document.getElementById("kAcresL").textContent = `projected to be converted at ${P.length} built and announced campuses`;
   } else {
-    ph.className = "phase m"; ph.innerHTML = "<i></i>Measured";
-    countTo("kAcres", curveAt(MEAS, state.t)); document.getElementById("kAcresL").textContent = `acres changed, Sentinel-1, ${Object.keys(TL.curves).length} tracked campuses`;
-    countTo("kSites", D.sites.filter(siteStarted).length); document.getElementById("kSitesL").textContent = `of ${D.sites.length} campuses past their construction start`;
-    countTo("kWater", 0, "—"); document.getElementById("kWaterL").textContent = "ML of water per year (projection starts Dec 2026)";
+    countTo("kAcres", curveAt(MEAS, state.t));
+    document.getElementById("kAcresL").textContent = `changed so far at ${Object.keys(TL.curves).length} campuses the radar tracks`;
   }
 }
-let feedT = null;
+/* One line of what is happening now: the latest event at or before the timeline date (for the open campus, if any). */
+let nowKey = null;
 function feed() {
-  const ul = document.getElementById("feed"), shown = EVENTS.filter(e => e.t <= state.t);
-  const latest = shown.slice(-14).reverse();
-  const animate = feedT != null && state.t > feedT;
-  const prevTop = ul.firstChild ? ul.firstChild.dataset.key : null;
-  ul.innerHTML = latest.map(e => `<li data-key="${e.t}${e.k}${e.s.id}" style="${animate && false ? "" : ""}"><span class="d">${tlabel(e.t)}</span>
-    <span><span class="k ${e.k}">${esc(e.label)}</span><button data-site="${e.s.id}">${esc(e.s.name)}</button></span></li>`).join("");
-  if (!animate || still) ul.querySelectorAll("li").forEach(li => li.style.animation = "none");
-  else { let seen = false; ul.querySelectorAll("li").forEach(li => { if (li.dataset.key === prevTop) seen = true; if (seen) li.style.animation = "none"; }); }
-  ul.querySelectorAll("[data-site]").forEach(b => b.addEventListener("click", () => select("site", b.dataset.site)));
-  document.getElementById("feedCount").textContent = `${shown.length} events`;
-  feedT = state.t;
+  const s = selSite(), el = document.getElementById("now");
+  let html, key;
+  if (isProj()) {
+    const y = yIdx(), w = (s ? (s.projected ? s.water_ml[state.scn][y] : null) : P.reduce((a, x) => a + x.water_ml[state.scn][y], 0));
+    key = "p" + y + (s ? s.id : "");
+    html = `<b>Projection, ${state.scn}</b>${w != null ? `About ${fmt(w)} ML of water per year ${s ? "for this campus" : "for these campuses"} by ${YEARS[y]}.` : "This campus is not in the projection."}`;
+  } else {
+    const ev = EVENTS.filter(e => e.t <= state.t && (!s || e.s.id === s.id)), e = ev[ev.length - 1];
+    const photo = s ? photoAt(s, state.t) : null;
+    key = e ? e.t + e.k + e.s.id : "none";
+    html = e ? `<b>${tlabel(e.t)} · ${esc(e.label)}</b>${esc(e.s.name)}` : s ? `<b>Before construction</b>${esc(s.name)} has not started yet.` : `<b>Press Play</b>Watch the radar record a decade of construction, then the projection to 2030.`;
+    if (photo) html += `<br><span class="note">Photo on the map: captured ${photo[2]}</span>`;
+  }
+  if (el.innerHTML !== html) el.innerHTML = html;
+  if (key !== nowKey && nowKey !== null && !still) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+  nowKey = key;
 }
 const tch = document.getElementById("tchart");
 let geom = null;
@@ -866,19 +977,24 @@ function startPlay(r = null) {
 }
 document.getElementById("play").addEventListener("click", () => {
   if (timer) return stopPlay();
-  const s = state.selected && state.selected[0] === "site" ? siteById[state.selected[1]] : null, cv = s && curveOf(s);
-  startPlay(cv ? [cv[0][0], cv[cv.length - 1][0]] : null);
+  const s = selSite();
+  startPlay(s ? playRange(s) : null);
 });
 document.getElementById("reset").addEventListener("click", () => { stopPlay(); setT(TL.t0); });
-function playSite() { const s = siteById[state.selected[1]], cv = curveOf(s); stopPlay(); setT(cv[0][0], false); startPlay([cv[0][0], cv[cv.length - 1][0]]); }
+function playSite() { const s = selSite(), r = s && playRange(s); if (!r) return; stopPlay(); setT(r[0], false); startPlay(r); }
 
 /* ---------------- other controls ---------------- */
 document.querySelectorAll("#scn button").forEach(b => b.addEventListener("click", () => {
   state.scn = b.dataset.scn; document.querySelectorAll("#scn button").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); }));
 ["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => { state.w[k] = +e.target.value; document.getElementById(id + "o").textContent = e.target.value; render(); }));
-const LAYERS = { lyrPixels: ["pixels", "pixels-new"], lyrSites: ["site", "site-label", "site-pulse", "outline", "outline-fill"], lyrWater: ["src", "src-label", "link"], lyrExposure: ["exposure"], lyrLabels: ["places"] };
-function applyLayers() { for (const [el, ids] of Object.entries(LAYERS)) { const on = document.getElementById(el).checked; ids.forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none")); } }
-Object.keys(LAYERS).forEach(id => document.getElementById(id).addEventListener("change", applyLayers));
+const LAYERS = { lyr3d: ["pixels-3d", "mass"], lyrPixels: ["pixels", "pixels-new", "pixels-3d"], lyrSites: ["site", "site-label", "site-pulse", "outline", "outline-fill"], lyrWater: ["src", "src-label", "link"], lyrExposure: ["exposure"], lyrLabels: ["places"] };
+function applyLayers() {
+  const vis = {}; for (const [el, ids] of Object.entries(LAYERS)) { const on = document.getElementById(el).checked; ids.forEach(id => vis[id] = (vis[id] ?? true) && on); }
+  for (const [id, on] of Object.entries(vis)) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  drawMap();
+}
+[...Object.keys(LAYERS), "lyrPhotos"].forEach(id => document.getElementById(id).addEventListener("change", applyLayers));
+map.on("pitchend", drawMap);
 document.getElementById("zin").addEventListener("click", () => map.zoomIn());
 document.getElementById("zout").addEventListener("click", () => map.zoomOut());
 document.getElementById("homeBtn").addEventListener("click", goHome);
