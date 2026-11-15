@@ -811,3 +811,9 @@ GCOV files but would repeat the "something was built" message, so it was left fo
 
   NISAR ground motion is a water measurement, so it sits beside OPERA's.
 - **Timeline bar only in the national view.** It hides when a site or source is open or the map is zoomed in to 9 or more. Up close, the site's own Replay button is the only way to play, and it now toggles to Pause.
+
+## 2026-11-15: Map v5 round 5 (zoom-out bug, fewer words)
+
+- **Timeline bar squashed after zooming back out.** The bar was being drawn while it was hidden, at zero width. It now skips drawing while hidden and redraws when it is shown again. Checked with 3 zoom-in/zoom-out cycles and an open/close of a site: the bar comes back at full width every time.
+- **Shorter left panel.** Each chapter keeps its headline number, one short lede and its lists. Methods, caveats and data links now sit behind a small "How we measured" toggle next to the section they explain. That includes the GUNW noise formula, F5, F8, the pace line and people's-worth. The "linked to is not caused by" caveat stays in the toggles of the shares and trends sections and in About the data.
+- **Shorter aquifer rows:** "OPERA sinking X mm a year" (or "rising X mm a year") and "NISAR no clear change yet". The toggle says that "sinking" means moving away from the satellite, which is usually, but not always, the ground going down.
