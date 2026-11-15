@@ -171,6 +171,25 @@ def aoi_mask(da, aoi_utm):
     return inside, res * res
 
 
+def write_converted_mask(site_id, da, epsg, mask, thresh):
+    """Final cumulative converted pixels inside the site (outline + 200 m) as a 10 m GeoTIFF.
+
+    This is the area whose acres are reported (acres_site at the last composite); Phase 6 reads
+    the land cover under it. 1 = converted, 0 = not. Small, committed under data/footprint/masks/."""
+    import rasterio
+    from rasterio.transform import from_origin
+    x, y = da.x.values, da.y.values
+    res = float(x[1] - x[0])
+    tf = from_origin(x[0] - res / 2, y[0] + res / 2, res, res)
+    out = OUT_DIR / "masks" / f"{site_id}_converted.tif"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with rasterio.open(out, "w", driver="GTiff", height=mask.shape[0], width=mask.shape[1], count=1,
+                       dtype="uint8", crs=f"EPSG:{epsg}", transform=tf, compress="deflate", nodata=255) as dst:
+        dst.write(mask.astype("uint8"), 1)
+        dst.update_tags(threshold_db=str(thresh), source=COLLECTION_LINK)
+    return out
+
+
 # ---------- F1 ----------
 def monthly_composites(db, start, n_months):
     times = pd.DatetimeIndex(db.time.values)
@@ -378,6 +397,8 @@ def run(args):
 
     if args.quicklook:
         write_quicklook(args.quicklook, baseline, cumulative[-1] & inside, inside)
+    mask_path = write_converted_mask(args.site_id, db, epsg, cumulative[-1] & inside_site, thresh)
+    print(f"Wrote {mask_path}")
 
     print(f"\nWrote {curve_path} and {sum_path}")
     print(curve[["date", "months_from_start", "n_images", "acres_site", "acres_spillover"]].to_string(index=False))
