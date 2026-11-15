@@ -17,17 +17,24 @@
    `mw_full_build` keeps the full figure. Hyperion: `mw` = 2000, `mw_full_build` = 5000. Every
    other stated MW completes by 2030 or gives no completion year, so for those the full figure is used.
 2. **Missing construction start.** If there is an expected online date, start = `operation_date`
-   minus 28 months. Otherwise start = `announced_date` plus the median gap from announcement to
-   groundbreaking across the built sites. That median comes from the built-sites thread (PR 6) and
-   **has not arrived yet**, so those rows show `start_estimated = pending`. `start_estimated` is
-   `true`, `false`, or `pending`.
+   minus 28 months (2 rows). Otherwise start = `announced_date` minus 0.6 months (18 days). That
+   is the median gap over 8 built sites, from `data/precedent_k_summary.csv` in PR #6 (10 rows).
+   `start_estimated` is `true`, `false`, or `missing` (Fermi has no announced date and no online date).
 3. **Source rule.** MW and capex now come only from a company, government, or utility source. The
    result is in `mw_source` and `capex_source`, with `*_basis` naming the kind of source. Rows whose
    capex spans phases past 2030, or can't be tied to the 2030 capacity, have `low_confidence = true`
    with a reason.
-4. **Sort.** Rows are sorted by `mw_2030_for_sort`, largest first, and `rank_2030_mw` gives the
-   order. That is the stated `mw` when there is one. Otherwise it is capex / $37.88M per MW (Epoch's
-   median), used **for sorting only**. Each figure sits next to its source column.
+4. **Sort.** `rank_2030` puts rows with a stated 2030 MW first, largest first. Rows with only
+   capex come next, ordered by capex, then rows with neither. I don't rank capex-only rows by a
+   derived MW, because the F3 conversion depends on k and on whether the capex includes compute
+   (see below). Two F3 estimates are shown for reference only and are never written to `mw`:
+   `mw_f3_est_k5_73` uses the median k from announced capex (PR #6), and `mw_f3_est_k37_88` uses Epoch's figure.
+5. **Capex with or without compute.** `capex_includes_compute` is `no`, `no (inferred)`, or
+   `unknown`. PR #6 finds that k from announced capex is $5.73M per IT MW, about a sixth of Epoch's
+   $37.88M, because announced figures usually leave out chips. A figure that includes compute would
+   overstate MW about 6 times through F3. Only El Paso ($14B for buildings and infrastructure, per
+   Meta) and Wharton (TDLR construction cost) are stated as facility-only. The three developer
+   campuses (Vantage x2, Related) are inferred as facility-only. The rest are unknown.
 
 ## Changes from the first version
 - **Saline capex:** $7B (one secondary source) became **$16B** (Related Digital financing release, 2026-04-24).
@@ -55,9 +62,12 @@
   (`location_basis` says which). Campus outlines come from OSM in Phase 2.
 
 ## Still open for your review
-- **Project Jupiter ranks #1 only because of the sort estimate.** $165B is a county bond ceiling
-  covering all phases, and no company MW is stated (low confidence).
-- **Saline:** construction was underway by 2026-06-01, so any estimated start must fall before that date.
+- **Project Jupiter:** $165B is a county bond ceiling covering all phases, and no company MW is
+  stated. Through F3 it would give 28,796 MW at $5.73M/MW, which isn't credible. Exclude it from
+  F3, or set its MW by hand from a source, before projecting (low confidence).
+- **Capex-only rows** (8 projectable rows): with k = $5.73M/MW and capex of unknown scope, F3 could
+  overstate their MW. For example, Laramie's $17B gives 2,967 MW.
+- **Saline:** the estimated start is 2025-10-12. That is consistent with construction being underway by 2026-06-01.
 - **xAI Southaven:** rule 2 gives a start of 2024-08-31, from Dec 2026 operation minus 28 months.
   These sites were announced in Nov 2026 inside existing buildings, so that date is implausible.
   The row isn't projectable anyway (no MW and no capex).

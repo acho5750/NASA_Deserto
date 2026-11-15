@@ -134,3 +134,9 @@ Judgment calls:
     sorting only and is never written to `mw`.
 (e) Wharton TX dates come from the planned dates in the TDLR registrations, so they are not estimated.
 **Why.** These follow Bubba's rules 1–4. The figures for (a)–(e) are in `data/announced_sites_notes.md`.
+(f) 2026-11-15 update: rule 2 uses the built-site median gap from announcement to start, -0.6
+    months (8 sites, `data/precedent_k_summary.csv` in PR #6), applied as -18 days. The sort no
+    longer ranks capex-only rows by a derived MW. Stated-MW rows come first, then capex-only rows
+    by capex, because F3 depends on k and on capex scope. `capex_includes_compute` is new: only El
+    Paso and Wharton are stated as facility-only, the three developer campuses are inferred
+    facility-only, and the rest are unknown.
