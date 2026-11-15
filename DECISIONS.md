@@ -691,3 +691,8 @@ populations, so the chart draws them as two labelled series with their own y sca
 `map/data.js` (written by `pipeline/projection.py` from the CSVs in `data/`), and "half of the final acres changed" = first
 month the area curve reaches 50% of its last value (campuses over 20 acres only).
 
+Result of the run: 28 of 29 built campuses passed all three checks (curve match within 0.00 acres). STARGATE-ABILENE was
+skipped twice: the re-run's final mask differs from the committed one by 254 of ~44,000 pixels, most likely because
+Planetary Computer reprocessed some scenes since F1 ran. Rather than guess months for it, Abilene shows its measured area
+curve and outline but no animated pixels; its committed F1 numbers are unchanged.
+

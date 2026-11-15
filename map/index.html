@@ -416,7 +416,7 @@ function showSite(s) {
   if (s.projected) h += `<div class="stats"><div><b>${fmt(s.mw[c])}</b><span>MW, ${c}</span></div><div><b>${fmt(s.acres[c][y])}</b><span>acres, ${YEARS[y]} projection</span></div>
       <div><b>${fmt(s.water_ml[c][y])}</b><span>ML water/yr, ${YEARS[y]}</span></div></div>`;
   if (cv) h += `<div class="sec"><h3>Land changed, measured by radar</h3>${curveChart(cv, s)}
-      <p class="note">Sentinel-1 acres changed inside the campus outline + 200 m, by month. The map's orange pixels follow this curve: each lights up in the month it first changed.</p></div>`;
+      <p class="note">Sentinel-1 acres changed inside the campus outline + 200 m, by month. ${(TL.pixels || []).includes(curveId(s)) ? "The map's orange pixels follow this curve: each lights up in the month it first changed." : "Pixel-by-pixel months are not shown for this campus: re-running the radar steps today no longer reproduces the saved mask exactly, so only the curve is shown."}</p></div>`;
   const fp = s.footprint;
   if (fp && s.status === "built") {
     h += `<div class="sec"><h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
