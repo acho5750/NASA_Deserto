@@ -420,6 +420,86 @@ rural utilities matched to large announced campuses at county-centroid points (F
 its supply, Camino Real 8.9x, Hawley WSC 6.0x). These rows are flagged `location_approx` and need real
 campus locations before the map shows them as shares.
 
+## 2026-11-15 Announced campus locations (coordinates only; same 24 sites)
+
+**Why.** 23 of the 24 announced rows sat at a town or county centroid (`location_basis` said "not the
+campus"), so the utility match put several large campuses inside tiny rural utilities that are not
+near them (Fort Griffin SUD 25x its supply in 2030, median).
+
+**Sources and precision.** Every row now has `location_precision` and `location_source` in
+`data/announced_sites.csv`; the full list with both links, the old point and the distance moved is
+`data/locations/announced_locations.csv`. Precision levels, best first:
+- `osm_outline` (11): a point inside an OpenStreetMap polygon for the campus itself (named for the
+  project or tagged with the operator). Outlines saved in `data/footprint/announced/` with
+  `pipeline/campus_outline.py build --out-dir data/footprint/announced`. Hyperion, Saline (The Barn),
+  Lebanon (Project Domino), El Paso, Port Washington (Lighthouse), Dona Ana (Project Jupiter), Laramie
+  (Project Jade, now Google's Project Tembo on the same Switchgrass site), Montgomery MO (Project
+  Green), Fairwater WI phase 2, Fermi Matador, Southaven (OSM "Microhard", the former Southaven
+  training facility = the Gun Range site; the Spam site address was not found).
+- `osm_anchor` (5): a point inside an OSM object the campus is built on or around, not the campus
+  outline: Keystone Trade Center (Falls Twp), AWS PHL next to Susquehanna (Salem Twp), Birchwood Power
+  Facility (King George), the "Stargate Project" building (Lordstown; Epoch's address geocodes 0.6 km
+  away), Homer City Generating Station (unchanged).
+- `address` (1): Milam, US Census geocoder on 1899 County Road 133, Burlington (Baxtel listing).
+- `road` (5, about 1-2 km): Shackelford (TX-351 at FM 604, listings), Richmond County NC (Airport Road
+  next to the Smith Energy Complex), Jasper IN (Schahfer plant, campus is half a mile away on NIPSCO
+  land), West Memphis (Bollinger Road, south side), Wharton (FM 1301 at FM 442; TDLR's Eaglewood Rd is
+  not mapped). These are matched but keep the `location_approx` flag.
+- `missing` (2): Armstrong County (Epoch's 10001 Lima Rd, Claude can't be geocoded and Lima Road has two
+  segments 20 km apart; the county's tax abatement exhibit is a scanned plan with no coordinates) and
+  Haskell County (one row covers two campuses, Journey and Thelma, 15-20 km apart). They keep the old
+  county centroid for map display only, are not matched to any utility (`match_status =
+  location_missing`) and are excluded from water shares.
+
+**Code.** `water_chain.py points` reads `location_precision`: `road` and `missing` set
+`location_approx`, `missing` also sets `location_missing`, and `match` skips those sites.
+`campus_outline.py build` gained `--out-dir`.
+
+**Rerun.** `points` -> `match` -> `lookup` -> `sources` -> projection on the combined registry (45
+sites, same filter as Phase 4). Matches that changed for announced sites:
+- Shackelford: Fort Griffin SUD -> Hamby WSC (TX2210006, buys from the City of Abilene).
+- Milam: no match -> Bell Milam Falls WSC (TX0140007, buys Brazos River Authority lake water).
+- Montgomery MO: Montgomery City PWS -> Montgomery Co PWSD 1 (MO6024406, 3 wells; DISP-S1 +1.56 mm/yr).
+- Richmond NC: Hamlet Water System -> Richmond County Water System (NC0377109, Pee Dee River).
+- Lordstown: no match -> Lordstown Village PWS (OH7804403, buys Meander Creek Reservoir water from
+  MVSD per its 2026 CCR).
+- Now unmatched (`self_supplied_check`): Lebanon (was Lebanon Utilities), Port Washington (was Port
+  Washington Waterworks), Laramie (was Cheyenne BOPU), Fermi Matador (was Amarillo). Southaven stays
+  unmatched. Armstrong and Haskell are `location_missing` (Haskell was City of Haskell).
+The 5 new utilities have rows in `data/water/source_assignments.csv`. Assignments for the 8 utilities
+no site matches any more stay in that file but `sources` now skips them (it used to fail on them).
+
+**Result: largest 2030 median shares (water linked to sites / the utility's own supply).**
+Before: Fort Griffin SUD 25.1x, Camino Real 8.9x, Hawley WSC 6.0x, Port Washington 3.9x, Montgomery
+City 3.9x, Lebanon 3.0x, Boling 2.2x, Hamlet 1.3x.
+After: Hamby WSC 39.8x (Shackelford, road-level point), Bell Milam Falls WSC 10.3x (Milam), Camino Real
+8.9x, Hawley WSC 6.0x, Montgomery Co PWSD 1 2.8x, Boling 2.2x, Richmond County 0.63x; everything else
+below 0.3x.
+Fort Griffin is gone, but shares above 1x remain where a campus really does sit inside a small rural
+water co-op. F5 divides by the co-op's own retail supply, although Hamby and Bell Milam Falls buy
+their water wholesale from much larger systems (Abilene serves about 130,000 people). Whether the
+share should use the wholesale seller's supply is a formula question for the person; nothing changed.
+
+## 2026-11-15 F5: wholesale-system share shown next to the local share (person's decision)
+
+The person chose "Show both numbers" for utilities that buy their water. Nothing about the local share
+changed. Added:
+- `wholesale_sellers` in `data/water/source_assignments.csv`, filled by hand only where the
+  assignment's basis names the seller(s): 8 utilities (Prince William West, Hawley, Eagle Mountain,
+  Castalian Springs, Falls Twp, Hamby, Bell Milam Falls, Lordstown). SAWS is SWP in SDWA, but its
+  assigned source is its own Edwards wells, so it gets no seller.
+- `water_chain.wholesale_population`: the sellers' own retail population plus every active system SDWA
+  lists as buying from them (active CC facility with that SELLER_PWSID), each PWSID once, buyers of
+  buyers not followed. It writes `wholesale_population` and `wholesale_systems` to `data/sources.csv`.
+- `projection.py`: `share_wholesale` = water of every site linked to any utility in that wholesale
+  system / (wholesale_population x the utility's state per-capita x 365). It is `null` where there is
+  no seller. The map popup shows it on a second line.
+
+2030 median, local share -> wholesale share: Hamby 39.8x -> 0.69x and Hawley 6.0x -> 0.68x (both on the
+Abilene system, so both count Shackelford + Stargate Abilene); Bell Milam Falls 10.3x -> 1.16x (Central
+Texas WSC + East Bell WSC system, about 61,000 people); Castalian Springs 0.28x -> 0.04x; PWCSA West
+0.12x -> 0.009x.
+
 ## 2026-11-15 · Phase 5 showcase: outlines, NISAR version mixing, GUNW reference
 
 - **Outlines.** Jupiter: OSM way/1476734418 "Project Jupiter" (613 ac); it misses graded land to

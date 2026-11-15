@@ -25,3 +25,8 @@ WB-HUECO,disp_s1,31.8121,-106.50184,ok,-1.69,mm/yr LOS,279.0,5.0,F42264,2016-07-
 WB-MESILLA,disp_s1,31.8536,-106.67598,ok,-2.36,mm/yr LOS,280.0,4.0,F42264,2016-07-25,2026-04-16,data/water/disp/disp_WB-MESILLA_F42264.csv,284.0,0.0,1.0,,
 WB-COLORADO-CAP,swot_reach,36.13205283,-114.6351309,insufficient_swot,,,0.0,,77233000293,,,,,,,Reach,Colorado River
 WB-OLD-HICKORY,swot_reach,36.27082267,-86.5651797,insufficient_swot,,,0.0,,74264500043,,,,,,,Reach,Cumberland River
+WB-ABILENE-SW,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-BELTON-STILLHOUSE,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-MEANDER,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-MONTGOMERY-PWSD1-GW,disp_s1,38.80392,-91.40205,ok,1.56,mm/yr LOS,100.0,4.0,F44061,2016-07-26,2025-05-04,data/water/disp/disp_WB-MONTGOMERY-PWSD1-GW_F44061.csv,239.0,135.0,7.0,,
+WB-PEEDEE-BLEWETT,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,

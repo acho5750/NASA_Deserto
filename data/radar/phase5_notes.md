@@ -27,9 +27,11 @@ straight back, so they look bright. When a field turns into a data center, the s
 | Project Jupiter, Dona Ana Co. NM | OSM way/1476734418 "Project Jupiter", 613 ac (graded land west of it is outside OSM's outline) | 2025-10-01 | descending 56 | track 48 A, frame 17 |
 | Stargate Lordstown, OH | OSM way/473431363 "Stargate Project", 43 ac (the existing plant building) | 2025-10-12 | ascending 77 | track 90 A, frame 22 |
 
-Outlines are recorded in `data/footprint/campus_outlines.csv`. Another thread is fixing the
-announced-site coordinates in `data/announced_sites.csv` in parallel; this phase uses its own
-outlines and does not change the registry.
+Outlines are recorded in `data/footprint/campus_outlines.csv`. Another thread fixed the
+announced-site coordinates in parallel (`data/locations/announced_locations.csv`, merged while this
+phase ran). They agree with the outlines here: Jupiter and Lordstown point to the same OSM objects,
+and the Frontier point (the TX-351 / FM 604 intersection) sits at the north-west corner of the
+hand-drawn Frontier outline. This phase does not change the registry.
 
 ## Results
 

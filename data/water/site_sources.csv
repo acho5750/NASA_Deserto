@@ -31,25 +31,25 @@ META-GALLATIN,precedent,matched,TN0000097,SRC-TN0000097,,,include
 GOOGLE-STOREY-COUNTY,precedent,self_supplied_check,,,,,exclude
 ANN-META-HYPERION,announced,self_supplied_check,,,,,exclude
 ANN-STARGATE-SALINE,announced,self_supplied_check,,,,,exclude
-ANN-STARGATE-SHACKELFORD,announced,matched_approx_location,TX2090005,SRC-TX2090005,,,include
-ANN-STARGATE-MILAM,announced,self_supplied_check,,,,"TX1660010 (MINERVA WSC, Residential Area)",exclude
-ANN-META-LEBANON,announced,matched_approx_location,IN5206003,SRC-IN5206003,,,include
-ANN-META-ELPASO,announced,matched_approx_location,TX0710002,SRC-TX0710002,,,include
-ANN-STARGATE-PORTWASH,announced,matched_approx_location,WI2460054,SRC-WI2460054,,,include
-ANN-STARGATE-DONAANA,announced,matched_approx_location,NM3502507,SRC-NM3502507,,,include
-ANN-GOOGLE-LARAMIE,announced,matched_approx_location,WY5600011,SRC-WY5600011,WY5600779,,include
-ANN-AMZN-RICHMOND-NC,announced,matched_approx_location,NC0377010,SRC-NC0377010,,,include
-ANN-AMZN-MONTGOMERY-MO,announced,matched_approx_location,MO6010539,SRC-MO6010539,,,include
+ANN-STARGATE-SHACKELFORD,announced,matched_approx_location,TX2210006,SRC-TX2210006,,,include
+ANN-STARGATE-MILAM,announced,matched,TX0140007,SRC-TX0140007,,,include
+ANN-META-LEBANON,announced,self_supplied_check,,,,,exclude
+ANN-META-ELPASO,announced,matched,TX0710002,SRC-TX0710002,,,include
+ANN-STARGATE-PORTWASH,announced,self_supplied_check,,,,"WI2460054 (PORT WASHINGTON WATERWORKS, Residential Area)",exclude
+ANN-STARGATE-DONAANA,announced,matched,NM3502507,SRC-NM3502507,,,include
+ANN-GOOGLE-LARAMIE,announced,self_supplied_check,,,,"WY5600779 (WINCHESTER HILLS, Residential Area)",exclude
+ANN-AMZN-RICHMOND-NC,announced,matched_approx_location,NC0377109,SRC-NC0377109,,,include
+ANN-AMZN-MONTGOMERY-MO,announced,matched,MO6024406,SRC-MO6024406,,,include
 ANN-AMZN-JASPER-IN,announced,self_supplied_check,,,,,exclude
-ANN-AMZN-KINGGEORGE-VA,announced,self_supplied_check,,,,"VA6099050 (KING GEORGE CO. COURTHOUSE, Residential Area)",exclude
+ANN-AMZN-KINGGEORGE-VA,announced,self_supplied_check,,,,"VA6099350 (OAKLAND PARK, Residential Area)",exclude
 ANN-GOOGLE-WMEMPHIS,announced,matched_approx_location,AR0000156,SRC-AR0000156,,,include
-ANN-MSFT-FAIRWATER-WI-2,announced,matched_approx_location,WI2520062,SRC-WI2520062,,,include
+ANN-MSFT-FAIRWATER-WI-2,announced,matched,WI2520062,SRC-WI2520062,,,include
 ANN-AMZN-WHARTON-TX,announced,matched_approx_location,TX2410006,SRC-TX2410006,,,include
-ANN-STARGATE-LORDSTOWN,announced,self_supplied_check,,,,"OH7804403 (LORDSTOWN VILLAGE PWS, Residential Area)",exclude
-ANN-AMZN-SALEM-PA,announced,self_supplied_check,,,,,exclude
-ANN-GOOGLE-ARMSTRONG,announced,self_supplied_check,,,,,exclude
-ANN-GOOGLE-HASKELL,announced,matched_approx_location,TX1040001,SRC-TX1040001,,,include
-ANN-AMZN-FALLS-PA,announced,matched_approx_location,PA1090022,SRC-PA1090022,,,include
+ANN-STARGATE-LORDSTOWN,announced,matched,OH7804403,SRC-OH7804403,,,include
+ANN-AMZN-SALEM-PA,announced,self_supplied_check,,,,"PA2400066 (AQUA PA WAPWALLOPEN, Residential Area)",exclude
+ANN-GOOGLE-ARMSTRONG,announced,location_missing,,,,,exclude
+ANN-GOOGLE-HASKELL,announced,location_missing,,,,,exclude
+ANN-AMZN-FALLS-PA,announced,matched,PA1090022,SRC-PA1090022,,,include
 ANN-AMZN-HOMERCITY-PA,announced,self_supplied_check,,,,"PA5320040 (CENTRAL INDIANA CO WATER AUTH, Residential Area); PA5650069 (HIGHRIDGE WATER AUTH, Residential Area)",exclude
-ANN-XAI-SOUTHAVEN,announced,self_supplied_check,,,,"MS0170010 (HORN LAKE WATER ASSOCIATION, Residential Area); MS0170027 (COUNTRY HAVEN MOBILE HOME PARK, Residential Area); TN0000450 (MEMPHIS LIGHT, GAS, & WATER, Residential Area); MS0170018 (CITY OF SOUTHAVEN, Municipality)",exclude
-ANN-FERMI-MATADOR,announced,matched_approx_location,TX1880001,SRC-TX1880001,,,include
+ANN-XAI-SOUTHAVEN,announced,self_supplied_check,,,,"MS0170010 (HORN LAKE WATER ASSOCIATION, Residential Area); TN0000450 (MEMPHIS LIGHT, GAS, & WATER, Residential Area); MS0170024 (CITY OF HORN LAKE - HOLLY HILLS, Residential Area); MS0170022 (CITY OF HORN LAKE, Municipality)",exclude
+ANN-FERMI-MATADOR,announced,self_supplied_check,,,,,exclude

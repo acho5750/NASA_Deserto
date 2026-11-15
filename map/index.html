@@ -135,7 +135,8 @@ function showSource(src) {
   const n = D.sites.filter(s => s.source_id === src.id).length;
   document.getElementById("detail").innerHTML =
     `<h2>${src.name}</h2><p class="muted">${src.type === "reservoir" ? "Reservoir" : "Aquifer"} · utility ${src.pwsid}</p>
-     <p>Data centers would draw ${pct(src.share[c][i])} of estimated supply in ${D.years[i]}</p>
+     <p>Data centers would draw ${pct(src.share[c][i])} of this utility's estimated supply in ${D.years[i]}</p>
+     ${src.share_wholesale ? `<p>${pct(src.share_wholesale[c][i])} of the estimated supply of the wholesale system it buys from (${src.wholesale_sellers})</p>` : ""}
      <p>Trend: ${src.trend_value} ${src.trend_unit}</p>
      <p>${n} linked campus${n === 1 ? "" : "es"} · pressure index ${pressure(src).toFixed(2)}</p>`;
 }

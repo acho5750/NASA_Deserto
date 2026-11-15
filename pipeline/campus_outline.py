@@ -182,8 +182,9 @@ def cmd_build(a):
         "source": " ; ".join(f"https://www.openstreetmap.org/{r.strip()}" for r in a.osm.split(",")),
         "license": "(c) OpenStreetMap contributors, ODbL 1.0",
         "retrieved": time.strftime("%Y-%m-%d"), "acres": round(area_acres(u), 1)}}
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = OUT_DIR / f"{a.site_id}_campus.geojson"
+    out_dir = Path(a.out_dir) if a.out_dir else OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{a.site_id}_campus.geojson"
     out.write_text(json.dumps({"type": "FeatureCollection", "features": [feat]}))
     print(f"wrote {out}: {feat['properties']['acres']} ac")
 
@@ -201,6 +202,7 @@ def main():
     b = sub.add_parser("build")
     b.add_argument("--site-id", required=True); b.add_argument("--osm", required=True)
     b.add_argument("--hull", action="store_true", help="use the convex hull of the objects (buildings only)")
+    b.add_argument("--out-dir", default="", help="default data/footprint; announced sites use data/footprint/announced")
     b.add_argument("--extra-geojson", default="", help="hand-drawn polygon unioned in where OSM is incomplete (flag it)")
     a = p.parse_args()
     {"search": cmd_search, "candidates": cmd_candidates, "build": cmd_build}[a.cmd](a)
