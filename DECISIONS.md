@@ -143,6 +143,51 @@ Judgment calls:
 (g) 2026-11-15: rows tagged `no (inferred)` (facility-only, inferred) are treated as facility-only
     for the F3 scenario rule. All three have a stated MW, so this doesn't change any number yet.
 
+## 2026-11-15 · Precedent sites from Epoch AI (Phase 1a)
+
+Details and per-site table: `data/precedent_sites_notes.md`. Script: `pipeline/precedent_sites.py`.
+- **construction_start = first Epoch timeline row; operation_date = first row with Power > 0.**
+  Epoch's timelines are satellite-image logs whose first row is land clearing; this is the closest
+  thing to a construction start the dataset has. Row text kept in `*_evidence` columns.
+- **mw = Epoch IT power as of 2026-11-15**, facility power kept in `mw_facility`. WUE is per IT kWh.
+- **Greenfield only.** Conversions of existing buildings convert little land and would bias acres/MW
+  down. Two sites at one address (Lake Mariner) both dropped: one footprint cannot be split.
+- **30 sites, buildout-complete first.** Sites still expanding after 2026-11-15 mix finished and
+  unfinished buildings in one footprint. Storey County (expanding) fills slot 30.
+- **Coordinates**: Epoch's own Google Earth links first, then Nominatim street hit, then Census
+  geocoder, then town centroid; a geocode must name the address's state or it is rejected.
+- **withdrawal_ml_per_yr left blank** although Epoch has "Water use (MGD)" for 10 of the 30 sites: Epoch
+  doesn't say whether it is withdrawal or consumption. Kept raw in `epoch_water_use_mgd`.
+- **Open:** Epoch capex is a constant 37.88 $M per IT MW (modeled), so k has no spread. Asked the
+  person how to source k.
+
+## 2026-11-15 · k (capex per MW) and announcement gap from built sites
+
+Rule from the person (2026-11-15): k = announced capex / Epoch MW for built sites; Epoch's modeled
+capex is not used; if fewer than 8 sites qualify, Epoch's 37.88 $M/MW is the median and the
+announced sites give low/high. Script: `pipeline/precedent_k.py`; inputs: `data/precedent_capex.csv`.
+- **Case A applied: 8 sites qualify.** Meta Kuna, Jeffersonville, Rosemount, Aiken, Temple; Google
+  Mesa (phase 1, $600M vs the 90 IT MW of Building 1); Microsoft Osmium ($1.5-2B city figure, midpoint
+  used); Stargate Abilene ($15B committed capital, Crusoe release). k low/median/high =
+  p10/p50/p90 = **4.49 / 5.73 / 11.91 $M per IT MW**. Borderline: Osmium (range, page 403 from
+  the cloud machine) and Abilene (financing, not a cost report) are the 7th and 8th sites; without
+  them the case would be B.
+- **Qualifying = same buildings.** Campus-wide, multi-site or cumulative figures (22 sites) are
+  listed with the reason in `precedent_capex.csv` and not used. The Dalles' $600M per project is
+  only an "illustrative" example in the SIP agreement, so it is excluded.
+- **MW basis = Epoch IT MW** for the buildings the capex covers (all Epoch buildings, except Mesa).
+- **Gap: median -0.6 months over 8 sites** (official announcement of the same project to Epoch's
+  first land clearing). Range -3.6 to +28.9 (Osmium). Sent to the announced-projects thread.
+- **Basis warning.** Announced capex excludes chips (Meta's $800M for ~150-180 MW), so k is about a
+  sixth of Epoch's 37.88 (which includes compute). F3 on an announced figure that includes compute
+  would overstate MW about 6x. Raised with the person.
+
+## 2026-11-15 · k revised to 6 facility-only sites (owner decision)
+The owner dropped Osmium (range) and Abilene (financing) and removed the fewer-than-8 fallback,
+because Epoch's 37.88 $M/MW includes compute. k = **4.49 / 4.88 / 6.43 $M per IT MW**
+(p10/p50/p90, n=6, low confidence), labeled in METHODS.md. `k_use` column added to
+`data/precedent_capex.csv`. Sent to the announced-projects thread. Supersedes the "Case A"
+numbers in the entry above.
 ## 2026-11-15 · Phase 5 NISAR coverage check: site choice, coordinates and "usable" rule
 
 **Sites.** Vantage Frontier (Shackelford Co., TX), Project Jupiter (Dona Ana Co., NM) and Stargate
