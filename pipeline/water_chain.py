@@ -1,13 +1,12 @@
 """
 Water chain (steps 1-3): data center site -> water utility -> water source -> source trend.
 
-Step 1  match_utilities(): spatial join of sites against EPA service area polygons (gets PWSID)
+Step 1  match_utilities(): point query of each site against EPA's service area ArcGIS service (gets PWSID)
 Step 2  lookup_sources(): source type, population served, and facility names from ECHO SDWA files
 Step 3  reservoir_trend(): SWOT lake time series from Hydrocron, fitted to a yearly trend
         aquifer_trend(): placeholder for DISP-S1 velocity over a wellfield (see notes in function)
 
 Inputs you download once (see README for links):
-  data/raw/epa_service_areas.(gpkg|shp|geojson)   EPA Public Water System Service Areas
   data/raw/SDWA_PUB_WATER_SYSTEMS.csv              from the ECHO SDWA download zip
   data/raw/SDWA_FACILITIES.csv                     from the ECHO SDWA download zip
 
@@ -22,6 +21,7 @@ Usage:
 import argparse
 import io
 import json
+import time
 from pathlib import Path
 
 import numpy as np
@@ -30,7 +30,8 @@ import requests
 
 RAW = Path("data/raw")
 COLS = {
-    "service_area_pwsid": "PWSID",
+    "service_area_pwsid": "PWSID",          # EPA service area layer fields (checked 2026-11-15)
+    "service_area_name": "PWS_Name",
     "pws_id": "PWSID",
     "pws_name": "PWS_NAME",
     "pws_source": "PRIMARY_SOURCE_CODE",      # e.g. GW, SW, GWP, SWP (P = purchased)
@@ -44,20 +45,57 @@ HYDROCRON = "https://soto.podaac.earthdatacloud.nasa.gov/hydrocron/v1/timeseries
 
 
 # ---------- Step 1: site -> utility ----------
-def match_utilities(registry_csv: str, service_areas_path: str = None) -> pd.DataFrame:
-    import geopandas as gpd  # imported here so the other steps run without geopandas
+# EPA Community Water System Service Area Boundaries, queried live by point (see DECISIONS.md for
+# the dataset version and why we use the service instead of a downloaded file).
+EPA_SERVICE_AREAS = ("https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/"
+                     "Water_System_Boundaries/FeatureServer/0/query")
+NO_MATCH = "no_utility_check_self_supply"
 
+
+def _query_service_areas(lat: float, lon: float, retries: int = 4) -> list:
+    """Return the attribute dicts of every service area polygon that contains (lat, lon)."""
+    params = {
+        "geometry": f"{lon},{lat}",
+        "geometryType": "esriGeometryPoint",
+        "inSR": 4326,
+        "spatialRel": "esriSpatialRelIntersects",
+        "outFields": f"{COLS['service_area_pwsid']},{COLS['service_area_name']}",
+        "returnGeometry": "false",
+        "f": "json",
+    }
+    for attempt in range(retries):
+        try:
+            r = requests.get(EPA_SERVICE_AREAS, params=params, timeout=60)
+            r.raise_for_status()
+            payload = r.json()
+            # ArcGIS reports query errors with HTTP 200 and an "error" key.
+            if "error" in payload:
+                raise RuntimeError(f"ArcGIS error: {payload['error']}")
+            return [f["attributes"] for f in payload.get("features", [])]
+        except (requests.RequestException, RuntimeError, ValueError):
+            if attempt == retries - 1:
+                raise
+            time.sleep(2 ** attempt)
+
+
+def match_utilities(registry_csv: str, out_csv: str = "data/site_utility_matches.csv") -> pd.DataFrame:
     sites = pd.read_csv(registry_csv)
-    pts = gpd.GeoDataFrame(sites, geometry=gpd.points_from_xy(sites.lon, sites.lat), crs="EPSG:4326")
-    path = service_areas_path or next(RAW.glob("epa_service_areas.*"))
-    areas = gpd.read_file(path).to_crs("EPSG:4326")
-    joined = gpd.sjoin(pts, areas[[COLS["service_area_pwsid"], "geometry"]], how="left", predicate="within")
-    joined = joined.rename(columns={COLS["service_area_pwsid"]: "pwsid"})
-    # Sites outside every polygon are probably self-supplied (own wells). Flag them for a manual check.
-    joined["match_status"] = np.where(joined["pwsid"].isna(), "no_utility_check_self_supply", "matched")
-    # A site inside overlapping polygons gets several rows; keep them all and review by hand.
-    out = pd.DataFrame(joined.drop(columns=["geometry", "index_right"], errors="ignore"))
-    out.to_csv("data/site_utility_matches.csv", index=False)
+    rows = []
+    for _, site in sites.iterrows():
+        hits = _query_service_areas(site["lat"], site["lon"])
+        # One polygon can be split into several features with the same PWSID; count it once.
+        pwsids = list(dict.fromkeys(h[COLS["service_area_pwsid"]] for h in hits if h.get(COLS["service_area_pwsid"])))
+        names = {h[COLS["service_area_pwsid"]]: h.get(COLS["service_area_name"]) for h in hits}
+        if not pwsids:
+            # Sites outside every polygon are probably self-supplied (own wells). Flag them for a manual check.
+            rows.append({"site_id": site["site_id"], "pwsid": np.nan, "match_status": NO_MATCH})
+        # A site inside overlapping polygons gets several rows; keep them all and review by hand.
+        for pwsid in pwsids:
+            rows.append({"site_id": site["site_id"], "pwsid": pwsid, "match_status": "matched"})
+        print(f"{site['site_id']}: {', '.join(f'{p} ({names[p]})' for p in pwsids) or 'no match'}")
+    # Merge back onto the registry so every registry column keeps its original type.
+    out = sites.merge(pd.DataFrame(rows), on="site_id", how="left")
+    out.to_csv(out_csv, index=False)
     print(out[["site_id", "pwsid", "match_status"]].to_string(index=False))
     return out
 
@@ -144,13 +182,13 @@ def aquifer_trend(wellfield_geojson: str, frame_files: list) -> dict:
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
-    m = sub.add_parser("match"); m.add_argument("--registry", required=True); m.add_argument("--areas")
+    m = sub.add_parser("match"); m.add_argument("--registry", required=True); m.add_argument("--out", default="data/site_utility_matches.csv")
     l = sub.add_parser("lookup"); l.add_argument("--pwsid", required=True)
     s = sub.add_parser("swot"); s.add_argument("--lake-id", required=True)
     s.add_argument("--start", required=True); s.add_argument("--end", required=True)
     a = p.parse_args()
     if a.cmd == "match":
-        match_utilities(a.registry, a.areas)
+        match_utilities(a.registry, a.out)
     elif a.cmd == "lookup":
         lookup_sources(a.pwsid)
     elif a.cmd == "swot":
