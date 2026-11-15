@@ -44,9 +44,6 @@
   nav.chapters button[aria-current=true] { background: var(--ink); color: var(--ivory); }
   nav.chapters button[aria-current=true] b { background: var(--ivory); color: var(--ink); border-color: var(--ivory); }
   nav.chapters button[aria-current=true] small { color: #CFC6B4; }
-  nav.chapters button[data-ch=nisar] small { color: var(--nisar); font-weight: 600; }
-  nav.chapters button[data-ch=nisar][aria-current=true] { background: var(--nisar); }
-  nav.chapters button[data-ch=nisar][aria-current=true] small { color: #EBD9FF; }
   .aboutbtn { border: 1px solid var(--rule2); background: transparent; padding: 6px 12px; cursor: pointer; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-radius: 3px; }
 
   .main { display: grid; grid-template-columns: 430px 1fr; min-height: 0; }
@@ -120,9 +117,9 @@
   @keyframes pop { from { transform: translateY(-4px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
 
   .card { border: 1px solid var(--rule); background: var(--paper); padding: 12px 14px; margin: 10px 0; }
-  .card.nis { border-color: rgba(138, 43, 226, .35); background: #F7F2FB; }
+
   .card h4 { margin: 0 0 4px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-  .card h4 button { font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; color: var(--nisar); background: transparent; padding: 3px 7px; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+  .card h4 button { font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; color: var(--ink2); background: transparent; padding: 3px 7px; cursor: pointer; border-radius: 2px; white-space: nowrap; }
   .card img { width: 100%; display: block; border: 1px solid var(--rule2); margin-top: 8px; }
   svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
 
@@ -415,16 +412,16 @@ function chNisar() {
   const say = SAY;
   const cards = ids.map(sid => { const s = siteById[sid], n = N[sid], ni = NI[sid];
     return `<div class="card nis"><h4>${esc(s.name.replace(/\s*\(.*\)/, ""))}<button data-site="${sid}">See it on the map</button></h4>
-      ${ni ? `<p style="margin:2px 0 0"><b style="color:var(--nisar);font:600 20px var(--mono)">${fmt(ni.brighter_acres_in_outline)} acres</b> got much brighter (over ${ni.threshold_db} dB) inside the ${fmt(ni.outline_acres)}-acre outline, ${tnice(tOf(ni.frames[0].date))} to ${tnice(tOf(ni.frames[ni.frames.length - 1].date))}. ${esc(say[sid] || "")}</p>` : ""}
+      ${ni ? `<p style="margin:2px 0 0"><b style="color:var(--nisar);font:600 20px var(--mono)">${fmt(ni.brighter_acres_in_outline)} ${Math.round(ni.brighter_acres_in_outline) === 1 ? "acre" : "acres"}</b> got much brighter (over ${ni.threshold_db} dB) inside the ${fmt(ni.outline_acres)}-acre outline, ${tnice(tOf(ni.frames[0].date))} to ${tnice(tOf(ni.frames[ni.frames.length - 1].date))}. ${esc(say[sid] || "")}</p>` : ""}
       ${nisarPair(sid)}
       <details style="margin-top:8px"><summary class="note" style="cursor:pointer">Brightness over time, Sentinel-1 vs NISAR</summary>${radarChart(n, s)}</details>
       ${srcline(["data/radar/nisar_change.csv", "data/radar/nisar_series.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`; }).join("");
   return `<div class="ch">
-    <div class="kicker"><span class="n" style="background:var(--nisar)">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
+    <div class="kicker"><span class="n">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
     <h1>NISAR checks whether the announced money is turning into buildings, every 12 days</h1>
-    <div class="big" style="color:var(--nisar)">${fmt(tot)}<small>acres got much brighter</small></div>
+    <p class="lede">We read every NISAR radar image of the 3 campuses it covers, one every 12 days since June 2026, and mapped where the ground got much brighter. Aerial photos can't keep up: the newest one of Project Jupiter (${jph ? jph[2] : "2025"}) still shows bare desert.</p>
+    <div class="big">${fmt(tot)}<small>acres got much brighter</small></div>
     <p class="bigl">in ${months} months at 3 Stargate campuses under construction. In radar, brighter = new buildings and steel.</p>
-    <div class="card nis" style="margin-top:14px"><p style="margin:0"><b>So what?</b> The newest aerial photo of Project Jupiter (${jph ? jph[2] : "2025"}) still shows bare desert. NISAR sees through clouds every 12 days, so it can check, almost live, that announced projects are really being built: the check our 2035 projection needs.</p></div>
     ${how(srcline([sv.file, "data/radar/nisar_change.csv"], ["https://search.asf.alaska.edu"]), `NISAR launched in July 2025, after these campuses broke ground, so Sentinel-1 provides the "before". Each NISAR comparison averages the first 3 and the last 3 images of one track to calm radar speckle; "much brighter" = more than 3 dB.`)}
     <h3>What NISAR saw, first image vs. latest</h3>
     ${cards}
@@ -700,7 +697,7 @@ function renderHeadline() {
       <p class="hl">so far at the ${Object.keys(TL.curves).length} campuses Sentinel-1 radar tracks. Squares are colored by what the land was before.</p>`;
   } else if (state.ch === "nisar") {
     const n = ST.nisar, cnt = Object.values(n).reduce((a, x) => a + x.nisar.t.filter(d => tOf(d) <= t).length, 0);
-    h = `<div class="when"><span class="cap">${tnice(t)}</span>${chip("nisar")}</div><div class="hbig" style="color:var(--nisar)">${t < NISAR_T0 ? "Not yet" : cnt}<small>${t < NISAR_T0 ? "NISAR has no data here" : "NISAR passes charted"}</small></div>
+    h = `<div class="when"><span class="cap">${tnice(t)}</span>${chip("nisar")}</div><div class="hbig">${t < NISAR_T0 ? "Not yet" : cnt}<small>${t < NISAR_T0 ? "NISAR has no data here" : "NISAR passes charted"}</small></div>
       <p class="hl">${t < NISAR_T0 ? "Before Oct 2025 only Sentinel-1 can show these sites." : "Purple rings: sites NISAR covers every 12 days. Click one."}</p>`;
   } else if (state.ch === "water") {
     h = `<div class="when"><span class="cap">Today · ${YEARS[LAST]} need</span>${chip("swot")}</div><div class="hbig" style="color:var(--crimson)">${D.sources.filter(s => s.share.median[LAST] >= 1).length}<small>utilities over 100%</small></div>
