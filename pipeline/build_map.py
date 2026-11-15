@@ -141,6 +141,10 @@ def main():
     cal = projection.calibrate(reg[projectable].copy())
     proj = {r["id"]: r for r in projection.project_sites(reg[projectable].copy(), cal)}
     src_proj = {r["id"]: r for r in projection.project_sources(sources, list(proj.values()))}
+    # F9: national "if the announcement pace continues" line past the announced list.
+    as_of = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d")
+    pace = projection.project_pace(list(proj.values()), dict(zip(ann.site_id, ann.announced_date)), cal, as_of)
+    pace["file"] = "data/announced_sites.csv"
 
     fp = pd.read_csv("data/footprint/footprint_summary.csv")
     fp["site_id"] = fp.site_id.replace(PHASE5_IDS)
@@ -219,13 +223,16 @@ def main():
 
     data = {"demo": False, "built": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d"), "years": projection.YEARS,
             "scenarios": projection.SCENARIOS, "calibration": cal,
-            "params": {"utilization": projection.UTILIZATION}, "sites": site_recs, "sources": src_recs}
+            "params": {"utilization": projection.UTILIZATION, "per_capita_l_per_day": projection.PER_CAPITA_L_PER_DAY},
+            "pace": pace, "sites": site_recs, "sources": src_recs}
     txt = json.dumps(sanitize(data), separators=(",", ":"))
     assert "NaN" not in txt, "NaN in output"
     OUT.write_text("window.PROTO_DATA = " + txt + ";\n")
     n_proj = sum(1 for r in site_recs if r["projected"])
     print(f"Wrote {OUT} ({OUT.stat().st_size / 1e3:.0f} kB): {len(site_recs)} sites ({n_proj} projected), "
           f"{len(src_recs)} sources, {sum(1 for r in src_recs if r['series'])} with a trend series")
+    print("F9 pace", pace["n_sites"], "sites announced", pace["window"], "MW/yr", pace["rate_mw_per_yr"],
+          "2035 water ML/yr", {k: v[-1] for k, v in pace["water_ml"].items()})
     print("acres/MW", {k: round(v, 2) for k, v in cal["acres_per_mw"].items()},
           "WUE", {k: round(v, 2) for k, v in cal["wue_l_per_kwh"].items()}, "tau", round(cal["tau_months"], 1))
 

@@ -716,3 +716,41 @@ the photo shows what was built. Campuses without per-pixel months (announced sit
 block whose height follows the share of land changed (radar curve) and then the projected acres. Block heights are for
 display only, are not building heights, and the legend and About box say so.
 
+
+## 2026-11-15: Map, fifth version: a four-chapter story to 2035 (replaces the fourth pass above)
+
+**Why.** The person compared the map with the goal (precedent impacts, then the future from announced capital) and found:
+the 2026-2030 part unclear and too short, the page still too complicated, circles that did not show change, too little about
+the environment, and no clear line between NISAR and Sentinel-1. They gave full authority to change direction.
+
+**Horizon 2035 and F9 (decided by the person on a decision card, 2026-11-15).** `projection.YEARS` runs 2026-2035. F2-F8 are
+unchanged; 2026-2030 values are identical to before (checked: 0 of 46 projected sites differ). With announced campuses only, land
+levels off by about 2031 and water by about 2033 (median 192,807 ML/yr in 2035). The person chose to add **F9**: a separate
+national "if the pace continues" line. Pace = MW of the projected announced campuses whose `announced_date` falls in the 24 months
+before the data date, divided by 2 (16 campuses, 7,410 MW a year). One cohort per year from 2027 (July 1), each on F2/F4/F8.
+2035 median: 455,402 ML/yr on top of the announced campuses. It is never added to any site or source share and is not drawn as
+places on the map. Known limit: the registry holds the largest announcements only, so the pace leaves out smaller projects.
+Cohorts start construction on their announcement day because the precedent median announcement-to-start gap is -0.6 months.
+
+**People's worth of water.** Water shown to a reader is converted to people with the US public-supply average already used in F5
+(`PER_CAPITA_L_PER_DAY` = 521.3 L/person/day, USGS 2015). It is a unit change, not a new estimate. Source shares (F5) still use
+each state's value.
+
+**Design.** Four chapters, each one screen with one big number: 1 Land (Sentinel-1), 2 NISAR now, 3 Water (SWOT, OPERA DISP-S1),
+4 2035 (projection). Removed from the screen: search, scenario switch, pressure-index weights, layer settings, activity log.
+Low/median/high is still shown, as the median with its range in text. F7's pressure index is no longer drawn; sources are
+colored by F5 share in 2035 (thresholds 5%, 20%, 100%; display choice).
+- Before/after: opening a built campus splits the map at a draggable divider: left = latest Wayback photo captured before the
+  construction start, right = the photo for the timeline date, with Sentinel-1 changed pixels in rust.
+- Unit charts: land 1 square = 20 acres colored by NLCD class before construction (`data/landcover/site_landcover.csv`);
+  water 1 figure = 25,000 people (solid = announced campuses, dashed = F9).
+- Campus markers are squares sized by sqrt(acres) and colored by the land class they replaced (chapter 1) or status (chapter 4).
+- Every satellite has one color used in chips, charts, the map and a time bar with one lane per sensor: Sentinel-1 steel blue,
+  NISAR violet, SWOT teal, OPERA DISP-S1 light blue, projection dashed ochre. NISAR's lane is faint from its first GCOV over
+  these sites (2025-10-24, beta) and solid from the first usable dual-pol date (2026-06-17).
+- New `pipeline/map_story.py` writes `map/story.js` (land-cover totals, the S1 VV and NISAR HH series of the stack with the most
+  dates for the three NISAR campuses, sensor spans). NISAR images counted: usable and not a duplicate product (105).
+
+**Wording.** Copy says "depends on" and "linked to". The water chapter says a trend describes the water body and that a
+linked campus does not mean it caused a change. Shares above 100% say the estimate is larger than today's supply and do not
+say where the water would come from.

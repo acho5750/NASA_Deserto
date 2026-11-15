@@ -4,1026 +4,928 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Data Centers and Water</title>
-<meta name="description" content="US data center campuses on satellite imagery: land converted, measured month by month with Sentinel-1 radar, the water sources their utilities depend on, and a 2026-2030 projection.">
+<meta name="description" content="What US data center campuses took from the land, what NASA's NISAR radar sees now, the water sources they depend on, and what announced projects add by 2035.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
   :root {
     --linen: #EFEAE0; --ivory: #FAF8F3; --paper: #F5F1E8; --rule: #DCD4C5; --rule2: #CFC6B4;
-    --ink: #1D1C1A; --ink2: #3A3731; --muted: #746C5F; --faint: #A39A8B;
-    --rust: #C2461B; --ember: #FF5A1F; --ochre: #C08A2B; --teal: #2C6A66; --crimson: #8E1F1F; --sage: #5F7F5A; --plum: #6E4F7E;
+    --ink: #1D1C1A; --ink2: #3A3731; --muted: #6F675A; --faint: #A39A8B;
+    --rust: #C2461B; --ember: #FF5A1F; --ochre: #B9832A; --crimson: #8E1F1F; --teal: #2C6A66;
+    /* one color per satellite, used everywhere: chips, lanes, charts, map */
+    --s1: #3E6A96; --nisar: #8A2BE2; --swot: #12808F; --opera: #6F8FB0; --proj: #B9832A;
+    --lc-developed: #8F8A80; --lc-cropland: #D9A93A; --lc-pasture_hay: #E3D08A; --lc-forest: #3F6E45;
+    --lc-shrub_grass: #9DB07A; --lc-barren: #C9B79A; --lc-wetlands: #4E9A9C; --lc-water: #3D74AE;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --lc-developed: #B5524B; --lc-cropland: #CFA93C; --lc-pasture_hay: #DCCB86; --lc-forest: #3F6E45;
-    --lc-shrub_grass: #9BAE7E; --lc-barren: #B3A791; --lc-wetlands: #4E9A9C; --lc-water: #3D74AE;
     color-scheme: light;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { font: 13px/1.5 var(--sans); color: var(--ink); background: var(--linen); -webkit-font-smoothing: antialiased; overflow: hidden; }
+  body { font: 14px/1.5 var(--sans); color: var(--ink); background: var(--linen); -webkit-font-smoothing: antialiased; overflow: hidden; }
   button { font: inherit; color: inherit; }
   a { color: var(--teal); }
   :focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
-  .mono { font-family: var(--mono); }
   .cap { font: 500 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
-  .app { height: 100vh; display: grid; grid-template-rows: 52px 1fr; }
-  header { display: flex; align-items: center; gap: 18px; padding: 0 18px; border-bottom: 1px solid var(--rule); background: var(--ivory); }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; letter-spacing: .01em; white-space: nowrap; }
+  .app { height: 100vh; display: grid; grid-template-rows: 56px 1fr; }
+  header { display: flex; align-items: center; gap: 20px; padding: 0 18px; border-bottom: 1px solid var(--rule); background: var(--ivory); min-width: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; white-space: nowrap; }
   .brand .logo { width: 22px; height: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-  .brand .logo i { background: var(--ink); } .brand .logo i:nth-child(2) { background: var(--rust); } .brand .logo i:nth-child(3) { background: var(--teal); }
-  .brand small { font: 500 10.5px var(--mono); letter-spacing: .12em; color: var(--muted); text-transform: uppercase; font-weight: 500; }
-  .hsep { width: 1px; height: 22px; background: var(--rule); }
-  .grow { flex: 1; }
-  .seg { display: inline-flex; border: 1px solid var(--rule2); border-radius: 3px; overflow: hidden; }
-  .seg button { border: 0; background: transparent; padding: 5px 12px; font: 500 11.5px var(--mono); letter-spacing: .04em; color: var(--muted); cursor: pointer; text-transform: uppercase; }
-  .seg button + button { border-left: 1px solid var(--rule2); }
-  .seg button[aria-pressed=true] { background: var(--ink); color: var(--ivory); }
-  .search { position: relative; }
-  #search { width: 250px; border: 1px solid var(--rule2); background: var(--paper); border-radius: 3px; padding: 6px 10px 6px 28px; font: 12.5px var(--sans); color: var(--ink); outline: 0; }
-  #search:focus { border-color: var(--ink2); }
-  .search svg { position: absolute; left: 9px; top: 8px; color: var(--muted); }
-  #results { position: absolute; z-index: 40; top: 34px; right: 0; width: 320px; background: var(--ivory); border: 1px solid var(--rule2); box-shadow: 0 10px 30px rgba(40, 30, 10, .18); display: none; max-height: 50vh; overflow-y: auto; }
-  #results.on { display: block; }
-  #results button { display: flex; gap: 10px; width: 100%; border: 0; background: transparent; padding: 8px 12px; text-align: left; cursor: pointer; align-items: center; }
-  #results button:hover, #results button.hi { background: var(--linen); }
-  #results small { display: block; color: var(--muted); font-size: 11.5px; }
-  .asof { font: 500 10.5px var(--mono); color: var(--muted); letter-spacing: .08em; white-space: nowrap; }
+  .brand .logo i { background: var(--ink); } .brand .logo i:nth-child(2) { background: var(--rust); } .brand .logo i:nth-child(3) { background: var(--swot); } .brand .logo i:nth-child(4) { background: var(--nisar); }
+  nav.chapters { display: flex; gap: 2px; flex: 1; min-width: 0; }
+  nav.chapters button { display: flex; align-items: center; gap: 9px; border: 0; background: transparent; padding: 8px 14px 8px 10px; cursor: pointer; border-radius: 3px; white-space: nowrap; color: var(--muted); }
+  nav.chapters button b { font: 600 11px/20px var(--mono); width: 20px; height: 20px; text-align: center; border: 1px solid var(--rule2); border-radius: 50%; color: var(--muted); }
+  nav.chapters button span { font-weight: 600; font-size: 13.5px; }
+  nav.chapters button small { display: block; font: 500 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  nav.chapters button:hover { background: var(--linen); }
+  nav.chapters button[aria-current=true] { background: var(--ink); color: var(--ivory); }
+  nav.chapters button[aria-current=true] b { background: var(--ivory); color: var(--ink); border-color: var(--ivory); }
+  nav.chapters button[aria-current=true] small { color: #CFC6B4; }
+  nav.chapters button[data-ch=nisar] small { color: var(--nisar); font-weight: 600; }
+  nav.chapters button[data-ch=nisar][aria-current=true] { background: var(--nisar); }
+  nav.chapters button[data-ch=nisar][aria-current=true] small { color: #EBD9FF; }
+  .aboutbtn { border: 1px solid var(--rule2); background: transparent; padding: 6px 12px; cursor: pointer; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-radius: 3px; }
 
-  .main { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
-  .col { min-height: 0; overflow-y: auto; background: var(--ivory); scrollbar-width: thin; scrollbar-color: var(--rule2) transparent; }
-  .col.left { border-right: 1px solid var(--rule); }
-  .col.right { border-left: 1px solid var(--rule); }
-  .blk { padding: 14px 16px; border-bottom: 1px solid var(--rule); }
-  .blk h4 { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
-  .kpi { margin-bottom: 12px; }
-  .kpi:last-child { margin-bottom: 0; }
-  .kpi b { display: block; font: 500 28px/1.1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .kpi span { font-size: 11.5px; color: var(--muted); }
-  .kpi .delta { font: 500 11px var(--mono); color: var(--rust); margin-left: 6px; }
-  .phase { display: inline-flex; align-items: center; gap: 6px; font: 600 10px var(--mono); letter-spacing: .12em; padding: 3px 7px; border-radius: 2px; text-transform: uppercase; }
-  .phase.m { background: rgba(194, 70, 27, .1); color: var(--rust); } .phase.p { background: rgba(192, 138, 43, .14); color: #8A621B; }
-  .phase i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  #feed { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: hidden; position: relative; }
-  #feed li { display: grid; grid-template-columns: 54px 1fr; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--rule); font-size: 12px; line-height: 1.35; animation: slide .45s ease-out; }
-  #feed li:first-child { border-top: 0; }
-  #feed li .d { font: 500 11px var(--mono); color: var(--muted); }
-  #feed li .k { display: block; font: 600 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1px; }
-  #feed li .k.c { color: var(--ink2); } #feed li .k.r { color: var(--rust); } #feed li .k.o { color: var(--teal); }
-  #feed li button { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: var(--ink); }
-  #feed li button:hover { text-decoration: underline; }
-  @keyframes slide { from { opacity: 0; transform: translateY(-6px); background: rgba(255, 90, 31, .12); } to { opacity: 1; transform: none; } }
-  .legend div { display: flex; align-items: center; gap: 9px; margin: 6px 0; font-size: 12px; color: var(--ink2); }
-  .sw { flex: none; display: inline-block; }
-  .tog { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12.5px; cursor: pointer; }
-  .tog input { accent-color: var(--ink); margin: 0; }
-  .wrow { display: grid; grid-template-columns: 1fr 96px 18px; gap: 8px; align-items: center; font-size: 12px; color: var(--ink2); margin: 4px 0; }
-  .wrow input { accent-color: var(--ink); width: 100%; }
-  .wrow output { font: 11px var(--mono); color: var(--muted); text-align: right; }
-  .ramp { height: 6px; background: linear-gradient(90deg, #2C6A66, #C08A2B, #8E1F1F); margin: 4px 0 2px; }
+  .main { display: grid; grid-template-columns: 430px 1fr; min-height: 0; }
+  #story { min-height: 0; overflow-y: auto; background: var(--ivory); border-right: 1px solid var(--rule); scrollbar-width: thin; scrollbar-color: var(--rule2) transparent; }
+  .center { display: grid; grid-template-rows: 1fr auto; min-height: 0; min-width: 0; }
+  .mapwrap { position: relative; min-height: 0; background: #D9D2C2; overflow: hidden; }
+  #map, #mapB { position: absolute; inset: 0; }
+  #mapB { pointer-events: none; display: none; z-index: 2; }
+  #mapB.on { display: block; }
 
-  .center { display: grid; grid-template-rows: 1fr 176px; min-height: 0; min-width: 0; }
-  .mapwrap { position: relative; min-height: 0; background: #D9D2C2; }
-  #map { position: absolute; inset: 0; }
-  .hud { position: absolute; z-index: 5; pointer-events: none; font: 500 10.5px var(--mono); letter-spacing: .1em; color: var(--ink); text-transform: uppercase; }
-  .hud.tl { top: 12px; left: 12px; } .hud.tr { top: 12px; right: 12px; text-align: right; }
-  .hud .tag { display: inline-block; background: rgba(250, 248, 243, .92); border: 1px solid var(--rule2); padding: 4px 8px; margin-bottom: 4px; }
-  .hud .tag b { font-weight: 600; }
-  .corner { position: absolute; z-index: 4; width: 18px; height: 18px; border: 2px solid var(--ink); pointer-events: none; opacity: .7; }
-  .corner.a { top: 6px; left: 6px; border-right: 0; border-bottom: 0; } .corner.b { top: 6px; right: 6px; border-left: 0; border-bottom: 0; }
-  .corner.c { bottom: 6px; left: 6px; border-right: 0; border-top: 0; } .corner.d { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
-  .mapbtns { position: absolute; z-index: 5; right: 12px; bottom: 34px; display: flex; flex-direction: column; border: 1px solid var(--rule2); background: var(--ivory); }
+  /* sensor chips */
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 600 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 5px 8px 5px 7px; border-radius: 2px; color: #fff; background: var(--c); white-space: nowrap; vertical-align: middle; }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .9; }
+  .chip.s1 { --c: var(--s1); } .chip.nisar { --c: var(--nisar); } .chip.swot { --c: var(--swot); } .chip.opera { --c: var(--opera); }
+  .chip.proj { --c: transparent; color: #8A621B; border: 1px dashed var(--proj); padding: 4px 7px 4px 6px; }
+  .chip.data { --c: transparent; color: var(--muted); border: 1px solid var(--rule2); padding: 4px 7px 4px 6px; }
+  .chip.data::before { display: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 0; }
+
+  /* story panel */
+  .ch { padding: 22px 24px 8px; }
+  .kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .kicker .n { font: 600 11px/22px var(--mono); width: 24px; height: 24px; text-align: center; border-radius: 50%; background: var(--ink); color: var(--ivory); }
+  h1 { font-size: 23px; line-height: 1.22; letter-spacing: -.015em; margin: 0 0 8px; font-weight: 700; }
+  h2 { font-size: 18px; line-height: 1.3; margin: 0 0 4px; font-weight: 650; }
+  h3 { margin: 22px 0 10px; font: 500 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  h3::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .lede { font-size: 15px; color: var(--ink2); margin: 0 0 4px; }
+  p { margin: 0 0 10px; color: var(--ink2); }
+  .big { font: 600 44px/1 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin: 18px 0 4px; }
+  .big small { font: 500 14px var(--sans); letter-spacing: 0; color: var(--muted); margin-left: 6px; }
+  .big.stack small, .headline .hbig.stack small { display: block; margin: 6px 0 0; }
+  .bigl { font-size: 14px; color: var(--ink2); margin: 0 0 4px; }
+  .range { font: 500 11.5px var(--mono); color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .srcline { font-size: 11px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+  .srcline a { color: var(--muted); }
+  code { font: 11px var(--mono); background: var(--linen); padding: 1px 4px; }
+  .next { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 26px 0 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--ink); background: transparent; padding: 9px 14px; cursor: pointer;
+         font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border-radius: 2px; }
+  .btn:hover { background: var(--ink); color: var(--ivory); }
+  .btn.solid { background: var(--ink); color: var(--ivory); }
+  .btn.solid:hover { background: #000; }
+  .btn.violet { border-color: var(--nisar); background: var(--nisar); color: #fff; }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--teal); cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: rgba(44, 106, 102, .35); }
+  .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0; margin-bottom: 14px; cursor: pointer; font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .back:hover { color: var(--ink); }
+
+  /* unit grids: one square = N acres, one figure = N people */
+  .ugrid { display: flex; flex-wrap: wrap; gap: 2px; margin: 10px 0 8px; }
+  .ugrid i { width: 9px; height: 9px; background: var(--c); display: block; }
+  .ugrid i.ghost { background: transparent; outline: 1px dashed var(--proj); outline-offset: -1px; }
+  .ulegend { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: 12.5px; color: var(--ink2); }
+  .ulegend span::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 8px; background: var(--c); vertical-align: -1px; }
+  .ulegend b { font: 500 12px var(--mono); text-align: right; color: var(--ink2); font-weight: 500; }
+  .people { display: flex; flex-wrap: wrap; gap: 3px 2px; margin: 12px 0 6px; }
+  .people svg { width: 11px; height: 22px; display: block; }
+  .people svg.new { animation: pop .35s ease-out; }
+  @keyframes pop { from { transform: translateY(-4px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .card { border: 1px solid var(--rule); background: var(--paper); padding: 12px 14px; margin: 10px 0; }
+  .card.nis { border-color: rgba(138, 43, 226, .35); background: #F7F2FB; }
+  .card h4 { margin: 0 0 4px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .card h4 button { font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; color: var(--nisar); background: transparent; padding: 3px 7px; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+  .card img { width: 100%; display: block; border: 1px solid var(--rule2); margin-top: 8px; }
+  svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .rank { width: 100%; border: 0; background: transparent; padding: 8px 0; display: grid; grid-template-columns: 1fr 92px; gap: 2px 12px; text-align: left; cursor: pointer; border-top: 1px solid var(--rule); }
+  .rank:hover { background: var(--linen); }
+  .rank .nm { font-size: 13px; line-height: 1.3; }
+  .rank .nm small { display: block; color: var(--muted); font-size: 11.5px; }
+  .rank .v { font: 600 14px var(--mono); text-align: right; }
+  .rank .v small { display: block; font: 500 10px var(--mono); color: var(--muted); }
+  .rank .barw { grid-column: 1 / -1; position: relative; height: 10px; background: var(--linen); }
+  .rank .barw i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); }
+  .rank .barw u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); text-decoration: none; }
+  .spark { width: 92px; height: 30px; }
+
+  .sensor { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--rule); }
+  .sensor i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-top: 5px; }
+  .sensor b { font-size: 13px; }
+  .sensor p { margin: 1px 0 0; font-size: 12.5px; }
+
+  .lcbar { display: flex; height: 10px; margin: 8px 0 6px; }
+
+  /* headline over the map */
+  .headline { position: absolute; z-index: 6; top: 14px; left: 14px; max-width: 360px; background: rgba(250, 248, 243, .96); border: 1px solid var(--rule2);
+              box-shadow: 0 8px 28px rgba(40, 30, 10, .16); padding: 12px 16px 12px; }
+  .headline .when { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .headline .hbig { font: 600 32px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .headline .hbig small { font: 500 13px var(--sans); color: var(--muted); letter-spacing: 0; margin-left: 6px; }
+  .headline .hl { font-size: 12.5px; color: var(--ink2); margin: 5px 0 0; }
+  .headline .hl2 { font-size: 12px; color: #8A621B; margin: 4px 0 0; }
+  .legend { position: absolute; z-index: 6; left: 14px; bottom: 30px; background: rgba(250, 248, 243, .95); border: 1px solid var(--rule2); padding: 8px 11px; font-size: 12px; color: var(--ink2); max-width: 330px; }
+  .legend div { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .legend .sw { flex: none; width: 11px; height: 11px; background: var(--c); }
+  .legend .sw.r { border-radius: 50%; } .legend .sw.ring { border-radius: 50%; background: transparent; border: 2.5px solid var(--nisar); }
+  .mapbtns { position: absolute; z-index: 6; right: 12px; top: 12px; display: flex; flex-direction: column; border: 1px solid var(--rule2); background: var(--ivory); }
   .mapbtns button { width: 32px; height: 32px; border: 0; background: transparent; cursor: pointer; font: 500 16px var(--mono); color: var(--ink2); }
   .mapbtns button + button { border-top: 1px solid var(--rule2); }
-  .mapbtns button:hover { background: var(--linen); }
-  .reticle { width: 46px; height: 46px; position: relative; pointer-events: none; }
-  .reticle i { position: absolute; width: 12px; height: 12px; border: 2px solid var(--ember); }
-  .reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; } .reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-  .reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; } .reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-  .reticle span { position: absolute; left: 52px; top: 12px; white-space: nowrap; font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
-                  background: var(--ink); color: var(--ivory); padding: 3px 7px; }
 
-  .timeline { border-top: 1px solid var(--rule); background: var(--ivory); display: grid; grid-template-columns: 150px 1fr; min-width: 0; }
-  .tctl { padding: 14px 14px 12px 16px; border-right: 1px solid var(--rule); display: flex; flex-direction: column; justify-content: space-between; }
+  /* before / after swipe */
+  .swipe { position: absolute; z-index: 5; top: 0; bottom: 0; width: 0; display: none; }
+  .swipe.on { display: block; }
+  .swipe .bar { position: absolute; top: 0; bottom: 0; left: -1.5px; width: 3px; background: var(--ivory); box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .swipe .knob { position: absolute; top: 50%; left: -22px; width: 44px; height: 44px; margin-top: -22px; border-radius: 50%; background: var(--ivory); border: 2px solid var(--ink);
+                 cursor: ew-resize; display: grid; place-items: center; font: 600 15px var(--mono); touch-action: none; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .phototag { position: absolute; z-index: 6; bottom: 30px; padding: 6px 10px; font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--ink); color: var(--ivory); display: none; }
+  .phototag.on { display: block; }
+  .phototag small { display: block; font: 500 10px var(--mono); color: #CFC6B4; letter-spacing: .04em; text-transform: none; }
+  #tagB { left: 14px; bottom: 44px; } #tagA { right: 54px; bottom: 44px; text-align: right; }
+  .phototag.a { background: var(--rust); }
+
+  /* time bar with one lane per satellite */
+  .timebar { border-top: 1px solid var(--rule); background: var(--ivory); display: grid; grid-template-columns: 170px 1fr; }
+  .tctl { padding: 12px 14px 12px 16px; border-right: 1px solid var(--rule); display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
   #clock { font: 600 26px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  #clockSub { margin-top: 4px; }
-  .pbtns { display: flex; gap: 6px; }
-  #play { display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--ink); color: var(--ivory); padding: 8px 14px 8px 12px; cursor: pointer;
+  #clockSub { font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+  #play { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--ink); color: var(--ivory); padding: 9px 14px; cursor: pointer;
           font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; border-radius: 2px; }
-  #play:hover { background: #000; }
-  #reset { border: 1px solid var(--rule2); background: transparent; width: 34px; cursor: pointer; border-radius: 2px; color: var(--ink2); }
-  .tchart { position: relative; min-width: 0; padding: 10px 16px 6px 8px; cursor: crosshair; user-select: none; }
-  .tchart svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .lanes { position: relative; padding: 8px 18px 4px 8px; cursor: pointer; user-select: none; min-width: 0; }
+  .lanes svg { display: block; width: 100%; height: 132px; overflow: visible; }
 
-  /* right column content */
-  .pad { padding: 16px 18px; }
-  .kind { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
-  .kind i { width: 8px; height: 8px; background: var(--c); }
-  h1, h2 { font-weight: 600; letter-spacing: -.01em; margin: 0 0 4px; }
-  h1 { font-size: 18px; line-height: 1.3; } h2 { font-size: 18px; line-height: 1.3; }
-  .sub { color: var(--muted); font-size: 12.5px; margin: 0; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
-  .stats div { padding: 10px 12px; } .stats div + div { border-left: 1px solid var(--rule); }
-  .stats b { display: block; font: 500 18px/1.2 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-  .stats span { display: block; font-size: 11px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
-  .sec { padding: 14px 18px 4px; }
-  .sec h3 { margin: 0 0 8px; font: 500 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: center; }
-  .sec h3::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
-  .sec p { margin: 0 0 8px; color: var(--ink2); }
-  .row { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: transparent; padding: 7px 18px; cursor: pointer; text-align: left; border-top: 1px solid transparent; }
-  .row:hover { background: var(--linen); }
-  .row .nm { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.35; }
-  .row .nm small { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row .v { font: 500 12px var(--mono); color: var(--ink2); }
-  .row .th { flex: none; width: 52px; height: 38px; overflow: hidden; border: 1px solid var(--rule2); background: #fff; }
-  .row .th img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
-  .bar { flex: none; width: 60px; height: 4px; background: var(--rule); } .bar i { display: block; height: 100%; }
-  .sq { flex: none; width: 9px; height: 9px; }
-  .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0; margin-bottom: 12px; cursor: pointer; font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-  .back:hover { color: var(--ink); }
-  table { border-collapse: collapse; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
-  th, td { text-align: right; padding: 5px 4px; border-bottom: 1px solid var(--rule); }
-  th:first-child, td:first-child { text-align: left; }
-  th { font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  td { font-family: var(--mono); } td:first-child { font-family: var(--sans); }
-  td.sel, th.sel { color: var(--ink); font-weight: 600; background: var(--linen); }
-  figure { margin: 8px 0 4px; } figure img { width: 100%; display: block; border: 1px solid var(--rule2); }
-  figcaption { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  svg.chart { width: 100%; height: auto; display: block; }
-  .lcbar { display: flex; height: 8px; margin: 6px 0 8px; }
-  .lclegend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 11.5px; color: var(--muted); }
-  .lclegend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; background: var(--c); }
-  .note { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
-  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--teal); cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: rgba(44, 106, 102, .35); }
-  .btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--ink); background: transparent; padding: 7px 12px; cursor: pointer; margin: 4px 0 8px;
-         font: 600 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border-radius: 2px; }
-  .btn:hover { background: var(--ink); color: var(--ivory); }
-  .btn.solid { background: var(--rust); border-color: var(--rust); color: #fff; }
-  .btn.solid:hover { background: #A33911; }
-  .srcs { font-size: 11px; color: var(--muted); padding: 12px 18px 18px; border-top: 1px solid var(--rule); margin-top: 10px; }
-  .srcs a { color: var(--muted); }
-  details.about summary { cursor: pointer; }
-  details.about p { font-size: 12px; color: var(--ink2); margin: 8px 0; }
-  code { font: 11px var(--mono); background: var(--linen); padding: 1px 4px; }
-  .chain { display: grid; grid-template-columns: 12px 1fr; gap: 0 10px; margin: 2px 0 8px; }
-  .chain .d { width: 10px; height: 10px; margin-top: 4px; background: var(--c); }
-  .chain .l { width: 1px; margin: 0 auto; background: var(--rule2); min-height: 14px; }
-  .chain .t { color: var(--ink2); padding-bottom: 4px; }
-
-
-  /* headline card: the one thing to read */
-  .headline { position: absolute; z-index: 6; top: 14px; left: 14px; width: 330px; background: rgba(250, 248, 243, .96); border: 1px solid var(--rule2);
-              box-shadow: 0 8px 28px rgba(40, 30, 10, .16); padding: 14px 16px 12px; }
-  .headline .when { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .headline .big { font: 600 34px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .headline .big small { font: 500 13px var(--sans); color: var(--muted); letter-spacing: 0; margin-left: 6px; }
-  .headline .lbl { font-size: 12px; color: var(--ink2); margin: 4px 0 0; }
-  .headline .now { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--rule); font-size: 12.5px; line-height: 1.4; min-height: 36px; }
-  .headline .now b { display: block; font: 600 9.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--rust); margin-bottom: 2px; }
-  .headline .now.flash { animation: flash .6s ease-out; }
-  @keyframes flash { from { background: rgba(255, 90, 31, .14); } to { background: transparent; } }
-  .hud .photo-tag { display: none; } .hud .photo-tag.on { display: inline-block; background: var(--ink) !important; color: var(--ivory); border-color: var(--ink) !important; }
-  .legendchip { position: absolute; z-index: 5; left: 12px; bottom: 34px; background: rgba(250, 248, 243, .94); border: 1px solid var(--rule2); padding: 8px 10px; font-size: 11.5px; color: var(--ink2); max-width: 300px; }
-  .legendchip div { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
-  .steps { counter-reset: st; margin: 4px 0 0; padding: 0; list-style: none; }
-  .steps li { counter-increment: st; display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); }
-  .steps li::before { content: counter(st); font: 600 12px/24px var(--mono); width: 24px; height: 24px; text-align: center; background: var(--ink); color: var(--ivory); }
-  .steps p { margin: 2px 0 6px; color: var(--ink2); font-size: 12.5px; }
-  .steps .btn { margin: 0; }
-  .film { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }
-  .film button { flex: none; border: 2px solid transparent; padding: 0; background: none; cursor: pointer; width: 74px; text-align: left; }
-  .film button img { width: 70px; height: 70px; object-fit: cover; display: block; background: var(--linen); }
-  .film button span { display: block; font: 500 10px var(--mono); color: var(--muted); padding: 2px 1px 0; }
-  .film button.on { border-color: var(--ember); } .film button.on span { color: var(--ink); }
-  .opts summary { cursor: pointer; padding: 12px 18px; border-top: 1px solid var(--rule); }
-  .opts > div { padding: 0 18px 14px; }
   .maplibregl-ctrl-attrib { background: rgba(250, 248, 243, .85) !important; font: 10px var(--sans); }
-  .maplibregl-ctrl-scale { background: rgba(250, 248, 243, .85); border-color: var(--ink2); color: var(--ink2); font: 10px var(--mono); }
-  .maplibregl-popup-content { border-radius: 0; padding: 8px 10px; background: var(--ink); color: var(--ivory); font: 12px/1.4 var(--sans); box-shadow: none; }
+  .maplibregl-popup-content { border-radius: 0; padding: 8px 10px; background: var(--ink); color: var(--ivory); font: 12.5px/1.4 var(--sans); box-shadow: none; }
   .maplibregl-popup-content small { display: block; color: #CFC6B4; font: 11px var(--mono); margin-top: 2px; }
   .maplibregl-popup-tip { display: none; }
 
-  @media (max-width: 1100px) { .main { grid-template-columns: 1fr 340px; } #search { width: 180px; } .asof { display: none; } }
+  dialog { border: 1px solid var(--rule2); background: var(--ivory); max-width: 680px; padding: 22px 26px; color: var(--ink); }
+  dialog::backdrop { background: rgba(29, 28, 26, .4); }
+  dialog p { font-size: 13px; }
+
+  @media (max-width: 1180px) { nav.chapters button small { display: none; } .main { grid-template-columns: 380px 1fr; } }
   @media (max-width: 860px) {
     body { overflow: auto; }
     .app { height: auto; display: block; }
-    header { flex-wrap: wrap; height: auto; padding: 10px 12px; gap: 10px; } .hsep { display: none; } .brand small { display: none; }
-    .search { order: 5; flex-basis: 100%; } #search { width: 100%; } #results { left: 0; width: auto; }
+    header { flex-wrap: wrap; height: auto; padding: 10px 12px; gap: 8px; }
+    nav.chapters { order: 3; flex-basis: 100%; overflow-x: auto; }
+    nav.chapters button { padding: 6px 10px 6px 6px; } nav.chapters button span { font-size: 12.5px; }
     .main { display: flex; flex-direction: column; }
-    .center { order: 1; grid-template-rows: 56vh auto; } .col.right { order: 2; border-left: 0; border-top: 1px solid var(--rule); }
-    .headline { top: 8px; left: 8px; right: 8px; width: auto; padding: 8px 10px; } .headline .big { font-size: 22px; } .headline .lbl { font-size: 11.5px; margin-top: 2px; } .headline .now { display: none; } .headline .when { margin-bottom: 2px; }
-    .hud.tr { display: none; }
-    .legendchip { display: none; }
-    .timeline { grid-template-columns: 1fr; } .tctl { flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--rule); }
-    .tchart { height: 130px; }
-    .col { overflow: visible; }
+    .center { order: 1; grid-template-rows: 58vh auto; }
+    #story { order: 2; overflow: visible; border-right: 0; }
+    .ch { padding: 18px 16px 6px; }
+    .headline { top: 8px; left: 8px; right: 8px; max-width: none; padding: 8px 10px; } .headline .hbig { font-size: 22px; } .headline .hl2 { display: none; }
+    .legend, .mapbtns { display: none; }
+    .timebar { grid-template-columns: 1fr; } .tctl { flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--rule); }
+    .lanes { padding: 6px 12px 4px 4px; }
+    .big { font-size: 36px; }
   }
 </style>
 </head>
 <body>
 <div class="app">
 <header>
-  <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Data Centers &amp; Water <small>US · Sentinel-1 · NISAR · SWOT</small></div>
-  <span class="hsep"></span>
-  <span class="cap">Scenario</span>
-  <div class="seg" id="scn" role="group" aria-label="Scenario">
-    <button type="button" data-scn="low" aria-pressed="false">Low</button>
-    <button type="button" data-scn="median" aria-pressed="true">Median</button>
-    <button type="button" data-scn="high" aria-pressed="false">High</button>
-  </div>
-  <span class="grow"></span>
-  <span class="asof" id="asof"></span>
-  <div class="search">
-    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="4.5"/><path d="M9.5 9.5 13 13"/></svg>
-    <input id="search" placeholder="Search campus or water source" aria-label="Search campus or water source" autocomplete="off">
-    <div id="results" role="listbox"></div>
-  </div>
+  <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Data Centers &amp; Water</div>
+  <nav class="chapters" aria-label="Chapters">
+    <button data-ch="land"><b>1</b><span>Land<small>2017-2026 · Sentinel-1</small></span></button>
+    <button data-ch="nisar"><b>2</b><span>NISAR now<small>2026 · NASA NISAR</small></span></button>
+    <button data-ch="water"><b>3</b><span>Water<small>SWOT · OPERA</small></span></button>
+    <button data-ch="future"><b>4</b><span>2035<small>Projection</small></span></button>
+  </nav>
+  <button class="aboutbtn" id="aboutBtn">About the data</button>
 </header>
 
 <div class="main">
-
+  <aside id="story" aria-live="polite"></aside>
   <section class="center">
-    <div class="mapwrap">
+    <div class="mapwrap" id="mapwrap">
       <div id="map" role="region" aria-label="Satellite map of US data center campuses and water sources"></div>
-      <span class="corner a"></span><span class="corner b"></span><span class="corner c"></span><span class="corner d"></span>
-      <div class="headline" id="headline">
-        <div class="when"><span class="cap" id="hWhen">2017-01</span><span class="phase m" id="phase"><i></i>Measured</span></div>
-        <div class="big"><span id="kAcres">0</span><small>acres</small></div>
-        <p class="lbl" id="kAcresL">of land changed so far at US data center campuses</p>
-        <div class="now" id="now"><b>Press Play</b>Watch the radar record a decade of construction, then the projection to 2030.</div>
-      </div>
-      <div class="legendchip" id="legendchip"></div>
-      <div class="hud tl" style="display:none"><span class="tag" id="hudView"><b>CONUS</b> · Esri World Imagery</span><br><span class="tag" id="hudLayer">Sentinel-1 C-band change · 10 m</span></div>
-      <div class="hud tr"><span class="tag photo-tag" id="photoTag"></span><br><span class="tag" id="hudXY">39.8283°N  98.5795°W</span></div>
+      <div id="mapB" aria-hidden="true"></div>
+      <div class="swipe" id="swipe"><div class="bar"></div><div class="knob" id="knob" role="slider" tabindex="0" aria-label="Before and after photo divider">&#8596;</div></div>
+      <div class="phototag" id="tagB"></div><div class="phototag a" id="tagA"></div>
+      <div class="headline" id="headline"></div>
+      <div class="legend" id="legend"></div>
       <div class="mapbtns"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button><button id="homeBtn" aria-label="Whole country" title="Whole country">&#8962;</button></div>
     </div>
-    <div class="timeline">
+    <div class="timebar">
       <div class="tctl">
-        <div><div id="clock">2017-01</div><div class="cap" id="clockSub">Measured</div></div>
-        <div class="pbtns">
-          <button id="play" aria-label="Play"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" id="playIcon"><path d="M1 0v10l9-5z"/></svg><span id="playLbl">Play</span></button>
-          <button id="reset" aria-label="Back to the start" title="Back to the start"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1h2v10H1zM11 1v10L4 6z"/></svg></button>
-        </div>
+        <div><div id="clock">2017</div><div id="clockSub">Measured</div></div>
+        <button id="play" aria-label="Play"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" id="playIcon"><path d="M1 0v10l9-5z"/></svg><span id="playLbl">Play</span></button>
       </div>
-      <div class="tchart" id="tchart" role="slider" tabindex="0" aria-label="Time" aria-valuetext=""></div>
+      <div class="lanes" id="lanes" role="slider" tabindex="0" aria-label="Time"></div>
     </div>
   </section>
+</div>
+</div>
 
-  <aside class="col right" aria-label="Details"><div id="detail"></div>
-    <details class="opts"><summary class="cap" style="color:var(--ink)">Map settings</summary><div>
-      <label class="tog"><input type="checkbox" id="lyr3d" checked> 3D blocks for changed land</label>
-      <label class="tog"><input type="checkbox" id="lyrPhotos" checked> Dated photos when a campus is open</label>
-      <label class="tog"><input type="checkbox" id="lyrPixels" checked> Radar change pixels</label>
-      <label class="tog"><input type="checkbox" id="lyrSites" checked> Campuses and outlines</label>
-      <label class="tog"><input type="checkbox" id="lyrWater" checked> Water sources</label>
-      <label class="tog"><input type="checkbox" id="lyrExposure"> Nearby wetlands and protected land</label>
-      <label class="tog"><input type="checkbox" id="lyrLabels" checked> Place names</label>
-      <p class="cap" style="margin:12px 0 4px">Pressure index weights</p>
-      <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"><output id="w1o">1</output></div>
-      <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"><output id="w2o">1</output></div>
-      <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"><output id="w3o">1</output></div>
-    </div></details></aside>
-</div>
-</div>
+<dialog id="about"></dialog>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="data.js"></script>
 <script src="radar_panels.js"></script>
 <script src="timeline.js"></script>
 <script src="wayback.js"></script>
+<script src="story.js"></script>
 <script>
-const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [], WB = window.WAYBACK || { sites: {} };
+const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [], WB = window.WAYBACK || { sites: {} }, ST = window.STORY;
 const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-US");
-const fmt1 = n => n == null ? "n/a" : (Math.abs(n) < 10 ? n.toFixed(1) : Math.round(n).toLocaleString("en-US"));
-const pct = n => n == null ? "n/a" : (n >= 10 ? Math.round(n * 100).toLocaleString("en-US") + "%" : (n * 100).toFixed(n < 0.01 ? 2 : 1) + "%");
-const dist = m => m == null ? "none within 100 km" : m === 0 ? "touching or inside" : m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const title = s => esc(String(s || "").toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
-const SCN = D.scenarios, YEARS = D.years;
-const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
+const short = n => n == null ? "n/a" : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + " million" : n >= 1e4 ? Math.round(n / 1e3).toLocaleString("en-US") + ",000" : fmt(n);
+const times = x => x >= 1 ? (x >= 10 ? Math.round(x) : x.toFixed(1)) + "×" : Math.round(x * 100) + "%";
+const YEARS = D.years, LAST = YEARS.length - 1;
 const siteById = Object.fromEntries(D.sites.map(s => [s.id, s]));
+const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
 const radarById = Object.fromEntries(RADAR.map(p => [p.id, p]));
 const RADAR_FOR_SITE = { "ANN-STARGATE-SHACKELFORD": "FRONTIER-SHACKELFORD", "ANN-STARGATE-DONAANA": "JUPITER-DONAANA", "ANN-STARGATE-LORDSTOWN": "LORDSTOWN" };
-const SITE_FOR_RADAR = Object.fromEntries(Object.entries(RADAR_FOR_SITE).map(([a, b]) => [b, a]));
 const placed = D.sites.filter(s => s.lat != null && !s.location.missing);
 const curveId = s => RADAR_FOR_SITE[s.id] || s.id;
 const curveOf = s => TL.curves[curveId(s)];
-const isNarrow = () => matchMedia("(max-width: 860px)").matches;
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isNarrow = () => matchMedia("(max-width: 860px)").matches;
+
+/* People's worth of water: the national public-supply use per person (USGS 2015), already a parameter of F5. */
+const PER_CAPITA = D.params.per_capita_l_per_day;            // liters per person per day
+const ML_PER_PERSON = PER_CAPITA * 365 / 1e6;               // megaliters per person per year
+const people = ml => ml / ML_PER_PERSON;
+const USGS = "https://doi.org/10.5066/F7TB15V5";
 
 /* ---------------- time ----------------
-   t = year*12 + month-1. Measured months run TL.t0..TL.t1 (Sentinel-1 area curves).
-   Projection steps sit at December 31 of 2026..2030 (F8). */
-const T_MEAS1 = TL.t1, PROJ_T = YEARS.map(y => y * 12 + 11), T_END = PROJ_T[PROJ_T.length - 1];
-const tlabel = t => `${Math.floor(t / 12)}-${String(t % 12 + 1).padStart(2, "0")}`;
+   t = year*12 + month-1. Sentinel-1 area curves run TL.t0..TL.t1. Projection values sit at December 31 of each year (F8). */
+const T0 = 2017 * 12, TEND = YEARS[LAST] * 12 + 11, T_MEAS1 = TL.t1, PROJ0 = YEARS[0] * 12 + 11;
 const tOf = d => { const x = new Date(d + "T00:00:00Z"); return x.getUTCFullYear() * 12 + x.getUTCMonth(); };
-const state = { t: TL.t0, scn: "median", w: [1, 1, 1], selected: null, playing: false };
-const isProj = () => state.t > T_MEAS1;
-const yIdx = () => { if (!isProj()) return 0; let k = 0; PROJ_T.forEach((pt, i) => { if (state.t >= pt) k = i; }); return k; };
-function curveAt(c, t) { if (!c) return null; let v = 0; for (const [ct, a] of c) { if (ct <= t) v = a; else break; } return v; }
-/* Dated aerial photos (Esri World Imagery Wayback): the latest photo captured on or before t, else the earliest. */
-function photoAt(s, t) { const ph = WB.sites[s.id]; if (!ph || !ph.length) return null; let cur = ph[0]; for (const p of ph) if (p[0] <= t) cur = p; return cur; }
-function wbTile(r, s, z) { const n = 2 ** z, x = Math.floor((s.lon + 180) / 360 * n), la = s.lat * Math.PI / 180,
-  y = Math.floor((1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n);
-  return WB.url.replace("{release}", r).replace("{z}", z).replace("{y}", y).replace("{x}", x); }
-function playRange(s) {
-  const cv = curveOf(s), ph = WB.sites[s.id];
-  if (cv) return [cv[0][0], Math.min(T_MEAS1, Math.max(cv[cv.length - 1][0], ph && ph.length ? ph[ph.length - 1][0] : 0))];
-  if (ph && ph.length) return [Math.max(TL.t0, ph[0][0]), T_END];
-  return null;
+const tlabel = t => `${Math.floor(t / 12)}-${String(t % 12 + 1).padStart(2, "0")}`;
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const tnice = t => `${MON[t % 12]} ${Math.floor(t / 12)}`;
+const NISAR_T0 = tOf("2025-10-24");                   // first NISAR GCOV over these sites (beta), data/nisar_coverage_notes.md
+const NISAR_USABLE = tOf(ST.sensors.nisar.from);      // first usable dual-pol series date
+function curveAt(c, t) { if (!c) return 0; let v = 0; for (const [ct, a] of c) { if (ct <= t) v = a; else break; } return v; }
+const yIdxAt = t => Math.max(0, Math.min(LAST, Math.floor((t - 11) / 12) - YEARS[0]));
+const projSites = D.sites.filter(s => s.projected);
+const sumYear = (key, scn, y) => projSites.reduce((a, s) => a + s[key][scn][y], 0);
+const pace = D.pace;
+
+const CH = {
+  land:   { t0: T0, t1: T_MEAS1, step: 1, tick: 70 },
+  nisar:  { t0: tOf("2025-06-01"), t1: T_MEAS1, step: 1, tick: 260 },
+  water:  { t0: T_MEAS1, t1: T_MEAS1, step: 1, tick: 100 },
+  future: { t0: PROJ0, t1: TEND, step: 12, tick: 800 },
+};
+const state = { ch: "land", t: T0, detail: null, playing: false };
+
+/* ---------------- land cover ---------------- */
+const LC = [["cropland", "Farmland (crops)"], ["pasture_hay", "Pasture and hay"], ["shrub_grass", "Shrubland and grassland"], ["forest", "Forest"],
+            ["wetlands", "Wetland"], ["water", "Open water"], ["barren", "Bare ground"], ["developed", "Already developed"]];
+const LCC = { cropland: "#D9A93A", pasture_hay: "#E3D08A", shrub_grass: "#9DB07A", forest: "#3F6E45", wetlands: "#4E9A9C", water: "#3D74AE", barren: "#C9B79A", developed: "#8F8A80" };
+const lcKey = s => { const lc = s.landcover; if (!lc) return null; let best = null; for (const [k] of LC) if (best == null || (lc.acres[k] || 0) > (lc.acres[best] || 0)) best = k; return best; };
+
+/* ---------------- shared bits ---------------- */
+const CHIP = { s1: "Sentinel-1 radar", nisar: "NISAR radar", swot: "SWOT", opera: "OPERA DISP-S1", proj: "Projection" };
+const chip = (k, txt) => `<span class="chip ${k}">${esc(txt || CHIP[k])}</span>`;
+const datachip = txt => `<span class="chip data">${esc(txt)}</span>`;
+function srcline(files, urls) {
+  const u = (urls || []).filter(Boolean).map(x => { let h = x; try { h = new URL(x).hostname.replace(/^www\./, ""); } catch (e) {} return `<a href="${esc(x)}" target="_blank" rel="noopener">${esc(h)}</a>`; });
+  return `<p class="srcline">Data: ${files.map(f => `<code>${esc(f)}</code>`).join(" ")}${u.length ? " · " + u.join(" · ") : ""}</p>`;
+}
+const PERSON = (cls, fill, dash) => `<svg class="${cls}" viewBox="0 0 11 22" aria-hidden="true"><circle cx="5.5" cy="3.4" r="3" fill="${fill}" ${dash}/><path d="M1.2 21V12.5Q1.2 8 5.5 8T9.8 12.5V21Z" fill="${fill}" ${dash}/></svg>`;
+function nextBtn(ch) {
+  const order = ["land", "nisar", "water", "future"], i = order.indexOf(ch), nx = order[i + 1];
+  const names = { land: "Land", nisar: "NISAR now", water: "Water", future: "2035" };
+  return `<div class="next">${i > 0 ? `<button class="btn" data-go="${order[i - 1]}">&larr; ${names[order[i - 1]]}</button>` : "<span></span>"}
+    ${nx ? `<button class="btn solid" data-go="${nx}">Next: ${names[nx]} &rarr;</button>` : `<button class="btn" data-go="land">Start again</button>`}</div>`;
 }
 
-/* ---------------- F7 pressure index ---------------- */
-function pressure(src) {
-  const y = yIdx(), maxShare = Math.max(...D.sources.map(s => s.share[state.scn][y]), 1e-9);
-  const parts = [src.share[state.scn][y] / maxShare, src.decline_score ?? 0, src.stress_norm ?? 0];
-  const wsum = state.w.reduce((a, b) => a + b, 0);
-  return wsum ? parts.reduce((acc, v, i) => acc + v * state.w[i], 0) / wsum : 0;
-}
-const STOPS = [[44, 106, 102], [192, 138, 43], [142, 31, 31]];
-function pcolor(t) {
-  t = Math.max(0, Math.min(1, t || 0));
-  const [a, b, k] = t < .5 ? [STOPS[0], STOPS[1], t * 2] : [STOPS[1], STOPS[2], (t - .5) * 2];
-  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, "0")).join("");
+/* ---------------- chapter 1: land ---------------- */
+function chLand() {
+  const L = ST.land, natural = L.total_acres - L.acres.developed, per = 20;
+  const sq = LC.flatMap(([k]) => Array(Math.round(L.acres[k] / per)).fill(k));
+  const ab = siteById["STARGATE-ABILENE"];
+  return `<div class="ch">
+    <div class="kicker"><span class="n">1</span>${chip("s1")}</div>
+    <h1>Farms, ranchland and forest became data center campuses</h1>
+    <p class="lede">From 2017 to 2026, the European Sentinel-1 radar satellite saw the ground change at every campus in this study, month by month. Press Play to watch it add up.</p>
+    <div class="big">${fmt(L.total_acres)}<small>acres changed</small></div>
+    <p class="bigl">at ${L.n_sites} built campuses. <b>${fmt(natural)} acres</b> of it was not built on before: farmland, pasture, shrubland, forest and wetland.</p>
+    <h3>What the land was before · 1 square = ${per} acres</h3>
+    <div class="ugrid" role="img" aria-label="${LC.map(([k, n]) => `${n} ${fmt(L.acres[k])} acres`).join(", ")}">${sq.map(k => `<i style="--c:${LCC[k]}"></i>`).join("")}</div>
+    <div class="ulegend">${LC.filter(([k]) => L.acres[k] >= 1).map(([k, n]) => `<span style="--c:${LCC[k]}">${n}</span><b>${fmt(L.acres[k])} ac</b>`).join("")}</div>
+    ${srcline([L.file, "data/footprint/masks/"], [L.source, "https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc"])}
+    <p class="note" style="margin-top:8px">Land cover is the US government's NLCD map from before construction (${L.nlcd_years[0]}-${L.nlcd_years[1]}), read under the pixels the radar marked as changed.</p>
+    <h3>See it on the ground</h3>
+    <div class="card"><h4>${esc(ab.name)}<span></span></h4>
+      <p style="margin:2px 0 8px">Shrubland near Abilene, Texas became a ${fmt(ab.footprint.final_acres)}-acre campus in about two years. Drag the divider to compare aerial photos from before and after.</p>
+      <button class="btn solid" data-site="STARGATE-ABILENE">Open before / after</button></div>
+    ${nextBtn("land")}</div>`;
 }
 
-/* Acres shown for a campus at the current time: the radar curve while measured, the projection after. */
-function siteAcres(s) {
-  if (isProj()) return s.projected ? s.acres[state.scn][yIdx()] : (curveOf(s) ? curveAt(curveOf(s), T_MEAS1) : 0);
-  return curveOf(s) ? curveAt(curveOf(s), state.t) : 0;
-}
-function siteStarted(s) { return s.construction_start ? tOf(s.construction_start) <= state.t : false; }
-
-/* ---------------- events for the activity log ---------------- */
-const EVENTS = [];
-for (const s of D.sites) {
-  if (s.construction_start) EVENTS.push({ t: tOf(s.construction_start), k: "c", label: "Construction start", s });
-  if (s.operation_date) EVENTS.push({ t: tOf(s.operation_date), k: "o", label: "First building operating", s });
-  const c = curveOf(s);
-  if (c && c.length) {
-    const fin = c[c.length - 1][1], hit = c.find(([, a]) => a >= fin / 2);
-    if (hit && fin > 20) EVENTS.push({ t: hit[0], k: "r", label: `Radar: half of ${fmt(fin)} ac changed`, s });
-  }
-}
-EVENTS.sort((a, b) => a.t - b.t);
-
-/* ---------------- panels ---------------- */
-function linkList(urls) {
-  if (!urls || !urls.length) return "";
-  return `<div class="srcs">Sources: ${urls.map(u => { let h = u; try { h = new URL(u).hostname.replace(/^www\./, ""); } catch (e) {}
-    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`; }).join(" · ")}</div>`;
-}
-function scnTable(rows) {
-  const head = `<tr><th></th>${SCN.map(c => `<th class="${c === state.scn ? "sel" : ""}">${c}</th>`).join("")}</tr>`;
-  return `<table>${head}${rows.map(([lab, f]) => `<tr><td>${lab}</td>${SCN.map(c => `<td class="${c === state.scn ? "sel" : ""}">${f(c)}</td>`).join("")}</tr>`).join("")}</table>`;
-}
-function curveChart(c, s) {
-  const W = 336, H = 120, L0 = 40, R0 = 6, T0 = 10, B0 = 20;
-  const t0 = c[0][0], t1 = c[c.length - 1][0], vmax = Math.max(...c.map(p => p[1])) * 1.08 || 1;
-  const X = t => L0 + (t - t0) / (t1 - t0 || 1) * (W - L0 - R0), Y = v => T0 + (vmax - v) / vmax * (H - T0 - B0);
-  const path = c.map(([t, v], i) => `${i ? "L" : "M"}${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const area = path + `L${X(t1)},${Y(0)}L${X(t0)},${Y(0)}Z`;
-  const cs = s.construction_start ? tOf(s.construction_start) : null;
-  const now = Math.max(t0, Math.min(t1, state.t)), nowV = curveAt(c, now);
-  let xt = ""; for (let y = Math.ceil(t0 / 12); y * 12 <= t1; y++) xt += `<text x="${X(y * 12)}" y="${H - 5}" font-size="9.5" text-anchor="middle" fill="#746C5F" font-family="IBM Plex Mono">${y}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Acres changed by month, Sentinel-1">
-    ${[0, .5, 1].map(f => `<line x1="${L0}" x2="${W - R0}" y1="${Y(vmax * f)}" y2="${Y(vmax * f)}" stroke="#DCD4C5"/><text x="${L0 - 5}" y="${Y(vmax * f) + 3}" font-size="9.5" text-anchor="end" fill="#746C5F" font-family="IBM Plex Mono">${fmt(vmax * f)}</text>`).join("")}
-    ${xt}<path d="${area}" fill="#C2461B" opacity=".1"/><path d="${path}" fill="none" stroke="#C2461B" stroke-width="1.6"/>
-    ${cs != null && cs >= t0 ? `<line x1="${X(cs)}" x2="${X(cs)}" y1="${T0}" y2="${H - B0}" stroke="#1D1C1A" stroke-dasharray="2 2"/><text x="${X(cs) + 3}" y="${T0 + 8}" font-size="9" fill="#1D1C1A" font-family="IBM Plex Mono">START</text>` : ""}
-    <line x1="${X(now)}" x2="${X(now)}" y1="${T0}" y2="${H - B0}" stroke="#FF5A1F" stroke-width="1.5"/><circle cx="${X(now)}" cy="${Y(nowV)}" r="3.5" fill="#FF5A1F"/>
+/* ---------------- chapter 2: NISAR ---------------- */
+function radarChart(n, s) {
+  const W = 360, H = 150, L0 = 34, R0 = 6, gap = 14, h1 = 62, h2 = 46, top2 = 10 + h1 + gap;
+  const all = [...n.s1.t, ...n.nisar.t].map(Date.parse), tmin = Math.min(...all), tmax = Math.max(...all);
+  const X = d => L0 + (Date.parse(d) - tmin) / (tmax - tmin) * (W - L0 - R0);
+  const lane = (vals, y0, h) => { let a = Math.min(...vals), b = Math.max(...vals); const p = (b - a) * .12 || 1; a -= p; b += p; return v => y0 + (b - v) / (b - a) * h; };
+  const Y1 = lane(n.s1.v, 10, h1), Y2 = lane(n.nisar.v, top2, h2);
+  const path = (t, v, Y) => t.map((d, i) => `${i ? "L" : "M"}${X(d).toFixed(1)},${Y(v[i]).toFixed(1)}`).join("");
+  const cs = s.construction_start;
+  let xt = ""; for (let y = new Date(tmin).getUTCFullYear() + 1; y <= new Date(tmax).getUTCFullYear(); y++) { const x = X(`${y}-01-01`); xt += `<text x="${x}" y="${H - 2}" font-size="9.5" text-anchor="middle" fill="#6F675A" font-family="IBM Plex Mono">${y}</text><line x1="${x}" x2="${x}" y1="8" y2="${H - 12}" stroke="#E6DFD1"/>`; }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar brightness inside the campus: Sentinel-1 from ${n.s1.t[0]}, NISAR from ${n.nisar.t[0]}">
+    ${xt}
+    <text x="${L0}" y="6" font-size="9.5" fill="#3E6A96" font-family="IBM Plex Mono" font-weight="600">SENTINEL-1 · VV dB</text>
+    <path d="${path(n.s1.t, n.s1.v, Y1)}" fill="none" stroke="#3E6A96" stroke-width="1.6"/>
+    <text x="${L0}" y="${top2 - 4}" font-size="9.5" fill="#8A2BE2" font-family="IBM Plex Mono" font-weight="600">NISAR · HH dB · track ${esc(n.nisar.stack)}</text>
+    <rect x="${X(n.nisar.t[0]) - 4}" y="${top2}" width="${W - R0 - X(n.nisar.t[0]) + 4}" height="${h2}" fill="#8A2BE2" opacity=".07"/>
+    <path d="${path(n.nisar.t, n.nisar.v, Y2)}" fill="none" stroke="#8A2BE2" stroke-width="1.8"/>
+    ${n.nisar.t.map((d, i) => `<circle cx="${X(d)}" cy="${Y2(n.nisar.v[i])}" r="2.6" fill="#8A2BE2"/>`).join("")}
+    ${cs ? `<line x1="${X(cs)}" x2="${X(cs)}" y1="8" y2="${H - 12}" stroke="#1D1C1A" stroke-dasharray="3 2"/><text x="${X(cs) - 3}" y="18" font-size="9" text-anchor="end" fill="#1D1C1A" font-family="IBM Plex Mono">BUILD STARTS</text>` : ""}
   </svg>`;
 }
-function bandChart(series, label, color, unit) {
-  const W = 336, H = 110, L0 = 40, R0 = 6, T0 = 12, B0 = 20, y = yIdx();
-  const vmax = Math.max(...SCN.flatMap(c => series[c])) * 1.08 || 1;
-  const X = i => L0 + i / (YEARS.length - 1) * (W - L0 - R0), Y = v => T0 + (vmax - v) / vmax * (H - T0 - B0);
-  const band = series.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + series.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
-  const line = series[state.scn].map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}, low to high, 2026 to 2030">
-    ${[0, .5, 1].map(f => `<line x1="${L0}" x2="${W - R0}" y1="${Y(vmax * f)}" y2="${Y(vmax * f)}" stroke="#DCD4C5"/><text x="${L0 - 5}" y="${Y(vmax * f) + 3}" font-size="9.5" text-anchor="end" fill="#746C5F" font-family="IBM Plex Mono">${fmt(vmax * f)}</text>`).join("")}
-    <polygon points="${band}" fill="${color}" opacity=".14"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.6"/>
-    <circle cx="${X(y)}" cy="${Y(series[state.scn][y])}" r="3.5" fill="${color}"/>
-    ${YEARS.map((yy, i) => `<text x="${X(i)}" y="${H - 5}" font-size="9.5" text-anchor="middle" fill="${i === y ? "#1D1C1A" : "#746C5F"}" font-family="IBM Plex Mono">${yy}</text>`).join("")}
-    <text x="${L0}" y="8" font-size="9" fill="#746C5F" font-family="IBM Plex Mono">${esc(unit)}</text></svg>`;
+function chNisar() {
+  const N = ST.nisar, sv = ST.sensors.nisar;
+  const cards = Object.entries(N).map(([sid, n]) => { const s = siteById[sid], rp = radarById[n.radar_id];
+    return `<div class="card nis"><h4>${esc(s.name.replace(/\s*\(.*\)/, ""))}<button data-site="${sid}">Open</button></h4>
+      ${radarChart(n, s)}
+      ${rp ? `<a href="${esc(rp.images.find(x => x.includes("_nisar")))}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(rp.images.find(x => x.includes("_nisar")))}" alt="NISAR radar images of ${esc(s.name)}, first and latest date"></a>
+      <p class="note" style="margin:4px 0 0">NISAR L-band images, first and latest date. Bright = strong echo from buildings and steel.</p>` : ""}
+      ${srcline([n.file.split(" ; ")[1]], ["https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`; }).join("");
+  const gm = radarById["WB-MESILLA"];
+  return `<div class="ch">
+    <div class="kicker"><span class="n" style="background:var(--nisar)">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
+    <h1>NASA's new NISAR radar is watching the biggest builds right now</h1>
+    <p class="lede">NISAR launched in July 2025, so it could not see these sites before work began. Sentinel-1 gives the "before". NISAR gives a sharper "now": a pass over each site every 12 days, through clouds, day and night.</p>
+    <div class="big" style="color:var(--nisar)">${sv.n_usable}<small>NISAR images used</small></div>
+    <p class="bigl">over 3 Stargate-scale campuses under construction, ${tnice(tOf(sv.from))} to ${tnice(tOf(sv.to))}. Every one passed a quality check.</p>
+    ${srcline([sv.file, "data/nisar_coverage_notes.md"], ["https://search.asf.alaska.edu"])}
+    <h3>Two satellites, one site</h3>
+    <p class="note">Blue line: Sentinel-1 since 2024. Purple: NISAR since June 2026. Both measure how brightly the ground echoes radar inside the campus outline; new buildings and steel make it brighter.</p>
+    ${cards}
+    ${gm ? `<div class="card nis"><h4>${esc(gm.name)}, the aquifer under Project Jupiter<button data-src="SRC-NM3502507">Open</button></h4>
+      <p style="margin:2px 0 0">${esc(gm.caption)}</p><a href="${esc(gm.images[0])}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(gm.images[0])}" alt="Ground motion over the Mesilla Bolson from Sentinel-1 and NISAR"></a>
+      ${srcline(["data/water/gunw/", "data/sources.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}</div>` : ""}
+    ${nextBtn("nisar")}</div>`;
 }
-const LC = [["developed", "Developed"], ["cropland", "Cropland"], ["pasture_hay", "Pasture/hay"], ["forest", "Forest"],
-            ["shrub_grass", "Shrub/grass"], ["barren", "Barren"], ["wetlands", "Wetland"], ["water", "Open water"]];
-function landcover(lc) {
-  const segs = LC.filter(([k]) => (lc.pct[k] || 0) > 0);
-  return `<div class="sec"><h3>Land before construction</h3><p>${fmt(lc.converted_acres)} acres measured as converted. Mostly ${esc(lc.dominant)} (${lc.dominant_pct}%) on the NLCD ${lc.nlcd_year} map.</p>
-    <div class="lcbar" role="img" aria-label="${segs.map(([k, n]) => `${n} ${lc.pct[k]}%`).join(", ")}">${segs.map(([k, n]) => `<span title="${n} ${lc.pct[k]}%" style="width:${lc.pct[k]}%;background:var(--lc-${k})"></span>`).join("")}</div>
-    <div class="lclegend">${segs.map(([k, n]) => `<span style="--c:var(--lc-${k})">${n} ${lc.pct[k]}%</span>`).join("")}</div></div>`;
-}
-function exposure(e) {
-  if (!e) return "";
-  return `<div class="sec"><h3>Nearby wetlands and protected land</h3>
-    <p>Nearest marsh or swamp (USFWS NWI): ${dist(e.wetland_vegetated_m)}${e.wetland_vegetated_type ? ` (${esc(e.wetland_vegetated_type)})` : ""}</p>
-    <p>Nearest mapped water or wetland of any type: ${dist(e.wetland_any_m)}${e.wetland_any_type ? ` (${esc(e.wetland_any_type)})` : ""}</p>
-    <p>Nearest protected land (PAD-US, GAP 1-3): ${dist(e.protected_m)}${e.protected_name ? ` (${esc(e.protected_name)}${e.protected_manager ? ", " + esc(e.protected_manager) : ""})` : ""}</p>
-    <p class="note">Measured from ${esc(e.measured_from || "")}. Wetland maps are often older than the construction.</p></div>`;
-}
-const BACK = `<button class="back" data-home="1">&larr; National overview</button>`;
-const MATCH_TEXT = {
-  self_supplied_check: "No public water utility's service area contains this campus. It may use its own wells or a private supply (not checked).",
-  location_missing: "Campus location not found, so no water source was matched.",
+
+/* ---------------- chapter 3: water ---------------- */
+const trendWords = src => {
+  if (src.trend_status !== "ok") return null;
+  if (src.trend_unit === "m/yr") return { k: "swot", txt: `water level ${src.trend_value < 0 ? "falling" : "rising"} ${Math.abs(src.trend_value * 100).toFixed(1)} cm a year`, down: src.trend_value < 0 };
+  return { k: "opera", txt: `ground ${src.trend_value < 0 ? "moving away from the satellite" : "moving toward the satellite"} ${Math.abs(src.trend_value).toFixed(1)} mm a year`, down: src.trend_value < 0 };
 };
+function sparkline(sr, color) {
+  if (!sr) return "";
+  const t = sr.t.map(Date.parse), v = sr.v.filter((_, i) => sr.keep[i]), tk = t.filter((_, i) => sr.keep[i]);
+  const W = 92, H = 30, a = Math.min(...v), b = Math.max(...v), t0 = Math.min(...tk), t1 = Math.max(...tk);
+  const X = x => (x - t0) / (t1 - t0 || 1) * (W - 2) + 1, Y = y => H - 2 - (y - a) / (b - a || 1) * (H - 4);
+  const fit0 = Date.parse(sr.fit.t0), fy = x => sr.fit.at_t0 + sr.fit.per_year * (x - fit0) / (365.25 * 864e5);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true">${tk.map((x, i) => `<rect x="${X(x) - .8}" y="${Y(v[i]) - .8}" width="1.6" height="1.6" fill="${color}" opacity=".55"/>`).join("")}
+    <line x1="${X(t0)}" y1="${Y(fy(t0))}" x2="${X(t1)}" y2="${Y(fy(t1))}" stroke="#C2461B" stroke-width="1.6"/></svg>`;
+}
+const SHARE_C = x => x >= 1 ? "#8E1F1F" : x >= .2 ? "#C2461B" : x >= .05 ? "#D9A93A" : "#9DB07A";
+function chWater() {
+  const ranked = D.sources.filter(s => s.share.median[LAST] > 0).sort((a, b) => b.share.median[LAST] - a.share.median[LAST]);
+  const top = ranked.slice(0, 8), maxS = Math.max(...top.map(s => s.share.median[LAST]), 1);
+  const over = ranked.filter(s => s.share.median[LAST] >= 1);
+  const trends = D.sources.filter(s => s.trend_status === "ok").sort((a, b) => (a.trend_value / Math.abs(a.trend_unit === "m/yr" ? .1 : 5)) - (b.trend_value / Math.abs(b.trend_unit === "m/yr" ? .1 : 5)));
+  return `<div class="ch">
+    <div class="kicker"><span class="n">3</span>${chip("swot")}${chip("opera")}</div>
+    <h1>Some campuses depend on small towns' water</h1>
+    <p class="lede">We followed each campus to the public water utility whose service area it sits in, then to the river, lake or aquifer that utility draws from (EPA records). Then we compared the campuses' estimated water use with what the utility supplies to its own customers.</p>
+    <div class="big" style="color:var(--crimson)">${over.length}<small>water utilities</small></div>
+    <p class="bigl">would need to supply <b>more water to linked campuses by 2035 than they supply to all their customers today</b>, if the announced campuses are built (middle estimate).</p>
+    <h3>Campus water need vs. the utility's supply, 2035</h3>
+    <p class="note" style="margin-top:-2px">Black tick = 100%, the utility's whole supply today.</p>
+    ${top.map(s => { const x = s.share.median[LAST], lo = s.share.low[LAST], hi = s.share.high[LAST];
+      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small>${title(s.utility)} · ${fmt(s.population_served)} people</small></span>
+        <span class="v" style="color:${SHARE_C(x)}">${times(x)}<small>range ${times(lo)}-${times(hi)}</small></span>
+        <span class="barw"><i style="--c:${SHARE_C(x)};width:${Math.min(100, x / maxS * 100)}%"></i><u style="left:${Math.min(100, 1 / maxS * 100)}%"></u></span></button>`; }).join("")}
+    ${srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"])}
+    <p class="note" style="margin-top:6px">F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.</p>
+    <h3>Is the water body already changing? · from space</h3>
+    <p class="note" style="margin-top:-2px">${chip("swot")} measures river and lake water levels. ${chip("opera")} measures tiny ground movement from Sentinel-1, which can show an aquifer being drawn down.</p>
+    ${trends.map(s => { const w = trendWords(s), col = w.k === "swot" ? "#12808F" : "#6F8FB0";
+      return `<button class="rank" data-src="${s.id}" style="grid-template-columns:1fr 92px"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${esc(w.txt)}</small><small>${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)} · ${CHIP[w.k]}</small></span>
+        <span>${sparkline(s.series, col)}</span></button>`; }).join("")}
+    ${srcline(["data/sources.csv", "data/water/swot/", "data/water/disp/"], ["https://podaac.github.io/hydrocron/intro.html", "https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1"])}
+    <p class="note" style="margin-top:6px">A trend describes the water body. It does not show what caused the change, and a campus being linked to a source does not mean it caused any change in it.</p>
+    ${nextBtn("water")}</div>`;
+}
+
+/* ---------------- chapter 4: future ---------------- */
+function futureNumbers(y) {
+  const out = {};
+  for (const c of D.scenarios) out[c] = { w: sumYear("water_ml", c, y), a: sumYear("acres", c, y), pw: pace.water_ml[c][y], pa: pace.acres[c][y] };
+  return out;
+}
+function futureChart(y) {
+  const W = 370, H = 170, L0 = 44, R0 = 8, T0p = 12, B0 = 20, n = YEARS.length;
+  const tot = i => sumYear("water_ml", "median", i) + pace.water_ml.median[i];
+  const vmax = people(Math.max(...YEARS.map((_, i) => sumYear("water_ml", "high", i) + pace.water_ml.median[i]), ...YEARS.map((_, i) => tot(i)))) * 1.05;
+  const X = i => L0 + i / (n - 1) * (W - L0 - R0), Y = v => T0p + (vmax - v) / vmax * (H - T0p - B0);
+  const ann = YEARS.map((_, i) => people(sumYear("water_ml", "median", i)));
+  const lo = YEARS.map((_, i) => people(sumYear("water_ml", "low", i))), hi = YEARS.map((_, i) => people(sumYear("water_ml", "high", i)));
+  const pc = YEARS.map((_, i) => people(tot(i)));
+  const line = a => a.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const band = hi.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + lo.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
+  const grid = [0, .25, .5, .75, 1].map(f => vmax * f);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="People's worth of water for the campuses, ${YEARS[0]} to ${YEARS[LAST]}">
+    ${grid.map(v => `<line x1="${L0}" x2="${W - R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E6DFD1"/><text x="${L0 - 5}" y="${Y(v) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">${v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1e3) + "k"}</text>`).join("")}
+    <path d="${line(pc)}L${X(n - 1)},${Y(ann[n - 1])}${ann.map((v, i) => `L${X(n - 1 - i)},${Y(ann[n - 1 - i])}`).join("")}Z" fill="#B9832A" opacity=".10"/>
+    <path d="${line(pc)}" fill="none" stroke="#B9832A" stroke-width="2" stroke-dasharray="5 4"/>
+    <polygon points="${band}" fill="#12808F" opacity=".14"/>
+    <path d="${line(ann)}" fill="none" stroke="#12808F" stroke-width="2.2"/>
+    <line x1="${X(y)}" x2="${X(y)}" y1="${T0p}" y2="${H - B0}" stroke="#1D1C1A" stroke-width="1"/>
+    <circle cx="${X(y)}" cy="${Y(ann[y])}" r="4" fill="#12808F" stroke="#fff" stroke-width="1.5"/><circle cx="${X(y)}" cy="${Y(pc[y])}" r="4" fill="#B9832A" stroke="#fff" stroke-width="1.5"/>
+    ${YEARS.map((yy, i) => i % (isNarrow() ? 3 : 1) === 0 || i === n - 1 ? `<text x="${X(i)}" y="${H - 5}" font-size="9.5" text-anchor="middle" fill="${i === y ? "#1D1C1A" : "#6F675A"}" font-family="IBM Plex Mono" font-weight="${i === y ? 600 : 400}">${String(yy).slice(2) === String(yy).slice(2) ? "'" + String(yy).slice(2) : yy}</text>` : "").join("")}
+    <text x="${X(n - 1) - 4}" y="${Y(pc[n - 1]) - 8}" font-size="10" text-anchor="end" fill="#8A621B" font-family="IBM Plex Sans" font-weight="600">if the pace continues</text>
+    <text x="${X(n - 1) - 4}" y="${Y(ann[n - 1]) + 16}" font-size="10" text-anchor="end" fill="#0E6670" font-family="IBM Plex Sans" font-weight="600">announced campuses</text>
+  </svg>`;
+}
+function chFuture() {
+  const y = yIdxAt(state.t), F = futureNumbers(y), m = F.median, per = 25000;
+  const nA = Math.round(people(m.w) / per), nP = Math.round(people(m.pw) / per);
+  const figs = Array(nA).fill(PERSON("", "#12808F", "")).concat(Array(nP).fill(PERSON("", "none", 'stroke="#B9832A" stroke-width="1" stroke-dasharray="2 1.5"')));
+  const sqmi = a => (a / 640).toFixed(0);
+  return `<div class="ch">
+    <div class="kicker"><span class="n">4</span>${chip("proj", "Projection to 2035")}</div>
+    <h1>What the announced money builds by ${YEARS[y]}</h1>
+    <p class="lede">Companies have announced how many megawatts or billions of dollars they will build, and where. We turned those announcements into land and water, using what the built campuses taught us. Press Play to run the years.</p>
+    <div class="big stack" id="fBig">${short(people(m.w))}<small>people's worth of water</small></div>
+    <p class="bigl">a year in <b>${YEARS[y]}</b> for the ${projSites.length} campuses in this study, built and announced. <span class="range">Range ${short(people(F.low.w))} to ${short(people(F.high.w))}.</span></p>
+    <p class="bigl" style="color:#8A621B">If new projects keep being announced at the pace of the last two years (${fmt(pace.rate_mw_per_yr.median)} MW a year), add <b>${short(people(m.pw))}</b> more.</p>
+    <h3>Each figure = ${per.toLocaleString("en-US")} people's daily water</h3>
+    <div class="people" role="img" aria-label="${nA} solid figures for announced campuses and ${nP} dashed figures if the pace continues">${figs.join("")}</div>
+    <p class="note"><span style="color:#12808F;font-weight:600">Solid</span>: built and announced campuses. <span style="color:#8A621B;font-weight:600">Dashed</span>: if the announcement pace continues (F9).</p>
+    <h3>Water, ${YEARS[0]}-${YEARS[LAST]}, in people</h3>
+    ${futureChart(y)}
+    <p class="note">Band: low to high estimate for the announced campuses. Each campus ramps up on the curve the built campuses followed (F8), so water keeps rising for about two years after the buildings are done.</p>
+    <h3>Land</h3>
+    <p><b>${fmt(m.a)} acres</b> (about ${sqmi(m.a)} square miles) of campus land by ${YEARS[y]} <span class="range">(range ${fmt(F.low.a)}-${fmt(F.high.a)})</span>,
+      plus <b style="color:#8A621B">${fmt(m.pa)} acres</b> if the pace continues. Today the radar measures ${fmt(ST.land.total_acres)} acres at the built campuses.</p>
+    ${srcline(["data/announced_sites.csv", "data/precedent_sites.csv", "data/calibration/"], [USGS, "https://epoch.ai/data/data-centers"])}
+    <p class="note" style="margin-top:8px">People's worth = water / (${fmt(PER_CAPITA)} liters per person per day, the US public-supply average, USGS 2015). The pace line is a "what if", not a forecast: it repeats, every year to 2035, the megawatts announced in the last two years by the projects in this study (${pace.n_sites} campuses), so it leaves out smaller projects.</p>
+    <h3>Where the pressure lands</h3>
+    ${D.sources.filter(s => s.share.median[y] >= 1).sort((a, b) => b.share.median[y] - a.share.median[y]).map(s =>
+      `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small>${title(s.utility)}</small></span><span class="v" style="color:#8E1F1F">${times(s.share.median[y])}<small>of supply, ${YEARS[y]}</small></span></button>`).join("") || `<p class="note">No utility above 100% in ${YEARS[y]}.</p>`}
+    ${nextBtn("future")}</div>`;
+}
+
+/* ---------------- detail: one campus ---------------- */
+function photos(s) {
+  const ph = WB.sites[s.id]; if (!ph || ph.length < 2) return null;
+  const cs = s.construction_start ? tOf(s.construction_start) : null, last = ph[ph.length - 1];
+  const before = cs != null ? [...ph].reverse().find(p => p[0] < cs) : ph[0];
+  if (!before || before === last) return null;
+  return { before, after: last, cs };
+}
 function showSite(s) {
-  const y = yIdx(), c = state.scn, src = srcById[s.source_id], cv = curveOf(s);
-  let h = `<div class="pad">${BACK}<div class="kind" style="--c:var(--ink)"><i></i><span class="cap">${s.status === "built" ? "Built campus" : "Announced campus"}</span></div>
-    <h2>${esc(s.name)}</h2><p class="sub">${[s.construction_start ? "Construction from " + s.construction_start : "", s.mw_stated ? fmt(s.mw_stated) + " MW stated" : ""].filter(Boolean).join(" · ")}</p>`;
-  if (s.location.precision && !["osm_outline", "image_outline"].includes(s.location.precision) && s.status !== "built")
-    h += `<p class="note" style="margin-top:6px">Location: ${esc(s.location.basis || s.location.precision)}</p>`;
-  if (playRange(s)) h += `<p style="margin:12px 0 0"><button class="btn solid" data-playsite="1">&#9654; Watch it being built, ${tlabel(playRange(s)[0])} to ${tlabel(playRange(s)[1])}</button></p>`;
+  const P = photos(s), lc = s.landcover, src = srcById[s.source_id], fp = s.footprint, n = ST.nisar[s.id], y = LAST;
+  const key = lcKey(s);
+  let h = `<div class="ch"><button class="back" data-back="1">&larr; Back to the story</button>
+    <div class="chips" style="margin:0 0 8px">${fp ? chip("s1") : ""}${n ? chip("nisar") : ""}${s.projected ? chip("proj") : ""}</div>
+    <h2>${esc(s.name)}</h2>
+    <p class="note">${s.status === "built" ? "Built campus" : "Announced campus"}${s.construction_start ? " · construction from " + s.construction_start : ""}${s.mw_stated ? " · " + fmt(s.mw_stated) + " MW stated" : ""}</p>`;
+  if (P) h += `<div class="card"><p style="margin:0">${P.after[0] > P.cs ? "Drag the divider on the map." : ""} Left: aerial photo from <b>${P.before[2]}</b>, before construction. Right: photo from <b>${P.after[2]}</b>${TL.pixels.includes(curveId(s)) ? ", with the land Sentinel-1 radar saw change painted in <b style=\"color:var(--rust)\">rust</b>" : ""}.</p>
+      ${TL.pixels.includes(curveId(s)) ? `<button class="btn" style="margin-top:8px" data-replay="1">&#9654; Replay the radar, month by month</button>` : ""}
+      ${srcline(["data/wayback_captures.csv"], [WB.source])}</div>`;
+  if (fp && fp.final_acres) h += `<div class="big" style="font-size:34px">${fmt(fp.final_acres)}<small>acres changed</small></div>
+      <p class="bigl">measured by Sentinel-1 radar inside the campus outline + 200 m, to ${esc(fp.window_end)}.</p>`;
+  if (lc) { const segs = LC.filter(([k]) => (lc.pct[k] || 0) > 0);
+    h += `<h3>What the land was before</h3><p>Mostly <b>${esc(LC.find(([k]) => k === key)[1].toLowerCase())}</b> on the NLCD ${lc.nlcd_year} map.</p>
+      <div class="lcbar">${segs.map(([k, nm]) => `<span title="${nm} ${lc.pct[k]}%" style="width:${lc.pct[k]}%;background:${LCC[k]}"></span>`).join("")}</div>
+      <div class="ulegend">${segs.map(([k, nm]) => `<span style="--c:${LCC[k]}">${nm}</span><b>${fmt(lc.acres[k])} ac</b>`).join("")}</div>${srcline([lc.file], ["https://www.mrlc.gov/data"])}`; }
+  if (n) h += `<h3>${chip("nisar")} watching now</h3><div class="card nis" style="margin-top:0">${radarChart(n, s)}${srcline(n.file.split(" ; "), ["https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`;
+  h += `<h3>Water</h3>`;
+  if (src) { const w = trendWords(src);
+    h += `<p>Depends on <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button> through ${title(src.utility)}${s.water_match && s.water_match.status === "matched_approx_location" ? " (campus location is approximate)" : ""}.
+      ${w ? `${chip(w.k)} ${esc(w.txt[0].toUpperCase() + w.txt.slice(1))} (${src.trend_start.slice(0, 4)}-${src.trend_end.slice(0, 4)}).` : ""}</p>`; }
+  else h += `<p>No public water utility's service area contains this campus. It may use its own wells or a private supply (not checked), so it is left out of water shares.</p>`;
+  if (s.projected) { const wm = s.water_ml, am = s.acres;
+    h += `<h3>${chip("proj")} By ${YEARS[y]}</h3><p><b>${short(people(wm.median[y]))} people's worth</b> of water a year <span class="range">(range ${short(people(wm.low[y]))}-${short(people(wm.high[y]))})</span>
+      and <b>${fmt(am.median[y])} acres</b> <span class="range">(${fmt(am.low[y])}-${fmt(am.high[y])})</span>.</p>${srcline([s.status === "built" ? "data/precedent_sites.csv" : "data/announced_sites.csv"], s.links.slice(0, 2))}`; }
+  else h += `<p class="note">Not projected: ${esc(s.not_projected_reason)}.</p>`;
   h += `</div>`;
-  const ph = WB.sites[s.id];
-  if (ph && ph.length) { const cur = photoAt(s, state.t);
-    h += `<div class="sec"><h3>Aerial photos, by capture date</h3><div class="film">${ph.map(([t, r, d]) => `<button data-photo="${t}" class="${cur && cur[1] === r ? "on" : ""}" title="Photo captured ${d}">
-      <img loading="lazy" alt="Aerial photo captured ${d}" src="${wbTile(r, s, 15)}"><span>${d}</span></button>`).join("")}</div>
-      <p class="note">Esri World Imagery Wayback. The map shows the latest photo taken before the timeline date; click one to jump there.</p></div>`; }
-  if (s.projected) h += `<div class="stats"><div><b>${fmt(s.mw[c])}</b><span>MW, ${c}</span></div><div><b>${fmt(s.acres[c][y])}</b><span>acres, ${YEARS[y]} projection</span></div>
-      <div><b>${fmt(s.water_ml[c][y])}</b><span>ML water/yr, ${YEARS[y]}</span></div></div>`;
-  if (cv) h += `<div class="sec"><h3>Land changed, measured by radar</h3>${curveChart(cv, s)}
-      <p class="note">Sentinel-1 acres changed inside the campus outline + 200 m, by month. ${(TL.pixels || []).includes(curveId(s)) ? "The map's orange pixels follow this curve: each lights up in the month it first changed." : s.status === "built" ? "Pixel-by-pixel months are not shown for this campus: re-running the radar steps today no longer reproduces the saved mask exactly. On the map, the outline rises with this curve instead." : "This announced campus has no saved radar mask, so on the map its outline rises with this curve, then with the projection."}</p></div>`;
-  const fp = s.footprint;
-  if (fp && s.status === "built") {
-    h += `<div class="sec"><h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
-      (Sentinel-1, ${esc(fp.orbit || "")}, threshold ${fp.threshold_db} dB, to ${esc(fp.window_end || "")}).
-      ${fp.a_max_acres ? `Fitted full-build footprint ${fmt(fp.a_max_acres)} acres; 10-90% of it took ${fmt1(fp.build_months)} months.` : "The growth curve did not level off, so no full-build footprint is fitted."}</p>
-      ${fp.radar_png ? `<figure><a href="${esc(fp.radar_png)}" target="_blank" rel="noopener"><img src="${esc(fp.radar_png)}" loading="lazy" alt="Sentinel-1 radar image of ${esc(s.name)} before construction and in the latest months"></a>
-      <figcaption>Sentinel-1 VV backscatter: before construction (left) and latest months (right); bright = strong echo from buildings and steel.</figcaption></figure>` : ""}</div>`;
-  }
-  const rp = radarById[RADAR_FOR_SITE[s.id]];
-  if (rp) h += `<div class="sec"><button class="btn" data-radar="${rp.id}">Open Sentinel-1 and NISAR radar view</button></div>`;
-  if (s.projected) h += `<div class="sec"><h3>Projection, ${YEARS[y]}</h3>${scnTable([["Capacity (MW)", c2 => fmt(s.mw[c2])], ["Acres converted", c2 => fmt(s.acres[c2][y])], ["Water (ML/yr)", c2 => fmt(s.water_ml[c2][y])]])}
-      <h3 style="margin-top:14px">Water use, 2026-2030</h3>${bandChart(s.water_ml, "Water use", "#2C6A66", "ML/yr")}
-      <h3 style="margin-top:10px">Acres converted, 2026-2030</h3>${bandChart(s.acres, "Acres converted", "#C2461B", "acres")}
-      <p class="note">Band: low to high scenario. Line: ${c}.</p></div>`;
-  else h += `<div class="sec"><p class="note">Not projected: ${esc(s.not_projected_reason)}.</p></div>`;
-  h += `<div class="sec"><h3>Water</h3>`;
-  if (src) h += `<div class="chain"><span class="d" style="--c:var(--ink)"></span><span class="t">${esc(s.name)}</span><span class="l"></span><span class="t note">served by ${title(src.utility)}</span>
-      <span class="d" style="--c:${pcolor(pressure(src))};transform:rotate(45deg) scale(.85)"></span><span class="t"><button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button></span></div>
-      <p>Linked to <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button> through ${title(src.utility)}${s.water_match && s.water_match.status === "matched_approx_location" ? " (campus location is approximate)" : ""}.</p>`;
-  else h += `<p>${MATCH_TEXT[s.water_match && s.water_match.status] || "No water source linked."}</p>`;
-  h += `</div>`;
-  if (s.landcover) h += landcover(s.landcover);
-  h += exposure(s.exposure) + linkList(s.links);
-  setDetail(h);
-}
-function chart(sr) {
-  const W = 336, H = 130, L0 = 40, R0 = 6, T0 = 8, B0 = 20;
-  const t = sr.t.map(d => Date.parse(d)), v = sr.v, tmin = Math.min(...t), tmax = Math.max(...t);
-  const kept = v.filter((_, i) => sr.keep[i]);
-  let vmin = Math.min(...kept), vmax = Math.max(...kept); const pd = (vmax - vmin) * 0.1 || 1; vmin -= pd; vmax += pd;
-  const X = x => L0 + (x - tmin) / (tmax - tmin || 1) * (W - L0 - R0), Y = y => T0 + (vmax - Math.max(vmin, Math.min(vmax, y))) / (vmax - vmin) * (H - T0 - B0);
-  const t0 = Date.parse(sr.fit.t0), yr = 365.25 * 864e5, fy = x => sr.fit.at_t0 + sr.fit.per_year * (x - t0) / yr;
-  const yl = n => sr.unit === "mm" ? n.toFixed(0) : n.toFixed(1);
-  let xt = ""; for (let y = new Date(tmin).getUTCFullYear() + 1; y <= new Date(tmax).getUTCFullYear(); y++) xt += `<text x="${X(Date.UTC(y, 0, 1))}" y="${H - 5}" font-size="9.5" text-anchor="middle" fill="#746C5F" font-family="IBM Plex Mono">${y}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sr.label)}, ${sr.t[0]} to ${sr.t[sr.t.length - 1]}">
-    ${[0, 1 / 3, 2 / 3, 1].map(f => { const yv = vmin + (vmax - vmin) * f; return `<line x1="${L0}" x2="${W - R0}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="#DCD4C5"/><text x="${L0 - 5}" y="${Y(yv) + 3}" font-size="9.5" text-anchor="end" fill="#746C5F" font-family="IBM Plex Mono">${yl(yv)}</text>`; }).join("")}
-    ${xt}${t.map((x, i) => sr.keep[i] ? `<rect x="${(X(x) - 1.6).toFixed(1)}" y="${(Y(v[i]) - 1.6).toFixed(1)}" width="3.2" height="3.2" fill="#2C6A66"/>` : `<rect x="${(X(x) - 1.6).toFixed(1)}" y="${(Y(v[i]) - 1.6).toFixed(1)}" width="3.2" height="3.2" fill="none" stroke="#A39A8B"/>`).join("")}
-    <line x1="${X(tmin)}" y1="${Y(fy(tmin))}" x2="${X(tmax)}" y2="${Y(fy(tmax))}" stroke="#C2461B" stroke-width="1.6"/></svg>`;
-}
-const TREND_TEXT = {
-  swot_lake_id_unavailable: "No satellite trend yet: this is a lake or reservoir, and the SWOT lake identifiers could not be downloaded (archive access was refused).",
-  insufficient_swot: "No satellite trend: too few good SWOT passes over this water body.",
-  insufficient_disp_s1: "No satellite trend: too few usable OPERA DISP-S1 dates.",
-};
-function trendBlock(src) {
-  if (src.trend_status !== "ok") return `<p>${TREND_TEXT[src.trend_status] || esc(src.trend_status)}</p>`;
-  const sr = src.series; let words;
-  if (src.trend_unit === "m/yr") words = `Water surface ${src.trend_value < 0 ? "fell" : "rose"} by about ${Math.abs(src.trend_value * 100).toFixed(1)} cm per year (SWOT, ${src.trend_start} to ${src.trend_end}).`;
-  else words = `The ground moved ${src.trend_value < 0 ? "away from" : "toward"} the satellite by about ${Math.abs(src.trend_value).toFixed(1)} mm per year
-    (OPERA DISP-S1, ${src.trend_start} to ${src.trend_end}). Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why.`;
-  return `<p>${words}</p>${sr ? chart(sr) + `<p class="note">${esc(sr.label)}. Filled squares used in the trend line; hollow squares set aside as outliers.${sr.segments > 1 ? ` The series was stitched from ${sr.segments} pieces.` : ""}</p>` : ""}`;
+  return h;
 }
 function showSource(src) {
-  const y = yIdx(), p = pressure(src), linked = D.sites.filter(s => s.source_id === src.id);
+  const linked = D.sites.filter(s => s.source_id === src.id), w = trendWords(src), y = LAST;
   const kind = { reservoir: "Reservoir", aquifer: "Aquifer", river: "River", lake: "Lake" }[src.type] || src.type;
-  let h = `<div class="pad">${BACK}<div class="kind" style="--c:${pcolor(p)}"><i style="transform:rotate(45deg)"></i><span class="cap">Water source · ${kind}</span></div>
-    <h2>${esc(src.water_body)}</h2><p class="sub">Used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p></div>
-    <div class="stats"><div><b>${pct(src.share[state.scn][y])}</b><span>share of supply, ${YEARS[y]}</span></div><div><b style="color:${pcolor(p)}">${p.toFixed(2)}</b><span>pressure index (0-1)</span></div>
-    <div><b>${linked.length}</b><span>linked campus${linked.length === 1 ? "" : "es"}</span></div></div>`;
-  const rows = [["This utility's supply", c => pct(src.share[c][y])]];
-  if (src.share_wholesale) rows.push(["Whole wholesale system", c => pct(src.share_wholesale[c][y])]);
-  h += `<div class="sec"><h3>Data center water as a share of supply, ${YEARS[y]}</h3>${scnTable(rows)}
-    <p class="note" style="margin-top:6px">Estimated water for the ${linked.length} linked campus${linked.length === 1 ? "" : "es"}, divided by estimated supply
-    (${fmt(src.supply_ml)} ML/yr for this utility${src.share_wholesale ? `; ${fmt(src.wholesale_supply_ml)} ML/yr for the system it buys from, ${esc(src.wholesale_sellers)}` : ""}). Above 100% means the estimate is larger than the supply.</p>
-    <p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p></div>
-    <div class="sec"><h3>How the water body is changing</h3>${trendBlock(src)}`;
-  const rp = RADAR.find(r => r.kind !== "site" && Math.abs(r.lat - src.lat) < .2 && Math.abs(r.lon - src.lon) < .2);
-  if (rp) h += `<button class="btn" data-radar="${rp.id}">Open Sentinel-1 and NISAR ground motion view</button>`;
-  h += `</div><div class="sec"><h3>Water stress</h3><p>WRI Aqueduct baseline: ${esc(src.aqueduct_label || "n/a")}. Pressure index ${p.toFixed(2)} (0-1).</p></div>`;
-  h += exposure(src.exposure) + `<div class="sec"><h3>How this source was identified</h3><p class="note">${esc(src.identification_basis)} Confidence: ${esc(src.confidence)}.</p></div>` + linkList(src.links);
-  setDetail(h);
+  const sh = src.share;
+  const W = 360, H = 90, L0 = 40, R0 = 8, vmax = Math.max(1.1, ...sh.high) * 1.05, X = i => L0 + i / LAST * (W - L0 - R0), Y = v => 8 + (vmax - v) / vmax * (H - 26);
+  const line = a => a.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const band = sh.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + sh.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
+  const chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Campus water need as a share of supply, ${YEARS[0]}-${YEARS[LAST]}">
+    <line x1="${L0}" x2="${W - R0}" y1="${Y(1)}" y2="${Y(1)}" stroke="#1D1C1A" stroke-dasharray="3 2"/><text x="${L0 - 5}" y="${Y(1) + 3}" font-size="9.5" text-anchor="end" fill="#1D1C1A" font-family="IBM Plex Mono">100%</text>
+    <text x="${L0 - 5}" y="${Y(0) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">0</text><text x="${L0 - 5}" y="${Y(Math.max(...sh.high)) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">${times(Math.max(...sh.high))}</text><line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
+    <polygon points="${band}" fill="#C2461B" opacity=".14"/><path d="${line(sh.median)}" fill="none" stroke="#C2461B" stroke-width="2"/>
+    ${YEARS.map((yy, i) => i % 3 === 0 || i === LAST ? `<text x="${X(i)}" y="${H - 4}" font-size="9.5" text-anchor="middle" fill="#6F675A" font-family="IBM Plex Mono">${yy}</text>` : "").join("")}</svg>`;
+  return `<div class="ch"><button class="back" data-back="1">&larr; Back to the story</button>
+    <div class="chips" style="margin:0 0 8px">${w ? chip(w.k) : datachip("No satellite trend")}${chip("proj")}</div>
+    <h2>${esc(src.water_body)}</h2><p class="note">${kind} · used by ${title(src.utility)} (EPA ${esc(src.pwsid)}), ${fmt(src.population_served)} people</p>
+    <h3>How it is changing</h3>
+    ${w ? `<p>${chip(w.k)} ${esc(w.txt[0].toUpperCase() + w.txt.slice(1))}, ${src.trend_start} to ${src.trend_end}.${w.k === "opera" && w.down ? " Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why." : ""}</p>${sparkline(src.series, w.k === "swot" ? "#12808F" : "#6F8FB0").replace('class="spark"', 'class="spark" style="width:100%;height:70px"')}`
+      : `<p>No satellite trend: ${esc({ swot_lake_id_unavailable: "SWOT lake identifiers could not be downloaded", insufficient_swot: "too few good SWOT passes", insufficient_disp_s1: "too few usable OPERA dates" }[src.trend_status] || src.trend_status)}.</p>`}
+    <h3>Campus water need vs. this utility's supply</h3>
+    <div class="big" style="font-size:34px;color:${SHARE_C(sh.median[y])}">${times(sh.median[y])}<small>by ${YEARS[y]}</small></div>
+    <p class="range">range ${times(sh.low[y])} to ${times(sh.high[y])}</p>${chart}
+    <p class="note">Estimated water for the linked campus${linked.length === 1 ? "" : "es"}, divided by the utility's estimated supply (${fmt(src.supply_ml)} megaliters a year)${src.share_wholesale ? `. Against the whole wholesale system it buys from (${esc(src.wholesale_sellers)}): ${times(src.share_wholesale.median[y])}` : ""}.</p>
+    <p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p>
+    <p class="note">Water stress (WRI Aqueduct): ${esc(src.aqueduct_label || "n/a")}. ${esc(src.identification_basis)}</p>
+    ${srcline(["data/sources.csv"], src.links.slice(0, 3))}</div>`;
 }
-const IMG_LABEL = { radar: "Sentinel-1 C-band: before construction vs. latest months", nisar: "NISAR L-band: first vs. latest date in 2026 (top HH, bottom HV)",
-  timeseries: "Average brightness inside the outline over time", ground_motion: "Ground motion: Sentinel-1 (left) and NISAR (right)" };
-function showRadar(p) {
-  const site = siteById[SITE_FOR_RADAR[p.id]];
-  const figs = p.images.map(src => { const k = Object.keys(IMG_LABEL).find(k => src.includes("_" + k));
-    return `<figure><a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${IMG_LABEL[k] || ""}, ${esc(p.name)}" loading="lazy"></a><figcaption>${IMG_LABEL[k] || ""}</figcaption></figure>`; }).join("");
-  setDetail(`<div class="pad">${BACK}<div class="kind" style="--c:var(--rust)"><i></i><span class="cap">Radar view · Sentinel-1 and NISAR</span></div><h2>${esc(p.name)}</h2></div>
-    <div class="sec" style="padding-top:0"><p>${esc(p.caption)}</p>${figs}${site ? `<button class="btn" data-site="${site.id}">Campus projection and water link</button>` : ""}</div>
-    ${linkList(p.source.split(" ; ").filter(s => s.startsWith("http")))}`);
+
+/* ---------------- story panel ---------------- */
+const story = document.getElementById("story");
+function renderStory() {
+  const d = state.detail;
+  story.innerHTML = d ? (d[0] === "site" ? showSite(siteById[d[1]]) : showSource(srcById[d[1]]))
+    : { land: chLand, nisar: chNisar, water: chWater, future: chFuture }[state.ch]();
+  story.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => goChapter(b.dataset.go)));
+  story.querySelectorAll("[data-site]").forEach(b => b.addEventListener("click", () => openDetail("site", b.dataset.site)));
+  story.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => openDetail("src", b.dataset.src)));
+  story.querySelectorAll("[data-back]").forEach(b => b.addEventListener("click", closeDetail));
+  story.querySelectorAll("[data-replay]").forEach(b => b.addEventListener("click", replaySite));
 }
-function showHome() {
-  const y = yIdx(), top = D.sources.map(s => [s, pressure(s)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const big = placed.filter(s => curveOf(s)).map(s => [s, curveAt(curveOf(s), T_MEAS1)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const missing = D.sites.filter(s => s.location.missing);
-  setDetail(`<div class="pad"><span class="cap">Start here</span><h1 style="margin-top:6px">How much land US data centers took, and the water they depend on</h1>
-    <ol class="steps">
-      <li><div><b>Watch the country</b><p>Press Play. The counter on the map adds up land the radar saw change, month by month since ${tlabel(TL.t0).slice(0, 4)}, then the projection to 2030.</p>
-        <button class="btn" data-act="playall">&#9654; Play 2017 to 2030</button></div></li>
-      <li><div><b>Watch one campus being built</b><p>Real dated aerial photos switch as time passes, and the land the radar saw change rises as 3D blocks.</p>
-        <button class="btn solid" data-act="demo">&#9654; Google Storey County, Nevada</button></div></li>
-      <li><div><b>Follow the water</b><p>Each campus links to the reservoir, river or aquifer its utility draws from.</p>
-        <button class="btn" data-src="${top[0][0].id}">${esc(top[0][0].water_body)}</button></div></li>
-    </ol></div>
-    <div class="sec"><h3>Largest land change, measured</h3></div>${big.map(([s, a]) => `<button class="row" data-site="${s.id}"><span class="sq" style="background:#C2461B"></span>
-      <span class="nm">${esc(s.name)}<small>${s.status === "built" ? "Built" : "Announced"} · construction from ${esc(s.construction_start || "n/a")}</small></span><span class="v">${fmt(a)} ac</span></button>`).join("")}
-    <div class="sec"><h3>Highest water pressure index, ${YEARS[y]}</h3></div>${top.map(([s, p]) => `<button class="row" data-src="${s.id}">
-      <span class="sq" style="background:${pcolor(p)};transform:rotate(45deg) scale(.85)"></span><span class="nm">${esc(s.water_body)}<small>${title(s.utility)}</small></span>
-      <span class="bar"><i style="width:${Math.round(p * 100)}%;background:${pcolor(p)}"></i></span><span class="v">${p.toFixed(2)}</span></button>`).join("")}
-    <div class="sec" style="padding-bottom:18px"><details class="about"><summary class="cap" style="color:var(--ink)">About the data and methods</summary>
-      <p><b>Footprints.</b> Converted acres at built campuses come from Sentinel-1 radar (Planetary Computer <code>sentinel-1-rtc</code>): a pixel counts as converted once its
-        backscatter changes by more than a threshold for two months in a row, inside the campus outline plus 200 m. Play shows each pixel in the month it first changed.</p>
-      <p><b>Photos.</b> When a campus is open, the map shows the Esri World Imagery Wayback photo captured most recently before the date on the timeline. Capture dates come from Esri's
-        imagery metadata (<code>data/wayback_captures.csv</code>).</p>
-      <p><b>3D blocks.</b> Changed radar pixels rise as blocks so growth is easy to see. Their height is for display only and is not a measured building height.
-        Announced campuses without radar pixels show their outline as a block that grows with measured or projected acres.</p>
-      <p><b>Projection.</b> Acres and water for 2026-2030 use ratios measured at built sites (acres per MW, water per kWh from Google's per-site reports, build time) and each
-        campus's stated MW or investment. Low, median and high use the 25th, 50th and 75th percentiles.</p>
-      <p><b>Water sources.</b> Each campus is matched to the EPA water service area it sits in, then to the utility's source (EPA SDWA). Trends are SWOT water surface elevation
-        (rivers) or OPERA DISP-S1 ground motion over aquifers. A trend describes the water body; it does not show what caused the change.</p>
-      <p><b>Shares.</b> "Local share" divides the campus water estimate by the utility's own supply (population served x per-capita use). Where a utility buys its water,
-        the "wholesale share" divides by the supply of the whole system it buys from.</p>
-      <p><b>Exposure.</b> Land cover before construction: NLCD. Wetlands: USFWS NWI. Protected land: USGS PAD-US 4.1 (GAP status 1-3).</p>
-      <p><b>Timeline.</b> Measured totals add the ${Object.keys(TL.curves).length} campuses with a Sentinel-1 area curve. Projected totals add the ${D.sites.filter(s => s.projected).length} campuses with
-        enough data to project. The two groups differ, so the chart draws them as separate series.</p>
-      <p><b>Radar views.</b> ${RADAR.map(p => `<button class="linkbtn" data-radar="${p.id}">${esc(p.name.replace(/\s*\(.*\)/, ""))}</button>`).join(", ")}.</p>
-      ${missing.length ? `<p>Not on the map because their campus location could not be found: ${missing.map(s => esc(s.name)).join("; ")}.</p>` : ""}
-      <p>Every number traces to a CSV in the project's <code>data/</code> folder, and each panel lists its sources. Data built ${esc(D.built || "")}.</p></details></div>`);
+/* Chapter 4 redraws only its numbers while playing, so the page does not jump. */
+function refreshFuture() { if (state.ch !== "future" || state.detail) return; const top = story.scrollTop; renderStory(); story.scrollTop = top; }
+
+/* ---------------- headline over the map ---------------- */
+const headline = document.getElementById("headline");
+function renderHeadline() {
+  const t = state.t;
+  if (state.detail) { headline.style.display = "none"; return; }
+  headline.style.display = "";
+  let h = "";
+  if (state.ch === "land") {
+    const acres = Object.values(TL.curves).reduce((a, c) => a + curveAt(c, t), 0);
+    h = `<div class="when"><span class="cap">${tnice(t)}</span>${chip("s1")}</div><div class="hbig">${fmt(acres)}<small>acres changed</small></div>
+      <p class="hl">so far at the ${Object.keys(TL.curves).length} campuses Sentinel-1 radar tracks. Squares are colored by what the land was before.</p>`;
+  } else if (state.ch === "nisar") {
+    const n = ST.nisar, cnt = Object.values(n).reduce((a, x) => a + x.nisar.t.filter(d => tOf(d) <= t).length, 0);
+    h = `<div class="when"><span class="cap">${tnice(t)}</span>${chip("nisar")}</div><div class="hbig" style="color:var(--nisar)">${t < NISAR_T0 ? "Not yet" : cnt}<small>${t < NISAR_T0 ? "NISAR has no data here" : "NISAR passes charted"}</small></div>
+      <p class="hl">${t < NISAR_T0 ? "Before Oct 2025 only Sentinel-1 can show these sites." : "Purple rings: sites NISAR covers every 12 days. Click one."}</p>`;
+  } else if (state.ch === "water") {
+    h = `<div class="when"><span class="cap">Today · ${YEARS[LAST]} need</span>${chip("swot")}</div><div class="hbig" style="color:var(--crimson)">${D.sources.filter(s => s.share.median[LAST] >= 1).length}<small>utilities over 100%</small></div>
+      <p class="hl">Drops are water sources. Bigger and darker = campus need is a larger share of the town's supply by ${YEARS[LAST]}. Lines link each campus to its source.</p>`;
+  } else {
+    const y = yIdxAt(t), F = futureNumbers(y);
+    h = `<div class="when"><span class="cap">December 31, ${YEARS[y]}</span>${chip("proj", "Projection")}</div><div class="hbig stack">${short(people(F.median.w))}<small>people's worth of water</small></div>
+      <p class="hl">${fmt(F.median.a)} acres at ${projSites.length} campuses. Squares grow with projected land.</p>
+      <p class="hl2">+${short(people(F.median.pw))} people's worth if the announcement pace continues</p>`;
+  }
+  headline.innerHTML = h;
 }
-function setDetail(h) {
-  const el = document.getElementById("detail");
-  el.innerHTML = h;
-  el.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => select("src", b.dataset.src)));
-  el.querySelectorAll("[data-site]").forEach(b => b.addEventListener("click", () => select("site", b.dataset.site)));
-  el.querySelectorAll("[data-radar]").forEach(b => b.addEventListener("click", () => select("radar", b.dataset.radar)));
-  el.querySelectorAll("[data-home]").forEach(b => b.addEventListener("click", goHome));
-  el.querySelectorAll("[data-playsite]").forEach(b => b.addEventListener("click", playSite));
-  el.querySelectorAll("[data-photo]").forEach(b => b.addEventListener("click", () => { stopPlay(); setT(+b.dataset.photo); }));
-  el.querySelectorAll("[data-act=playall]").forEach(b => b.addEventListener("click", () => { stopPlay(); setT(TL.t0, false); startPlay(null); }));
-  el.querySelectorAll("[data-act=demo]").forEach(b => b.addEventListener("click", () => { select("site", "GOOGLE-STOREY-COUNTY"); setTimeout(playSite, still ? 0 : 2400); }));
+function renderLegend() {
+  const el = document.getElementById("legend");
+  if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
+  if (state.detail && state.detail[0] === "site") { el.innerHTML = `<div><span class="sw" style="--c:#C2461B"></span>Land Sentinel-1 radar saw change</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
+  if (state.ch === "land") el.innerHTML = `<div class="cap" style="margin-bottom:2px">Campus, size = acres changed, color = land before</div>` +
+    LC.filter(([k]) => ST.land.acres[k] > 100).map(([k, n]) => `<div><span class="sw" style="--c:${LCC[k]}"></span>${n}</div>`).join("");
+  else if (state.ch === "nisar") el.innerHTML = `<div><span class="sw ring"></span>NISAR site, a pass every 12 days</div><div><span class="sw" style="--c:#3A3731"></span>Other campus (Sentinel-1 only)</div>`;
+  else if (state.ch === "water") el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div>`;
+  else el.innerHTML = `<div><span class="sw" style="--c:#B9832A"></span>Announced campus, size = projected acres</div><div><span class="sw" style="--c:#6F675A"></span>Built campus</div><div><span class="sw r" style="--c:#8E1F1F"></span>Utility needing over 100%</div>`;
 }
-function objOf(kind, id) { return kind === "site" ? siteById[id] : kind === "src" ? srcById[id] : radarById[id]; }
-function showDetail() {
-  if (!state.selected) return showHome();
-  const [kind, id] = state.selected, o = objOf(kind, id);
-  kind === "site" ? showSite(o) : kind === "src" ? showSource(o) : showRadar(o);
+
+/* ---------------- time bar: one lane per satellite ---------------- */
+const lanesEl = document.getElementById("lanes");
+const LANES = [
+  { k: "s1", name: "Sentinel-1 radar · land", from: Math.max(T0, tOf(ST.sensors.sentinel1.from)), to: tOf(ST.sensors.sentinel1.to), c: "#3E6A96" },
+  { k: "nisar", name: "NISAR radar · land + ground", from: NISAR_T0, to: tOf(ST.sensors.nisar.to), c: "#8A2BE2", strong: NISAR_USABLE },
+  { k: "swot", name: "SWOT · water levels", from: tOf(ST.sensors.swot.from), to: tOf(ST.sensors.swot.to), c: "#12808F" },
+  { k: "opera", name: "OPERA DISP-S1 · ground", from: Math.max(T0, tOf(ST.sensors.opera.from)), to: tOf(ST.sensors.opera.to), c: "#6F8FB0" },
+  { k: "proj", name: "Projection · announced + pace", from: PROJ0, to: TEND, c: "#B9832A", dash: true },
+];
+let laneGeom = null;
+function renderLanes() {
+  const W = Math.max(300, lanesEl.clientWidth - 26), LW = isNarrow() ? 0 : 196, H = 132, rowH = 19, top = 8;
+  const X = t => LW + (t - T0) / (TEND + 1 - T0) * (W - LW);
+  laneGeom = { X, LW, W };
+  const active = l => state.t >= l.from && state.t <= l.to + (l.k === "proj" ? 0 : 0);
+  const ch = state.ch, emph = { land: "s1", nisar: "nisar", water: "swot", future: "proj" }[ch];
+  let s = "";
+  for (let y = 2017; y <= YEARS[LAST] + 1; y++) { const x = X(y * 12); s += `<line x1="${x}" x2="${x}" y1="${top - 4}" y2="${H - 16}" stroke="#ECE6DA"/>${y <= YEARS[LAST] && (y % (isNarrow() ? 3 : 1) === 0) ? `<text x="${X(y * 12 + 6)}" y="${H - 3}" font-size="10" text-anchor="middle" fill="#6F675A" font-family="IBM Plex Mono">${isNarrow() ? "'" + String(y).slice(2) : y}</text>` : ""}`; }
+  s += `<rect x="${X(PROJ0 + 1)}" y="${top - 4}" width="${X(TEND + 1) - X(PROJ0 + 1)}" height="${H - 12 - top}" fill="#B9832A" opacity=".06"/>`;
+  s += `<text x="${X(PROJ0 + 1) + 4}" y="${H - 18}" font-size="9" fill="#8A621B" font-family="IBM Plex Mono" letter-spacing=".08em">FUTURE →</text>`;
+  LANES.forEach((l, i) => {
+    const y = top + i * rowH, on = active(l), em = l.k === emph || (ch === "water" && l.k === "opera");
+    const op = em ? 1 : .45;
+    if (LW) s += `<text x="${LW - 10}" y="${y + 10}" font-size="11" text-anchor="end" font-family="IBM Plex Sans" font-weight="${em ? 600 : 400}" fill="${em ? l.c : "#6F675A"}">${l.name}</text>`;
+    if (l.k === "nisar") {
+      s += `<rect x="${X(l.from)}" y="${y + 3}" width="${X(l.strong) - X(l.from)}" height="9" fill="${l.c}" opacity="${.3 * op}"/>`;
+      s += `<rect x="${X(l.strong)}" y="${y + 1}" width="${X(l.to + 1) - X(l.strong)}" height="13" fill="${l.c}" opacity="${op}"/>`;
+      if (LW && W > 700) s += `<text x="${X(l.from) - 6}" y="${y + 11}" font-size="10" text-anchor="end" fill="${l.c}" font-family="IBM Plex Mono" font-weight="600" opacity="${op}">NISAR starts</text>`;
+    } else if (l.dash) {
+      s += `<rect x="${X(l.from)}" y="${y + 2}" width="${X(l.to + 1) - X(l.from)}" height="11" fill="none" stroke="${l.c}" stroke-dasharray="4 3" opacity="${op}"/>`;
+      s += `<rect x="${X(l.from)}" y="${y + 2}" width="${Math.max(0, Math.min(X(state.t + 1), X(l.to + 1)) - X(l.from))}" height="11" fill="${l.c}" opacity="${state.t >= l.from ? .5 * op + .2 : 0}"/>`;
+    } else s += `<rect x="${X(l.from)}" y="${y + 3}" width="${X(l.to + 1) - X(l.from)}" height="9" fill="${l.c}" opacity="${op}"/>`;
+    if (!LW) s += l.k === "nisar" ? `<text x="${X(l.from) - 4}" y="${y + 11}" font-size="9.5" text-anchor="end" fill="${l.c}" font-family="IBM Plex Mono" font-weight="700">NISAR</text>`
+      : `<text x="${X(l.from) + 3}" y="${y + 11}" font-size="9" fill="#fff" font-family="IBM Plex Mono" font-weight="600">${CHIP[l.k]}</text>`;
+    if (on) s += `<circle cx="${X(state.t)}" cy="${y + 7.5}" r="4.5" fill="${l.c}" stroke="#fff" stroke-width="1.5"/>`;
+  });
+  const px = X(state.t);
+  s += `<line x1="${px}" x2="${px}" y1="${top - 6}" y2="${H - 14}" stroke="#1D1C1A" stroke-width="1.5"/>`;
+  lanesEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px">${s}</svg>`;
+  lanesEl.setAttribute("aria-valuetext", tnice(state.t));
+  document.getElementById("clock").textContent = state.t > T_MEAS1 ? String(Math.floor(state.t / 12)) : tnice(state.t);
+  const sub = document.getElementById("clockSub");
+  const act = LANES.filter(active).filter(l => l.k !== "proj").map(l => CHIP[l.k].replace(" radar", ""));
+  sub.textContent = state.t > T_MEAS1 ? "Projected" : act.join(" + ") || "Measured";
+  sub.style.color = state.t > T_MEAS1 ? "#8A621B" : act.some(a => a.startsWith("NISAR")) ? "#8A2BE2" : "#3E6A96";
+}
+function tFromX(clientX) {
+  const r = lanesEl.getBoundingClientRect(), svgW = laneGeom.W, x = (clientX - r.left - 8) / (r.width - 26) * svgW;
+  const t = Math.round(T0 + (x - laneGeom.LW) / (svgW - laneGeom.LW) * (TEND + 1 - T0));
+  return Math.max(T0, Math.min(TEND, t));
+}
+let dragging = false;
+lanesEl.addEventListener("pointerdown", e => { dragging = true; lanesEl.setPointerCapture(e.pointerId); scrub(tFromX(e.clientX)); });
+lanesEl.addEventListener("pointermove", e => { if (dragging) scrub(tFromX(e.clientX)); });
+lanesEl.addEventListener("pointerup", () => dragging = false);
+lanesEl.addEventListener("keydown", e => { if (e.key === "ArrowRight" || e.key === "ArrowLeft") { scrub(Math.max(T0, Math.min(TEND, state.t + (e.key === "ArrowRight" ? 1 : -1) * (state.t >= PROJ0 ? 12 : 1)))); e.preventDefault(); } });
+/* Scrubbing into another chapter's years switches chapter, so the panel always explains what the map shows. */
+function scrub(t) {
+  stopPlay();
+  if (t > T_MEAS1) { t = Math.max(PROJ0, Math.round((t - 11) / 12) * 12 + 11); if (state.ch !== "future") return goChapter("future", t); }
+  else if (state.ch === "future") return goChapter(t >= NISAR_T0 ? "nisar" : "land", t);
+  setT(t);
 }
 
 /* ---------------- map ---------------- */
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const US = [[-125.5, 23.5], [-66, 50]];
-const grat = { type: "FeatureCollection", features: [] };
-for (let x = -130; x <= -60; x += 5) grat.features.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[x, 15], [x, 55]] } });
-for (let y = 20; y <= 55; y += 5) grat.features.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[-140, y], [-50, y]] } });
-const map = new maplibregl.Map({
-  container: "map",
-  style: {
-    version: 8,
-    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-    sources: {
-      imagery: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
-                 attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics" },
-      places: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`], attribution: "Labels &copy; Esri" },
-      wash: { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]] } } },
-      grat: { type: "geojson", data: grat }
-    },
-    layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#D9D2C2" } },
-      { id: "imagery", type: "raster", source: "imagery", paint: { "raster-saturation": -0.55, "raster-contrast": 0.05, "raster-brightness-min": 0.06, "raster-fade-duration": 150 } },
-      { id: "wash", type: "fill", source: "wash", paint: { "fill-color": "#F2ECDF", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 3, .42, 8, .22, 12, .08, 15, 0] } },
-      { id: "grat", type: "line", source: "grat", maxzoom: 8, paint: { "line-color": "#3A3731", "line-opacity": .16, "line-width": .8, "line-dasharray": [3, 3] } },
-      { id: "places", type: "raster", source: "places", paint: { "raster-opacity": .7, "raster-saturation": -1 } }
-    ]
+const baseStyle = (tiles, attribution) => ({
+  version: 8, glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  sources: {
+    imagery: { type: "raster", tileSize: 256, maxzoom: 19, tiles, attribution },
+    places: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`], attribution: "Labels &copy; Esri" },
+    wash: { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]] } } }
   },
-  bounds: US, maxBounds: [[-140, 12], [-52, 58]], minZoom: innerWidth < 700 ? 1.6 : 3, maxZoom: 17.5, maxPitch: 65, attributionControl: { compact: true },
-  fadeDuration: 0
+  layers: [
+    { id: "bg", type: "background", paint: { "background-color": "#D9D2C2" } },
+    { id: "imagery", type: "raster", source: "imagery", paint: { "raster-saturation": ["interpolate", ["linear"], ["zoom"], 5, -0.55, 12, -0.1], "raster-contrast": 0.05, "raster-fade-duration": 150 } },
+    { id: "wash", type: "fill", source: "wash", paint: { "fill-color": "#F2ECDF", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 3, .42, 8, .2, 12, 0] } },
+    { id: "places", type: "raster", source: "places", paint: { "raster-opacity": ["interpolate", ["linear"], ["zoom"], 4, .75, 13, .35], "raster-saturation": -1 } }
+  ]
 });
+const map = new maplibregl.Map({ container: "map", style: baseStyle([`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`], "Imagery &copy; Esri, Maxar, Earthstar Geographics"),
+  bounds: US, maxBounds: [[-140, 12], [-52, 58]], minZoom: innerWidth < 700 ? 1.6 : 3, maxZoom: 17.5, attributionControl: { compact: true }, fadeDuration: 0,
+  dragRotate: false, pitchWithRotate: false });
 map.touchZoomRotate.disableRotation();
-map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
+let mapB = null;
 
-function diamond(size = 28) {
-  const c = document.createElement("canvas"); c.width = c.height = size;
-  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.beginPath();
-  g.moveTo(size / 2, 2); g.lineTo(size - 2, size / 2); g.lineTo(size / 2, size - 2); g.lineTo(2, size / 2); g.closePath(); g.fill();
+function drop(size = 40) {
+  const c = document.createElement("canvas"); c.width = c.height = size; const g = c.getContext("2d"), r = size * .3, cx = size / 2, cy = size * .62;
+  g.fillStyle = "#fff"; g.beginPath(); g.moveTo(cx, size * .06); g.bezierCurveTo(cx + r * .2, cy - r * 1.3, cx + r, cy - r * .7, cx + r, cy);
+  g.arc(cx, cy, r, 0, Math.PI); g.bezierCurveTo(cx - r, cy - r * .7, cx - r * .2, cy - r * 1.3, cx, size * .06); g.fill();
   return g.getImageData(0, 0, size, size);
 }
+function square(size = 32) { const c = document.createElement("canvas"); c.width = c.height = size; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(3, 3, size - 6, size - 6); return g.getImageData(0, 0, size, size); }
+
+/* Campus marker: a square whose side grows with acres (radar curve in Land, projection in 2035). Color = land before (Land) or status (2035). */
 function sitesFC() {
+  const t = state.t, ch = state.ch, y = yIdxAt(t);
   return { type: "FeatureCollection", features: placed.map((s, k) => {
-    const a = siteAcres(s), measured = !!curveOf(s), started = siteStarted(s) || (isProj() && s.projected && a > 0) || a > 0;
-    const cs = s.construction_start ? tOf(s.construction_start) : null, age = cs != null ? state.t - cs : 999;
-    return { type: "Feature", id: k, properties: { id: s.id, name: s.name, started, a, measured,
-      r: started ? 4 + Math.sqrt(Math.max(a, 0)) * .32 : 3.5, pulse: !isProj() && age >= 0 && age < 5 ? age : -1 },
+    let a = 0, color = "#3A3731", show = true;
+    if (ch === "future") { a = s.projected ? s.acres.median[y] : curveAt(curveOf(s), T_MEAS1); color = s.status === "built" ? "#6F675A" : "#B9832A"; }
+    else { a = curveAt(curveOf(s), Math.min(t, T_MEAS1)); const k2 = lcKey(s); color = k2 ? LCC[k2] : s.status === "built" ? "#8F8A80" : "#B9832A";
+      if (ch === "land") show = !!curveOf(s) || s.status === "built"; }
+    const nis = !!ST.nisar[s.id];
+    return { type: "Feature", id: k, properties: { id: s.id, name: s.name, color, show, nis, a, size: .26 + Math.sqrt(Math.max(a, 0)) * .022, started: a > 0 },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] } }; }) };
 }
 function sourcesFC() {
-  return { type: "FeatureCollection", features: D.sources.map((s, k) => ({ type: "Feature", id: k,
-    properties: { id: s.id, name: s.water_body, color: pcolor(pressure(s)) }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } })) };
+  const y = state.ch === "future" ? yIdxAt(state.t) : LAST;
+  return { type: "FeatureCollection", features: D.sources.map((s, k) => { const x = s.share.median[y];
+    return { type: "Feature", id: k, properties: { id: s.id, name: s.water_body.replace(/\s*\(.*?\)/g, ""), color: SHARE_C(x), size: .42 + Math.min(.8, Math.sqrt(x) * .3), lab: x >= 1 ? times(x) + " of supply" : "" },
+      geometry: { type: "Point", coordinates: [s.lon, s.lat] } }; }) };
 }
 const outlinesFC = { type: "FeatureCollection", features: placed.filter(s => s.outline).map(s => ({ type: "Feature", properties: { id: s.id }, geometry: s.outline })) };
 const linksFC = { type: "FeatureCollection", features: placed.filter(s => srcById[s.source_id]).map(s => { const r = srcById[s.source_id];
   return { type: "Feature", properties: { site: s.id, src: r.id }, geometry: { type: "LineString", coordinates: [[s.lon, s.lat], [r.lon, r.lat]] } }; }) };
-const exposureFC = { type: "FeatureCollection", features: [] };
-for (const o of [...placed, ...D.sources]) {
-  const e = o.exposure; if (!e || o.lat == null) continue;
-  const kind = o.water_body ? "src" : "site";
-  if (e.wetland_vegetated_m != null && e.wetland_vegetated_m <= 100) exposureFC.features.push({ type: "Feature", properties: { k: "w", id: o.id, kind }, geometry: { type: "Point", coordinates: [o.lon, o.lat] } });
-  if (e.protected_m != null && e.protected_m <= 1000) exposureFC.features.push({ type: "Feature", properties: { k: "p", id: o.id, kind }, geometry: { type: "Point", coordinates: [o.lon, o.lat] } });
-}
-const TXT = { "text-font": ["Open Sans Semibold"], "text-size": 11, "text-anchor": "left", "text-offset": [1, 0], "text-optional": true, "text-max-width": 14 };
+const nisarFC = { type: "FeatureCollection", features: [...Object.keys(ST.nisar).map(id => siteById[id]).map(s => ({ type: "Feature", properties: { id: s.id, kind: "site", name: s.name.replace(/\s*\(.*\)/, "") }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } })),
+  ...RADAR.filter(r => r.kind === "aquifer").map(r => ({ type: "Feature", properties: { id: "SRC-NM3502507", kind: "src", name: r.name.replace(/\s*\(.*\)/, "") + " aquifer" }, geometry: { type: "Point", coordinates: [r.lon, r.lat] } }))] };
+const TXT = { "text-font": ["Open Sans Semibold"], "text-size": 11.5, "text-anchor": "left", "text-offset": [1.1, 0], "text-optional": true, "text-max-width": 16 };
+const LABF = ["format", ["get", "name"], {}, "\n", {}, ["get", "lab"], { "font-scale": 1.05, "text-color": "#8E1F1F" }];
+const HALO = { "text-color": "#1D1C1A", "text-halo-color": "#FAF8F3", "text-halo-width": 1.8 };
 
 map.on("load", () => {
-  map.addImage("diamond", diamond(), { sdf: true });
+  map.addImage("drop", drop(), { sdf: true }); map.addImage("sq", square(), { sdf: true });
   map.addSource("pixels", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-  map.addLayer({ id: "pixels", type: "fill", source: "pixels", filter: ["<=", ["get", "t"], -1],
-    paint: { "fill-color": "#C08A2B", "fill-opacity": .42, "fill-antialias": false } }, "places");
-  map.addLayer({ id: "pixels-new", type: "fill", source: "pixels", filter: ["<=", ["get", "t"], -1],
-    paint: { "fill-color": "#FF5A1F", "fill-opacity": .9, "fill-antialias": false } }, "places");
-  map.addLayer({ id: "pixels-3d", type: "fill-extrusion", source: "pixels", minzoom: 10, filter: ["<=", ["get", "t"], -1],
-    paint: { "fill-extrusion-color": "#C08A2B", "fill-extrusion-opacity": .72, "fill-extrusion-height": 0 } });
-  map.addSource("mass", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-  map.addLayer({ id: "mass", type: "fill-extrusion", source: "mass", minzoom: 10, filter: [">", ["get", "frac"], 0],
-    paint: { "fill-extrusion-color": "#C08A2B", "fill-extrusion-opacity": .7, "fill-extrusion-height": ["+", 4, ["*", 46, ["get", "frac"]]],
-             "fill-extrusion-height-transition": { duration: 600 } } });
+  map.addLayer({ id: "pixels", type: "fill", source: "pixels", filter: ["<=", ["get", "t"], -1], paint: { "fill-color": "#C2461B", "fill-opacity": .62, "fill-antialias": false } }, "places");
+  map.addLayer({ id: "pixels-new", type: "fill", source: "pixels", filter: ["<=", ["get", "t"], -1], paint: { "fill-color": "#FF5A1F", "fill-opacity": .95, "fill-antialias": false } }, "places");
   map.addSource("outlines", { type: "geojson", data: outlinesFC });
-  map.addLayer({ id: "outline-fill", type: "fill", source: "outlines", minzoom: 10, paint: { "fill-color": "#000", "fill-opacity": 0 } });
-  map.addLayer({ id: "outline", type: "line", source: "outlines", minzoom: 10, paint: { "line-color": "#FAF8F3", "line-width": 1.6, "line-dasharray": [3, 2] } });
+  map.addLayer({ id: "outline-fill", type: "fill", source: "outlines", minzoom: 9, paint: { "fill-color": "#B9832A", "fill-opacity": 0 } });
+  map.addLayer({ id: "outline", type: "line", source: "outlines", minzoom: 9, paint: { "line-color": "#FAF8F3", "line-width": 2, "line-dasharray": [3, 2] } });
   map.addSource("links", { type: "geojson", data: linksFC });
-  map.addLayer({ id: "link", type: "line", source: "links", filter: ["==", ["get", "site"], "__none__"],
-    paint: { "line-color": "#1D1C1A", "line-width": 1.5, "line-dasharray": [4, 3] } });
-  map.addSource("exposure", { type: "geojson", data: exposureFC });
-  map.addLayer({ id: "exposure", type: "circle", source: "exposure", layout: { visibility: "none" }, maxzoom: 12,
-    paint: { "circle-radius": ["case", ["==", ["get", "k"], "w"], 13, 18], "circle-opacity": 0, "circle-stroke-width": 2,
-             "circle-stroke-color": ["case", ["==", ["get", "k"], "w"], "#5F7F5A", "#6E4F7E"] } });
+  map.addLayer({ id: "link", type: "line", source: "links", layout: { visibility: "none" }, paint: { "line-color": "#12808F", "line-width": 1.6, "line-opacity": .8, "line-dasharray": [3, 2] } });
   map.addSource("sources", { type: "geojson", data: sourcesFC() });
-  map.addLayer({ id: "src", type: "symbol", source: "sources",
-    layout: { "icon-image": "diamond", "icon-size": ["interpolate", ["linear"], ["zoom"], 3, .5, 8, .75], "icon-allow-overlap": true },
-    paint: { "icon-color": ["get", "color"], "icon-halo-color": "#FAF8F3", "icon-halo-width": 2 } });
-  map.addLayer({ id: "src-label", type: "symbol", source: "sources", minzoom: 7,
-    layout: { ...TXT, "text-field": ["get", "name"] }, paint: { "text-color": "#1D1C1A", "text-halo-color": "#FAF8F3", "text-halo-width": 1.6 } });
+  map.addLayer({ id: "src", type: "symbol", source: "sources", layout: { visibility: "none", "icon-image": "drop", "icon-size": ["interpolate", ["linear"], ["zoom"], 2, ["*", ["get", "size"], .5], 4.5, ["get", "size"]], "icon-allow-overlap": true, "icon-anchor": "bottom" },
+    paint: { "icon-color": ["get", "color"] } });
+  map.addLayer({ id: "src-label", type: "symbol", source: "sources", layout: { visibility: "none", ...TXT, "text-anchor": "left", "text-offset": [1, -1],
+    "text-field": ["step", ["zoom"], ["case", ["!=", ["get", "lab"], ""], LABF, ""], 6, ["case", ["!=", ["get", "lab"], ""], LABF, ["get", "name"]]] }, paint: HALO });
   map.addSource("sites", { type: "geojson", data: sitesFC() });
-  const fade = ["interpolate", ["linear"], ["zoom"], 11, 1, 12.5, 0];
-  map.addLayer({ id: "site-pulse", type: "circle", source: "sites", filter: [">=", ["get", "pulse"], 0],
-    paint: { "circle-radius": ["+", ["get", "r"], ["*", ["get", "pulse"], 6], 4], "circle-opacity": 0, "circle-stroke-color": "#FF5A1F",
-             "circle-stroke-width": 2, "circle-stroke-opacity": ["-", 1, ["/", ["get", "pulse"], 5]] } });
-  map.addLayer({ id: "site", type: "circle", source: "sites",
-    paint: { "circle-radius": ["get", "r"],
-             "circle-color": ["case", ["get", "started"], "#1D1C1A", "rgba(0,0,0,0)"],
-             "circle-opacity": ["interpolate", ["linear"], ["zoom"], 11, ["case", ["get", "started"], .88, 1], 12.5, 0],
-             "circle-stroke-color": ["case", ["get", "started"], "#FAF8F3", "#1D1C1A"],
-             "circle-stroke-width": ["case", ["boolean", ["feature-state", "hover"], false], 3, ["get", "started"], 1.5, 1.4], "circle-stroke-opacity": fade } });
-  map.addLayer({ id: "site-label", type: "symbol", source: "sites", minzoom: 6,
-    layout: { ...TXT, "text-field": ["get", "name"] }, paint: { "text-color": "#1D1C1A", "text-halo-color": "#FAF8F3", "text-halo-width": 1.6, "text-opacity": fade } });
+  const fade = ["interpolate", ["linear"], ["zoom"], 10.5, 1, 12, 0];
+  map.addLayer({ id: "site", type: "symbol", source: "sites", filter: ["get", "show"],
+    layout: { "icon-image": "sq", "icon-size": ["interpolate", ["linear"], ["zoom"], 2, ["*", ["get", "size"], .4], 4.5, ["get", "size"]], "icon-allow-overlap": true, "symbol-sort-key": ["-", 0, ["get", "a"]] },
+    paint: { "icon-color": ["get", "color"], "icon-opacity": ["interpolate", ["linear"], ["zoom"], 10.5, ["case", ["get", "started"], .95, .45], 12, 0], "icon-halo-color": "#1D1C1A", "icon-halo-width": 1 } });
+  map.addLayer({ id: "site-label", type: "symbol", source: "sites", minzoom: 6, filter: ["get", "show"], layout: { ...TXT, "text-field": ["get", "name"] }, paint: { ...HALO, "text-opacity": fade } });
+  map.addSource("nisar", { type: "geojson", data: nisarFC });
+  map.addLayer({ id: "nisar-glow", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 26, "circle-color": "#8A2BE2", "circle-opacity": .14, "circle-blur": .4 } });
+  map.addLayer({ id: "nisar-ring", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 16, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#8A2BE2", "circle-stroke-width": 3 } });
+  map.addLayer({ id: "nisar-label", type: "symbol", source: "nisar", layout: { visibility: "none", "text-font": ["Open Sans Semibold"], "text-size": 12, "text-anchor": ["case", ["==", ["get", "kind"], "src"], "bottom", "top"], "text-offset": ["case", ["==", ["get", "kind"], "src"], ["literal", [0, -1.9]], ["literal", [0, 1.9]]],
+    "text-field": ["format", "NISAR\n", { "font-scale": .95, "text-color": "#8A2BE2" }, ["get", "name"], {}], "text-allow-overlap": true }, paint: { ...HALO, "text-halo-width": 2.2 } });
 
-  for (const id of ["site", "src", "outline-fill"]) {
+  for (const id of ["site", "src", "nisar-ring", "outline-fill"]) {
     map.on("mouseenter", id, () => map.getCanvas().style.cursor = "pointer");
-    map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; popup.remove(); clearHover(); });
+    map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; popup.remove(); });
   }
-  map.on("mousemove", "site", e => hover(e, "sites", f => { const s = siteById[f.properties.id];
-    return `${esc(s.name)}<small>${s.status.toUpperCase()} · ${curveOf(s) ? fmt(siteAcres(s)) + " AC" : "NO RADAR CURVE"}</small>`; }));
-  map.on("mousemove", "src", e => hover(e, "sources", f => { const s = srcById[f.properties.id];
-    return `${esc(s.water_body)}<small>WATER SOURCE · PRESSURE ${pressure(s).toFixed(2)}</small>`; }));
-  map.on("click", "site", e => select("site", e.features[0].properties.id));
-  map.on("click", "outline-fill", e => select("site", e.features[0].properties.id));
-  map.on("click", "src", e => select("src", e.features[0].properties.id));
-  map.on("click", "exposure", e => { const p = e.features[0].properties; select(p.kind, p.id); });
-  applyLayers(); drawMap();
+  map.on("mousemove", "site", e => tip(e, s => `${esc(s.name)}<small>${state.ch === "future" ? fmt(siteById[s.id].projected ? siteById[s.id].acres.median[yIdxAt(state.t)] : 0) + " AC PROJECTED" : fmt(s.a) + " AC CHANGED · SENTINEL-1"}</small>`));
+  map.on("mousemove", "src", e => tip(e, s => { const r = srcById[s.id]; return `${esc(r.water_body)}<small>CAMPUS NEED ${times(r.share.median[LAST])} OF SUPPLY BY ${YEARS[LAST]}</small>`; }));
+  map.on("click", "site", e => openDetail("site", e.features[0].properties.id));
+  map.on("click", "outline-fill", e => openDetail("site", e.features[0].properties.id));
+  map.on("click", "src", e => openDetail("src", e.features[0].properties.id));
+  map.on("click", "nisar-ring", e => { const p = e.features[0].properties; openDetail(p.kind, p.id); });
+  applyChapterLayers(); drawMap();
 });
-map.on("mousemove", e => { document.getElementById("hudXY").textContent = `${Math.abs(e.lngLat.lat).toFixed(4)}°${e.lngLat.lat >= 0 ? "N" : "S"}  ${Math.abs(e.lngLat.lng).toFixed(4)}°${e.lngLat.lng >= 0 ? "E" : "W"}`; });
-
 const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14 });
-let hovered = null;
-function clearHover() { if (hovered) map.setFeatureState({ source: hovered[0], id: hovered[1] }, { hover: false }); hovered = null; }
-function hover(e, source, html) {
-  const f = e.features[0];
-  if (!hovered || hovered[0] !== source || hovered[1] !== f.id) { clearHover(); hovered = [source, f.id]; map.setFeatureState({ source, id: f.id }, { hover: true }); }
-  if (matchMedia("(hover: hover)").matches) popup.setLngLat(f.geometry.coordinates).setHTML(html(f)).addTo(map);
-}
+function tip(e, html) { if (matchMedia("(hover: hover)").matches) popup.setLngLat(e.features[0].geometry.coordinates).setHTML(html(e.features[0].properties)).addTo(map); }
 
+function applyChapterLayers() {
+  if (!map.getLayer("site")) return;
+  const ch = state.ch, det = state.detail, vis = (id, on) => map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  const water = ch === "water" || ch === "future" || (det && det[0] === "src");
+  vis("src", water); vis("src-label", water); vis("link", water || (det && det[0] === "site"));
+  for (const id of ["nisar-glow", "nisar-ring", "nisar-label"]) vis(id, ch === "nisar" && !det);
+  vis("site-label", ch !== "water");
+  map.setPaintProperty("site", "icon-halo-width", ch === "nisar" ? 0 : 1);
+  if (det && det[0] === "site") map.setFilter("link", ["==", ["get", "site"], det[1]]);
+  else if (det && det[0] === "src") map.setFilter("link", ["==", ["get", "src"], det[1]]);
+  else map.setFilter("link", null);
+}
 function drawMap() {
   if (!map.getSource("sites")) return;
   map.getSource("sites").setData(sitesFC());
   map.getSource("sources").setData(sourcesFC());
-  const T = isProj() ? 1e9 : state.t, d3 = document.getElementById("lyr3d").checked;
-  const flat3d = d3 && map.getPitch() > 5;
-  // In 3D, blocks show the last two years of change; older change is a light tint so the photo shows what was built.
-  map.setFilter("pixels", ["<=", ["get", "t"], T - (flat3d ? 24 : 3)]);
+  const T = state.t > T_MEAS1 ? 1e9 : state.t;
+  map.setFilter("pixels", ["<=", ["get", "t"], T - 3]);
   map.setFilter("pixels-new", ["all", ["<=", ["get", "t"], T], [">", ["get", "t"], T - 3]]);
-  map.setFilter("pixels-3d", ["all", ["<=", ["get", "t"], T], [">", ["get", "t"], T - 24]]);
-  // Display only: a changed pixel rises as a block for its first year, then settles to a thin layer so the photo shows
-  // what was built. The newest (last 3 months) are ember.
-  map.setPaintProperty("pixels-3d", "fill-extrusion-height", ["interpolate", ["linear"], ["-", T, ["get", "t"]], 0, 8, 3, 16, 12, 16, 24, 0]);
-  map.setPaintProperty("pixels-3d", "fill-extrusion-color", ["case", ["<", ["-", T, ["get", "t"]], 3], "#FF5A1F", "#C08A2B"]);
-  map.setPaintProperty("pixels", "fill-opacity", flat3d ? .2 : .42);
-  map.setPaintProperty("pixels-new", "fill-opacity", flat3d ? 0 : .9);
-  map.getSource("mass").setData(massFC());
-  drawPhotos(); legendChip();
-}
-/* Campuses without per-pixel months: the outline rises with the share of land changed (radar) or projected. Display only. */
-function massFC() {
-  const y = yIdx(), c = state.scn;
-  return { type: "FeatureCollection", features: placed.filter(s => s.outline && !(TL.pixels || []).includes(curveId(s))).map(s => {
-    const cv = curveOf(s); let frac = 0;
-    if (isProj() && s.projected) frac = s.acres[c][y] / Math.max(...s.acres.high, 1e-9);
-    else if (cv) frac = curveAt(cv, Math.min(state.t, T_MEAS1)) / Math.max(cv[cv.length - 1][1], 1e-9);
-    return { type: "Feature", properties: { id: s.id, frac: Math.max(0, Math.min(1, frac)) }, geometry: s.outline }; }) };
-}
-let photoSite = null, photoShown = null;
-function clearPhotos() {
-  if (!photoSite) return;
-  for (const [, r] of WB.sites[photoSite] || []) { if (map.getLayer("wb" + r)) map.removeLayer("wb" + r); if (map.getSource("wb" + r)) map.removeSource("wb" + r); }
-  photoSite = photoShown = null; document.getElementById("photoTag").classList.remove("on");
-}
-function drawPhotos() {
-  const sel = state.selected, s = sel && sel[0] === "site" ? siteById[sel[1]] : sel && sel[0] === "radar" ? siteById[SITE_FOR_RADAR[sel[1]]] : null;
-  const on = document.getElementById("lyrPhotos").checked;
-  if (!s || !on || !WB.sites[s.id]) { clearPhotos(); document.getElementById("photoTag").classList.remove("on"); return; }
-  if (photoSite !== s.id) {
-    clearPhotos(); photoSite = s.id;
-    for (const [, r] of WB.sites[s.id]) {
-      map.addSource("wb" + r, { type: "raster", tileSize: 256, maxzoom: 18, tiles: [WB.url.replace("{release}", r)], attribution: "Photos &copy; Esri World Imagery Wayback" });
-      map.addLayer({ id: "wb" + r, type: "raster", source: "wb" + r, minzoom: 9,
-        paint: { "raster-opacity": 0, "raster-opacity-transition": { duration: still ? 0 : 450 }, "raster-saturation": -0.3, "raster-fade-duration": 0 } }, "wash");
-    }
-  }
-  const cur = photoAt(s, state.t);
-  if (cur && cur[1] !== photoShown) {
-    for (const [, r] of WB.sites[s.id]) map.setPaintProperty("wb" + r, "raster-opacity", r === cur[1] ? 1 : 0);
-    photoShown = cur[1];
-    document.querySelectorAll(".film button").forEach(b => b.classList.toggle("on", +b.dataset.photo === cur[0]));
-  }
-  const tag = document.getElementById("photoTag");
-  tag.textContent = cur ? `Photo captured ${cur[2]}` : ""; tag.classList.toggle("on", !!cur);
-}
-function legendChip() {
-  const el = document.getElementById("legendchip"), site = state.selected && state.selected[0] !== "src";
-  const sq = c => `<svg class="sw" width="12" height="12"><rect width="12" height="12" fill="${c}"/></svg>`;
-  el.innerHTML = site
-    ? `<div>${sq("#FF5A1F")}Land the radar saw change in the last 3 months</div><div>${sq("#C08A2B")}Changed in the last 2 years (block height is for display only)</div><div>${sq("rgba(192,138,43,.35)")}Changed earlier</div>
-       <div><svg class="sw" width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="#1D1C1A" stroke-dasharray="2 1.5"/></svg>Campus outline</div>`
-    : `<div><svg class="sw" width="12" height="12"><circle cx="6" cy="6" r="5" fill="#1D1C1A" stroke="#FAF8F3"/></svg>Campus, size = acres changed</div>
-       <div><svg class="sw" width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#1D1C1A" stroke-dasharray="2 1.5"/></svg>Announced, not started</div>
-       <div><svg class="sw" width="12" height="12"><path d="M6 1 11 6 6 11 1 6z" fill="#C08A2B"/></svg>Water source, color = pressure</div>
-       <div class="ramp" style="width:150px;margin-left:20px"></div>`;
+  // Announced campus outlines fill in with the projected share of their land (2035 chapter); display only.
+  if (state.ch === "future") { const y = yIdxAt(state.t);
+    map.setPaintProperty("outline-fill", "fill-opacity", ["match", ["get", "id"], ...placed.filter(s => s.outline && s.projected && s.status !== "built").flatMap(s => [s.id, .55 * s.acres.median[y] / Math.max(s.acres.median[LAST], 1e-9)]), 0]); }
+  else map.setPaintProperty("outline-fill", "fill-opacity", 0);
+  drawPhotoAt();
 }
 
-/* selection */
-let reticle = null, pixelsFor = null;
-const pad = () => isNarrow() ? 30 : 70;
-function flatten(g) { return g.type === "Polygon" ? g.coordinates.flat() : g.coordinates.flat(2); }
-function bbox(pts) { const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]]; }
-function loadPixels(s) {
-  const id = curveId(s);
-  if (pixelsFor === id) return;
-  pixelsFor = id;
-  map.getSource("pixels").setData({ type: "FeatureCollection", features: [] });
-  if (!(TL.pixels || []).includes(id)) return;
-  fetch(`pixels/${id}.json`).then(r => r.ok ? r.json() : null).then(j => { if (j && pixelsFor === id) { map.getSource("pixels").setData(j); drawMap(); } }).catch(() => {});
+/* ---------------- before / after photos ---------------- */
+const swipeEl = document.getElementById("swipe"), knob = document.getElementById("knob"), mapBEl = document.getElementById("mapB");
+const tagA = document.getElementById("tagA"), tagB = document.getElementById("tagB");
+let swipeX = .5, photoSite = null, afterRel = null;
+function setSwipe(f) {
+  swipeX = Math.max(.04, Math.min(.96, f)); const w = mapBEl.parentElement.clientWidth;
+  swipeEl.style.left = (swipeX * 100) + "%"; mapBEl.style.clipPath = `inset(0 ${(1 - swipeX) * w}px 0 0)`;
 }
-function setReticle(o, label) {
-  if (reticle) reticle.remove();
-  if (!o || o.lat == null) { reticle = null; return; }
-  const el = document.createElement("div"); el.className = "reticle"; el.innerHTML = `<i></i><i></i><i></i><i></i><span>${esc(label)}</span>`;
-  reticle = new maplibregl.Marker({ element: el }).setLngLat([o.lon, o.lat]).addTo(map);
+function syncB() { if (mapB) mapB.jumpTo({ center: map.getCenter(), zoom: map.getZoom(), bearing: 0, pitch: 0 }); }
+map.on("move", syncB);
+knob.addEventListener("pointerdown", e => { knob.setPointerCapture(e.pointerId); const r = mapBEl.parentElement.getBoundingClientRect();
+  const mv = ev => setSwipe((ev.clientX - r.left) / r.width); knob.addEventListener("pointermove", mv); knob.addEventListener("pointerup", () => knob.removeEventListener("pointermove", mv), { once: true }); });
+knob.addEventListener("keydown", e => { if (e.key === "ArrowLeft") setSwipe(swipeX - .05); if (e.key === "ArrowRight") setSwipe(swipeX + .05); });
+function addAfter(rel) {
+  if (afterRel === rel) return;
+  if (afterRel != null) { map.removeLayer("after"); map.removeSource("after"); }
+  map.addSource("after", { type: "raster", tileSize: 256, maxzoom: 18, tiles: [WB.url.replace("{release}", rel)], attribution: "Photos &copy; Esri World Imagery Wayback" });
+  map.addLayer({ id: "after", type: "raster", source: "after", minzoom: 9, paint: { "raster-fade-duration": 0 } }, "pixels");
+  afterRel = rel;
 }
-function select(kind, id) {
-  const o = objOf(kind, id); if (!o) return;
-  state.selected = [kind, id]; closeResults();
-  const site = kind === "site" ? o : kind === "radar" ? siteById[SITE_FOR_RADAR[id]] : null;
-  if (site) {
-    const pts = site.outline ? flatten(site.outline) : [];
-    const d3 = document.getElementById("lyr3d").checked;
-    const cam = pts.length ? map.cameraForBounds(bbox(pts), { padding: pad() + 30, maxZoom: 15.6 }) : { center: [site.lon, site.lat], zoom: 13.5 };
-    map.flyTo({ ...cam, zoom: Math.min(cam.zoom, 15.6) - (d3 ? .15 : 0), pitch: d3 ? 52 : 0, bearing: d3 ? -12 : 0, duration: still ? 0 : 2400, essential: true });
-    loadPixels(site); setReticle(null);
-    document.getElementById("hudView").innerHTML = `<b>${esc(site.name)}</b> · ${Math.abs(site.lat).toFixed(3)}°N ${Math.abs(site.lon).toFixed(3)}°W`;
-  } else if (kind === "src") {
-    const linked = placed.filter(s => s.source_id === id);
-    map.fitBounds(bbox([[o.lon, o.lat], ...linked.map(s => [s.lon, s.lat])]), { padding: pad() + 60, maxZoom: 11, pitch: 0, bearing: 0, duration: still ? 0 : 2200, essential: true });
-    setReticle(o, o.water_body);
-    document.getElementById("hudView").innerHTML = `<b>${esc(o.water_body)}</b> · water source`;
-  } else {
-    map.flyTo({ center: [o.lon, o.lat], zoom: 11, duration: still ? 0 : 2200, essential: true }); setReticle(o, o.name);
-  }
-  let f = ["==", ["get", "site"], "__none__"];
-  if (kind === "site") f = ["==", ["get", "site"], id]; else if (kind === "src") f = ["==", ["get", "src"], id]; else if (site) f = ["==", ["get", "site"], site.id];
-  map.setFilter("link", f);
-  showDetail(); render(false);
+function photoOn(s, P) {
+  photoSite = s.id;
+  addAfter(P.after[1]);
+  if (!mapB) mapB = new maplibregl.Map({ container: "mapB", style: baseStyle([WB.url.replace("{release}", P.before[1])], "Photos &copy; Esri World Imagery Wayback"), interactive: false, attributionControl: false, fadeDuration: 0, center: map.getCenter(), zoom: map.getZoom() });
+  else mapB.getSource("imagery").setTiles([WB.url.replace("{release}", P.before[1])]);
+  mapBEl.classList.add("on"); swipeEl.classList.add("on"); setSwipe(.5); syncB(); setTimeout(() => { mapB.resize(); syncB(); }, 50);
+  tagB.innerHTML = `Before<small>photo ${P.before[2]}</small>`; tagB.classList.add("on"); tagA.classList.add("on");
+  drawPhotoAt();
 }
-function goHome() {
-  state.selected = null; setReticle(null); map.setFilter("link", ["==", ["get", "site"], "__none__"]);
-  document.getElementById("hudView").innerHTML = `<b>CONUS</b> · Esri World Imagery`;
-  map.fitBounds(US, { padding: 10, pitch: 0, bearing: 0, duration: still ? 0 : 1800, essential: true }); showHome(); render(false);
+function photoOff() {
+  photoSite = null; if (afterRel != null && map.getLayer("after")) { map.removeLayer("after"); map.removeSource("after"); } afterRel = null;
+  mapBEl.classList.remove("on"); swipeEl.classList.remove("on"); tagA.classList.remove("on"); tagB.classList.remove("on");
+}
+/* The right-hand photo follows the timeline: the latest photo captured on or before the date. */
+function drawPhotoAt() {
+  if (!photoSite || !map.getStyle()) return;
+  const ph = WB.sites[photoSite], P = photos(siteById[photoSite]); let cur = P.after;
+  if (state.t <= T_MEAS1) { cur = ph[0]; for (const p of ph) if (p[0] <= state.t) cur = p; if (cur[0] < P.before[0]) cur = P.before; }
+  addAfter(cur[1]);
+  tagA.innerHTML = `${cur === P.after ? "After" : "Photo"}<small>photo ${cur[2]}${TL.pixels.includes(curveId(siteById[photoSite])) ? " · rust = radar change to " + tnice(Math.min(state.t, T_MEAS1)) : ""}</small>`;
 }
 
-/* ---------------- KPIs, feed and timeline chart ---------------- */
-const P = D.sites.filter(s => s.projected);
-const MEAS = []; for (let t = TL.t0; t <= T_MEAS1; t++) MEAS.push([t, Object.values(TL.curves).reduce((a, c) => a + curveAt(c, t), 0)]);
-const PROJ = Object.fromEntries(SCN.map(c => [c, YEARS.map((_, i) => P.reduce((a, s) => a + s.acres[c][i], 0))]));
-const tween = {};
-function countTo(id, val, text) {
-  const el = document.getElementById(id);
-  if (text != null) { el.textContent = text; tween[id] = null; return; }
-  const from = tween[id] ?? val; tween[id] = val;
-  if (still || Math.abs(from - val) < 1) { el.textContent = fmt(val); return; }
-  const t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / 260); el.textContent = fmt(from + (val - from) * k); if (k < 1 && tween[id] === val) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
+/* ---------------- navigation ---------------- */
+let pixelsFor = null;
+async function loadPixels(s) {
+  const id = curveId(s); if (pixelsFor === id) return; pixelsFor = id;
+  if (!TL.pixels.includes(id)) { map.getSource("pixels").setData({ type: "FeatureCollection", features: [] }); return; }
+  const fc = await fetch(`pixels/${id}.json`).then(r => r.json()); if (pixelsFor === id) map.getSource("pixels").setData(fc);
 }
-function selSite() { const x = state.selected; return x && x[0] === "site" ? siteById[x[1]] : x && x[0] === "radar" ? siteById[SITE_FOR_RADAR[x[1]]] : null; }
-function kpis() {
-  const ph = document.getElementById("phase"), s = selSite(), proj = isProj(), y = yIdx();
-  document.getElementById("hWhen").textContent = proj ? `Dec 31, ${YEARS[y]} · projected` : `${tlabel(state.t)} · measured by radar`;
-  ph.className = proj ? "phase p" : "phase m"; ph.innerHTML = proj ? "<i></i>Projected" : "<i></i>Measured";
-  if (s) {
-    const cv = curveOf(s), a = proj ? (s.projected ? s.acres[state.scn][y] : (cv ? curveAt(cv, T_MEAS1) : null)) : (cv ? curveAt(cv, state.t) : null);
-    if (a == null) countTo("kAcres", 0, "n/a"); else countTo("kAcres", a);
-    document.getElementById("kAcresL").textContent = `${proj ? "projected to be converted" : "changed so far"} at ${s.name}`;
-  } else if (proj) {
-    countTo("kAcres", PROJ[state.scn][y]);
-    document.getElementById("kAcresL").textContent = `projected to be converted at ${P.length} built and announced campuses`;
+function bboxOf(geom) { let b = [180, 90, -180, -90]; const walk = c => typeof c[0] === "number" ? (b = [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[0]), Math.max(b[3], c[1])]) : c.forEach(walk); walk(geom.coordinates); return [[b[0], b[1]], [b[2], b[3]]]; }
+const pad = () => isNarrow() ? 30 : { top: 90, bottom: 40, left: 60, right: 60 };
+function openDetail(kind, id) {
+  stopPlay(); popup.remove();
+  state.detail = [kind, id];
+  if (kind === "site") {
+    const s = siteById[id], P = photos(s);
+    if (s.outline) map.fitBounds(bboxOf(s.outline), { padding: pad(), maxZoom: 15.5, duration: still ? 0 : 2200 });
+    else map.flyTo({ center: [s.lon, s.lat], zoom: 14, duration: still ? 0 : 2200 });
+    loadPixels(s);
+    if (state.t < (s.construction_start ? tOf(s.construction_start) : 0) || state.ch === "future") state.t = T_MEAS1;
+    if (P) photoOn(s, P); else photoOff();
   } else {
-    countTo("kAcres", curveAt(MEAS, state.t));
-    document.getElementById("kAcresL").textContent = `changed so far at ${Object.keys(TL.curves).length} campuses the radar tracks`;
+    photoOff(); if (state.ch !== "future") state.t = T_MEAS1; const src = srcById[id], pts = [[src.lon, src.lat], ...D.sites.filter(s => s.source_id === id && s.lat != null).map(s => [s.lon, s.lat])];
+    const b = [[Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1]))], [Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]];
+    map.fitBounds(b, { padding: isNarrow() ? 40 : 140, maxZoom: 10, duration: still ? 0 : 2000 });
   }
+  render(); story.scrollTop = 0;
 }
-/* One line of what is happening now: the latest event at or before the timeline date (for the open campus, if any). */
-let nowKey = null;
-function feed() {
-  const s = selSite(), el = document.getElementById("now");
-  let html, key;
-  if (isProj()) {
-    const y = yIdx(), w = (s ? (s.projected ? s.water_ml[state.scn][y] : null) : P.reduce((a, x) => a + x.water_ml[state.scn][y], 0));
-    key = "p" + y + (s ? s.id : "");
-    html = `<b>Projection, ${state.scn}</b>${w != null ? `About ${fmt(w)} ML of water per year ${s ? "for this campus" : "for these campuses"} by ${YEARS[y]}.` : "This campus is not in the projection."}`;
-  } else {
-    const ev = EVENTS.filter(e => e.t <= state.t && (!s || e.s.id === s.id)), e = ev[ev.length - 1];
-    const photo = s ? photoAt(s, state.t) : null;
-    key = e ? e.t + e.k + e.s.id : "none";
-    html = e ? `<b>${tlabel(e.t)} · ${esc(e.label)}</b>${esc(e.s.name)}` : s ? `<b>Before construction</b>${esc(s.name)} has not started yet.` : `<b>Press Play</b>Watch the radar record a decade of construction, then the projection to 2030.`;
-    if (photo) html += `<br><span class="note">Photo on the map: captured ${photo[2]}</span>`;
-  }
-  if (el.innerHTML !== html) el.innerHTML = html;
-  if (key !== nowKey && nowKey !== null && !still) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
-  nowKey = key;
+function closeDetail() { state.detail = null; photoOff(); goChapter(state.ch, state.ch === "future" ? state.t : undefined, true); }
+const CH_VIEW = { land: US, nisar: [[-111, 27.5], [-78, 44.5]], water: US, future: US };
+function goChapter(ch, t, keepT) {
+  stopPlay(); popup.remove();
+  const changed = ch !== state.ch;
+  state.ch = ch; state.detail = null; photoOff();
+  if (t != null) state.t = t;
+  else if (changed || !keepT) state.t = ch === "land" ? T0 : ch === "nisar" ? NISAR_USABLE : ch === "water" ? T_MEAS1 : PROJ0;
+  map.fitBounds(CH_VIEW[ch], { padding: isNarrow() ? 10 : 30, duration: still ? 0 : 1600 });
+  document.querySelectorAll("nav.chapters button").forEach(b => b.setAttribute("aria-current", b.dataset.ch === ch));
+  render(); story.scrollTop = 0;
+  history.replaceState(null, "", "#" + ch);
 }
-const tch = document.getElementById("tchart");
-let geom = null;
-function drawChart() {
-  // Two panels with their own scales: measured radar acres (32 tracked campuses) and projected acres
-  // (46 campuses). They count different populations, so they never share a y axis.
-  const W = Math.max(300, tch.clientWidth - 24), H = Math.max(110, tch.clientHeight - 16), L0 = 44, R0 = 46, T0 = 22, B0 = 22;
-  const tA = TL.t0, tB = T_END, tM = T_MEAS1 + .5;
-  const mmax = MEAS[MEAS.length - 1][1] * 1.12, pmax = Math.max(...PROJ.high) * 1.08;
-  const X = t => L0 + (t - tA) / (tB - tA) * (W - L0 - R0);
-  const Ym = v => T0 + (mmax - v) / mmax * (H - T0 - B0), Yp = v => T0 + (pmax - v) / pmax * (H - T0 - B0);
-  geom = { X, W, L0, R0, tA, tB };
-  const mPath = MEAS.map(([t, v], i) => `${i ? "L" : "M"}${X(t).toFixed(1)},${Ym(v).toFixed(1)}`).join("");
-  const cut = Math.min(state.t, T_MEAS1);
-  const mDone = MEAS.filter(([t]) => t <= cut).map(([t, v], i) => `${i ? "L" : "M"}${X(t).toFixed(1)},${Ym(v).toFixed(1)}`).join("");
-  const mArea = mDone ? mDone + `L${X(cut)},${Ym(0)}L${X(tA)},${Ym(0)}Z` : "";
-  const band = PROJ.high.map((v, i) => `${X(PROJ_T[i])},${Yp(v)}`).join(" ") + " " + PROJ.low.map((v, i) => `${X(PROJ_T[i])},${Yp(v)}`).reverse().join(" ");
-  const pLine = PROJ[state.scn].map((v, i) => `${i ? "L" : "M"}${X(PROJ_T[i])},${Yp(v)}`).join("");
-  const mono = 'font-family="IBM Plex Mono"';
-  let xt = ""; for (let y = Math.ceil(tA / 12); y * 12 <= tB; y++) xt += `<line x1="${X(y * 12)}" x2="${X(y * 12)}" y1="${H - B0}" y2="${H - B0 + 4}" stroke="#A39A8B"/><text x="${X(y * 12)}" y="${H - 6}" font-size="10" text-anchor="middle" fill="#746C5F" ${mono}>${y}</text>`;
-  const grid = [0, .5, 1].map(f => `<line x1="${L0}" x2="${W - R0}" y1="${Ym(mmax * f)}" y2="${Ym(mmax * f)}" stroke="#E4DDCF"/>` +
-    `<text x="${L0 - 6}" y="${Ym(mmax * f) + 3}" font-size="9.5" text-anchor="end" fill="#C2461B" ${mono}>${fmt(mmax * f)}</text>` +
-    `<text x="${W - R0 + 6}" y="${Yp(pmax * f) + 3}" font-size="9.5" fill="#8A621B" ${mono}>${fmt(pmax * f)}</text>`).join("");
-  const px = X(state.t), proj = isProj();
-  const val = proj ? PROJ[state.scn][yIdx()] : curveAt(MEAS, state.t);
-  const py = proj ? Yp(val) : Ym(val);
-  const tagX = Math.max(L0, Math.min(px - 46, W - R0 - 92));
-  tch.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px">
-    <rect x="${X(tM)}" y="${T0}" width="${X(tB) - X(tM)}" height="${H - T0 - B0}" fill="#C08A2B" opacity=".07"/>
-    <line x1="${X(tM)}" x2="${X(tM)}" y1="${T0}" y2="${H - B0}" stroke="#A39A8B" stroke-dasharray="2 3"/>
-    <text x="${L0}" y="9" font-size="9.5" fill="#C2461B" ${mono} letter-spacing="1">${W < 560 ? "MEASURED" : "MEASURED · SENTINEL-1 · " + Object.keys(TL.curves).length + " CAMPUSES"}</text>
-    <text x="${W - 4}" y="9" font-size="9.5" text-anchor="end" fill="#8A621B" ${mono} letter-spacing="1">${W < 560 ? "PROJECTED" : "PROJECTED · " + P.length + " CAMPUSES · OWN SCALE"}</text>
-    ${grid}${xt}
-    <path d="${mPath}" fill="none" stroke="#C2461B" stroke-width="1.2" opacity=".25"/>
-    ${mArea ? `<path d="${mArea}" fill="#C2461B" opacity=".12"/><path d="${mDone}" fill="none" stroke="#C2461B" stroke-width="2"/>` : ""}
-    <polygon points="${band}" fill="#C08A2B" opacity="${proj ? .28 : .14}"/>
-    <path d="${pLine}" fill="none" stroke="#8A621B" stroke-width="1.6" stroke-dasharray="4 3"/>
-    ${PROJ_T.map((t, i) => `<rect x="${X(t) - 3}" y="${Yp(PROJ[state.scn][i]) - 3}" width="6" height="6" fill="${proj && i <= yIdx() ? "#8A621B" : "#FAF8F3"}" stroke="#8A621B" stroke-width="1.4"/>`).join("")}
-    <line x1="${px}" x2="${px}" y1="${T0}" y2="${H - B0}" stroke="#1D1C1A" stroke-width="1.4"/>
-    <rect x="${px - 4}" y="${py - 4}" width="8" height="8" fill="#FF5A1F" stroke="#1D1C1A" stroke-width="1"/>
-    <rect x="${tagX}" y="${T0 + 2}" width="92" height="17" fill="#1D1C1A"/>
-    <text x="${tagX + 46}" y="${T0 + 14}" font-size="10" text-anchor="middle" fill="#FAF8F3" ${mono}>${fmt(val)} AC</text>
-  </svg>`;
-  tch.setAttribute("aria-valuetext", `${tlabel(state.t)}, ${fmt(val)} acres ${proj ? "projected" : "measured"}`);
-}
-function setClock() {
-  const proj = isProj();
-  document.getElementById("clock").textContent = proj ? `${YEARS[yIdx()]}-12-31` : tlabel(state.t);
-  document.getElementById("clockSub").textContent = proj ? `Projection · ${state.scn}` : "Measured · Sentinel-1";
-}
-function render(full = true) {
-  setClock(); kpis(); feed(); drawChart(); drawMap();
-  if (full) showDetail();
-  else if (state.selected && state.selected[0] === "site") { const s = siteById[state.selected[1]]; const cv = curveOf(s);
-    const box = document.querySelector("#detail .chart"); if (cv && box) box.outerHTML = curveChart(cv, s); }
-}
-function setT(t, full = true) {
-  t = Math.max(TL.t0, Math.min(T_END, Math.round(t)));
-  if (t > T_MEAS1) { let k = 0; PROJ_T.forEach((pt, i) => { if (t >= pt - 6) k = i; }); t = PROJ_T[k]; }
-  const crossed = (state.t > T_MEAS1) !== (t > T_MEAS1) || (t > T_MEAS1 && t !== state.t);
-  state.t = t; render(full || crossed);
-}
-function tFromX(clientX) {
-  const r = tch.getBoundingClientRect(), svg = tch.querySelector("svg"), sx = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width;
-  const x = (clientX - svg.getBoundingClientRect().left) * sx;
-  return geom.tA + (x - geom.L0) / (geom.W - geom.L0 - geom.R0) * (geom.tB - geom.tA);
-}
-let dragging = false;
-tch.addEventListener("pointerdown", e => { stopPlay(); dragging = true; tch.setPointerCapture(e.pointerId); setT(tFromX(e.clientX), false); });
-tch.addEventListener("pointermove", e => { if (dragging) setT(tFromX(e.clientX), false); });
-tch.addEventListener("pointerup", () => { dragging = false; showDetail(); });
-tch.addEventListener("keydown", e => {
-  if (e.key === "ArrowRight") { stopPlay(); setT(state.t > T_MEAS1 ? state.t + 12 : state.t + 1); e.preventDefault(); }
-  if (e.key === "ArrowLeft") { stopPlay(); setT(state.t > T_MEAS1 ? (state.t - 12 <= T_MEAS1 ? T_MEAS1 : state.t - 12) : state.t - 1); e.preventDefault(); }
-});
-addEventListener("resize", drawChart);
+function setT(t) { state.t = t; drawMap(); renderHeadline(); renderLanes(); if (state.ch === "future") refreshFuture(); }
+function render() { applyChapterLayers(); drawMap(); renderStory(); renderHeadline(); renderLegend(); renderLanes(); }
 
 /* ---------------- play ---------------- */
-let timer = null, range = null;
-const PLAY = '<path d="M1 0v10l9-5z"/>', PAUSE = '<path d="M1 0h3v10H1zM6 0h3v10H6z"/>';
-function stopPlay() { clearTimeout(timer); timer = null; state.playing = false; document.getElementById("playIcon").innerHTML = PLAY; document.getElementById("playLbl").textContent = "Play"; showDetail(); }
-function tick() {
-  const end = range ? range[1] : T_END;
-  if (state.t >= end) { stopPlay(); range = null; return; }
-  const next = state.t < T_MEAS1 ? state.t + 1 : (state.t === T_MEAS1 ? PROJ_T[0] : state.t + 12);
-  setT(Math.min(next, end), false);
-  timer = setTimeout(tick, state.t > T_MEAS1 ? 1100 : (range ? 150 : 110));
+let timer = null;
+const playBtn = document.getElementById("play");
+function setPlayUI(on) { document.getElementById("playLbl").textContent = on ? "Pause" : "Play"; document.getElementById("playIcon").innerHTML = on ? '<path d="M1 0h3v10H1zM6 0h3v10H6z"/>' : '<path d="M1 0v10l9-5z"/>'; }
+function stopPlay() { if (timer) clearInterval(timer); timer = null; state.playing = false; setPlayUI(false); }
+function startPlay(t0, t1, step, tick) {
+  stopPlay(); state.playing = true; setPlayUI(true);
+  if (state.t >= t1 || state.t < t0) setT(t0);
+  timer = setInterval(() => { const nt = Math.min(t1, state.t + step); setT(nt); if (nt >= t1) stopPlay(); }, still ? 30 : tick);
 }
-function startPlay(r = null) {
-  range = r;
-  const start = r ? r[0] : TL.t0, end = r ? r[1] : T_END;
-  if (state.t >= end || state.t < start) setT(start, false);
-  state.playing = true; document.getElementById("playIcon").innerHTML = PAUSE; document.getElementById("playLbl").textContent = "Pause";
-  timer = setTimeout(tick, 300);
+function playRange() {
+  if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
+  if (state.detail && state.detail[0] === "site") { const s = siteById[state.detail[1]], cs = s.construction_start ? tOf(s.construction_start) : T0;
+    return [Math.max(T0, cs - 6), T_MEAS1, 1, 120]; }
+  const c = CH[state.ch]; if (state.ch === "water") return [PROJ0, TEND, 12, 800];
+  return [c.t0, c.t1, c.step, c.tick];
 }
-document.getElementById("play").addEventListener("click", () => {
-  if (timer) return stopPlay();
-  const s = selSite();
-  startPlay(s ? playRange(s) : null);
+playBtn.addEventListener("click", () => {
+  if (state.playing) return stopPlay();
+  if (state.ch === "water" && !state.detail) return goChapter("future"), setTimeout(() => playBtn.click(), still ? 0 : 1700);
+  const [a, b, st, tk] = playRange(); startPlay(a, b, st, tk);
 });
-document.getElementById("reset").addEventListener("click", () => { stopPlay(); setT(TL.t0); });
-function playSite() { const s = selSite(), r = s && playRange(s); if (!r) return; stopPlay(); setT(r[0], false); startPlay(r); }
+function replaySite() { const [a, b, st, tk] = playRange(); setT(a); startPlay(a, b, st, tk); }
 
-/* ---------------- other controls ---------------- */
-document.querySelectorAll("#scn button").forEach(b => b.addEventListener("click", () => {
-  state.scn = b.dataset.scn; document.querySelectorAll("#scn button").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); }));
-["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => { state.w[k] = +e.target.value; document.getElementById(id + "o").textContent = e.target.value; render(); }));
-const LAYERS = { lyr3d: ["pixels-3d", "mass"], lyrPixels: ["pixels", "pixels-new", "pixels-3d"], lyrSites: ["site", "site-label", "site-pulse", "outline", "outline-fill"], lyrWater: ["src", "src-label", "link"], lyrExposure: ["exposure"], lyrLabels: ["places"] };
-function applyLayers() {
-  const vis = {}; for (const [el, ids] of Object.entries(LAYERS)) { const on = document.getElementById(el).checked; ids.forEach(id => vis[id] = (vis[id] ?? true) && on); }
-  for (const [id, on] of Object.entries(vis)) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
-  drawMap();
-}
-[...Object.keys(LAYERS), "lyrPhotos"].forEach(id => document.getElementById(id).addEventListener("change", applyLayers));
-map.on("pitchend", drawMap);
-document.getElementById("zin").addEventListener("click", () => map.zoomIn());
-document.getElementById("zout").addEventListener("click", () => map.zoomOut());
-document.getElementById("homeBtn").addEventListener("click", goHome);
-document.addEventListener("keydown", e => { if (e.key === "Escape") { closeResults(); if (state.selected) goHome(); } if (e.key === " " && e.target === document.body) { e.preventDefault(); document.getElementById("play").click(); } });
-document.getElementById("asof").textContent = `DATA AS OF ${D.built || ""}`;
+document.querySelectorAll("nav.chapters button").forEach(b => b.addEventListener("click", () => goChapter(b.dataset.ch)));
+document.getElementById("zin").onclick = () => map.zoomIn(); document.getElementById("zout").onclick = () => map.zoomOut();
+document.getElementById("homeBtn").onclick = () => state.detail ? closeDetail() : map.fitBounds(CH_VIEW[state.ch], { padding: 30 });
+addEventListener("resize", () => { renderLanes(); if (photoSite) setSwipe(swipeX); });
 
-const searchable = [...placed.map(s => ({ kind: "site", id: s.id, name: s.name, sub: s.status === "built" ? "Built campus" : "Announced campus", c: "#1D1C1A" })),
-                    ...D.sources.map(s => ({ kind: "src", id: s.id, name: s.water_body, sub: "Water source · " + title(s.utility), c: "#2C6A66" }))];
-const box = document.getElementById("search"), results = document.getElementById("results");
-let hits = [], hi = 0;
-function closeResults() { results.classList.remove("on"); }
-function drawResults() {
-  results.innerHTML = hits.map((h, k) => `<button class="${k === hi ? "hi" : ""}" data-k="${k}"><span class="sq" style="background:${h.c}"></span><span>${esc(h.name)}<small>${h.sub}</small></span></button>`).join("")
-    || `<p class="note" style="padding:8px 12px;margin:0">No match</p>`;
-  results.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { const h = hits[+b.dataset.k]; box.value = ""; select(h.kind, h.id); }));
-  results.classList.add("on");
-}
-box.addEventListener("input", () => { const q = box.value.trim().toLowerCase(); if (!q) return closeResults();
-  hits = searchable.filter(h => h.name.toLowerCase().includes(q) || h.sub.toLowerCase().includes(q)).slice(0, 8); hi = 0; drawResults(); });
-box.addEventListener("keydown", e => {
-  if (!results.classList.contains("on")) return;
-  if (e.key === "ArrowDown") { hi = Math.min(hits.length - 1, hi + 1); drawResults(); e.preventDefault(); }
-  if (e.key === "ArrowUp") { hi = Math.max(0, hi - 1); drawResults(); e.preventDefault(); }
-  if (e.key === "Enter" && hits[hi]) { const h = hits[hi]; box.value = ""; select(h.kind, h.id); box.blur(); }
-});
-document.addEventListener("click", e => { if (!results.contains(e.target) && e.target !== box) closeResults(); });
+/* ---------------- about ---------------- */
+const about = document.getElementById("about");
+document.getElementById("aboutBtn").onclick = () => {
+  const missing = D.sites.filter(s => s.location.missing);
+  about.innerHTML = `<h2>About the data</h2>
+  <div class="sensor" style="--c:#3E6A96"><i></i><div><b>Sentinel-1 (ESA), C-band radar</b><p>Land change at ${Object.keys(TL.curves).length} campuses, monthly, 2017 to ${tnice(T_MEAS1)}. A pixel counts as changed when its brightness moves more than a threshold (3-5 dB) for two months in a row (F1). Read from Microsoft Planetary Computer.</p></div></div>
+  <div class="sensor" style="--c:#8A2BE2"><i></i><div><b>NISAR (NASA-ISRO), L-band radar</b><p>${ST.sensors.nisar.n_usable} usable dual-polarization images over Vantage Frontier, Project Jupiter and Stargate Lordstown, ${ST.sensors.nisar.from} to ${ST.sensors.nisar.to}, plus ground motion over the Mesilla Bolson aquifer. NISAR's first images here date from Oct 2025, after construction began, so Sentinel-1 supplies the "before". Files: <code>data/nisar_gcov_coverage.csv</code>, <code>data/radar/nisar_series.csv</code>.</p></div></div>
+  <div class="sensor" style="--c:#12808F"><i></i><div><b>SWOT (NASA-CNES)</b><p>River water levels from Hydrocron, ${ST.sensors.swot.from} to ${ST.sensors.swot.to}, for ${ST.sensors.swot.n_sources} rivers.</p></div></div>
+  <div class="sensor" style="--c:#6F8FB0"><i></i><div><b>OPERA DISP-S1 (NASA JPL, from Sentinel-1)</b><p>Ground motion over ${ST.sensors.opera.n_sources} aquifers, ${ST.sensors.opera.from} to ${ST.sensors.opera.to}.</p></div></div>
+  <div class="sensor" style="--c:#B9832A"><i></i><div><b>Projection (F2-F9)</b><p>Built campuses give acres per MW, water per kWh, and how long building takes (low / median / high). Announced MW, or capex divided by $ per MW, gives each announced campus's land and water to ${YEARS[LAST]} (F2-F8). F9 adds a separate "if the pace continues" line: the MW announced in the last two years, repeated every year. People's worth = ${fmt(PER_CAPITA)} liters per person per day (USGS 2015 US public supply).</p></div></div>
+  <p class="note" style="margin-top:12px">Every number traces to a CSV in the project's <code>data/</code> folder and its source link. Water text says a campus "depends on" or is "linked to" a source; nothing here says a data center caused a change in a water body.
+  ${missing.length ? `Not on the map (location not found): ${missing.map(s => esc(s.name)).join("; ")}.` : ""} Data built ${esc(D.built)}.</p>
+  <p style="margin-top:14px"><button class="btn solid" onclick="document.getElementById('about').close()">Close</button></p>`;
+  about.showModal();
+};
 
-render();
-window.__map = map; window.__select = select; window.__setT = setT; window.__play = () => document.getElementById("play").click(); window.__state = state;
+const start = (location.hash || "").slice(1);
+goChapter(CH[start] ? start : "land");
+window.__map = map; window.__state = state; window.__go = goChapter; window.__open = openDetail; window.__setT = setT;
 </script>
 </body>
 </html>
