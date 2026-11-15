@@ -125,3 +125,24 @@ Details and per-site table: `data/precedent_sites_notes.md`. Script: `pipeline/p
   doesn't say whether it is withdrawal or consumption. Kept raw in `epoch_water_use_mgd`.
 - **Open:** Epoch capex is a constant 37.88 $M per IT MW (modeled), so k has no spread. Asked the
   person how to source k.
+
+## 2026-11-15 · k (capex per MW) and announcement gap from built sites
+
+Rule from the person (2026-11-15): k = announced capex / Epoch MW for built sites; Epoch's modeled
+capex is not used; if fewer than 8 sites qualify, Epoch's 37.88 $M/MW is the median and the
+announced sites give low/high. Script: `pipeline/precedent_k.py`; inputs: `data/precedent_capex.csv`.
+- **Case A applied: 8 sites qualify.** Meta Kuna, Jeffersonville, Rosemount, Aiken, Temple; Google
+  Mesa (phase 1, $600M vs the 90 IT MW of Building 1); Microsoft Osmium ($1.5-2B city figure, midpoint
+  used); Stargate Abilene ($15B committed capital, Crusoe release). k low/median/high =
+  p10/p50/p90 = **4.49 / 5.73 / 11.91 $M per IT MW**. Borderline: Osmium (range, page 403 from
+  the cloud machine) and Abilene (financing, not a cost report) are the 7th and 8th sites; without
+  them the case would be B.
+- **Qualifying = same buildings.** Campus-wide, multi-site or cumulative figures (22 sites) are
+  listed with the reason in `precedent_capex.csv` and not used. The Dalles' $600M per project is
+  only an "illustrative" example in the SIP agreement, so it is excluded.
+- **MW basis = Epoch IT MW** for the buildings the capex covers (all Epoch buildings, except Mesa).
+- **Gap: median -0.6 months over 8 sites** (official announcement of the same project to Epoch's
+  first land clearing). Range -3.6 to +28.9 (Osmium). Sent to the announced-projects thread.
+- **Basis warning.** Announced capex excludes chips (Meta's $800M for ~150-180 MW), so k is about a
+  sixth of Epoch's 37.88 (which includes compute). F3 on an announced figure that includes compute
+  would overstate MW about 6x. Raised with the person.
