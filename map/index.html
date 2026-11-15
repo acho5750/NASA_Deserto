@@ -83,6 +83,12 @@
   .bigl { font-size: 14px; color: var(--ink2); margin: 0 0 4px; }
   .range { font: 500 11.5px var(--mono); color: var(--muted); }
   .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .take { border-left: 4px solid var(--c); padding: 2px 0 2px 14px; margin: 12px 0 4px; }
+  .take .big { margin: 0; } .take .bigl { margin: 4px 0 0; }
+  .part { margin: 26px -4px 0; padding: 14px 16px 12px; background: var(--linen); border-top: 3px solid var(--c); }
+  .part > h2.ph { margin: 0 0 2px; font-size: 17px; display: flex; gap: 10px; align-items: baseline; }
+  .part > h2.ph .pn { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--c); color: #fff; font: 600 12px var(--mono); display: inline-grid; place-items: center; }
+  .part .rank:first-of-type { border-top: 0; } .part .rank:hover { background: var(--ivory); }
   details.how { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
   details.how summary { cursor: pointer; font: 500 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); list-style: none; }
   details.how summary::before { content: "ⓘ "; } details.how[open] summary { color: var(--ink2); }
@@ -397,15 +403,16 @@ function gwChart(g, big) {
 }
 const gwWords = g => g.verdict === "no_clear" ? `no movement it can tell apart from its noise (${(g.change_mm / 10).toFixed(1)} cm, noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`
   : `${(Math.abs(g.change_mm) / 10).toFixed(1)} cm ${g.verdict === "toward" ? "toward" : "away from"} the satellite (noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`;
+const SAY = { "ANN-STARGATE-DONAANA": "Much of the campus lit up as buildings went up on bare desert.",
+              "ANN-STARGATE-SHACKELFORD": "New buildings and pads around the first finished halls.",
+              "ANN-STARGATE-LORDSTOWN": "Almost nothing new outside: the data center is going into an existing factory building, and radar sees its roof, not the work inside." };
 function chNisar() {
   const N = ST.nisar, sv = ST.sensors.nisar, ids = Object.keys(N);
   const tot = ids.reduce((a, id) => a + (NI[id] ? NI[id].brighter_acres_in_outline : 0), 0);
   const jup = siteById["ANN-STARGATE-DONAANA"], jph = (WB.sites[jup.id] || []).slice(-1)[0];
   const first = Math.min(...ids.map(id => tOf(NI[id].frames[0].date))), last = Math.max(...ids.map(id => tOf(NI[id].frames[NI[id].frames.length - 1].date)));
   const months = last - first;
-  const say = { "ANN-STARGATE-DONAANA": "Much of the campus lit up as buildings went up on bare desert.",
-                "ANN-STARGATE-SHACKELFORD": "New buildings and pads around the first finished halls.",
-                "ANN-STARGATE-LORDSTOWN": "Almost nothing new outside: the data center is going into an existing factory building, and radar sees its roof, not the work inside." };
+  const say = SAY;
   const cards = ids.map(sid => { const s = siteById[sid], n = N[sid], ni = NI[sid];
     return `<div class="card nis"><h4>${esc(s.name.replace(/\s*\(.*\)/, ""))}<button data-site="${sid}">See it on the map</button></h4>
       ${ni ? `<p style="margin:2px 0 0"><b style="color:var(--nisar);font:600 20px var(--mono)">${fmt(ni.brighter_acres_in_outline)} acres</b> got much brighter (over ${ni.threshold_db} dB) inside the ${fmt(ni.outline_acres)}-acre outline, ${tnice(tOf(ni.frames[0].date))} to ${tnice(tOf(ni.frames[ni.frames.length - 1].date))}. ${esc(say[sid] || "")}</p>` : ""}
@@ -450,21 +457,23 @@ function chWater() {
     <div class="kicker"><span class="n">3</span>${chip("swot")}${chip("opera")}${chip("nisar")}</div>
     <h1>Some campuses depend on small towns' water</h1>
     <p class="lede">We linked each campus to its town's water utility and the river, lake or aquifer it draws from, then compared the campus's water need with the town's supply.</p>
+    <section class="part" style="--c:var(--crimson)"><h2 class="ph"><span class="pn">1</span>Campus water need vs. the town's supply</h2>
     <div class="big" style="color:var(--crimson)">${over.length}<small>water utilities</small></div>
     <p class="bigl">would need to supply <b>more water to linked campuses by 2035 than to all their customers today</b>, if the announced campuses are built.</p>
-    <h3>Campus water need vs. the utility's supply, 2035</h3>
-    <p class="note" style="margin-top:-2px">Black tick = 100%, the utility's whole supply today.</p>
+    <p class="note" style="margin-top:12px">Share of each utility's supply, 2035. Black tick = 100%, its whole supply today.</p>
     ${top.map(s => { const x = s.share.median[LAST], lo = s.share.low[LAST], hi = s.share.high[LAST];
       return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small>${title(s.utility)} · ${fmt(s.population_served)} people</small></span>
         <span class="v" style="color:${SHARE_C(x)}">${times(x)}<small>range ${times(lo)}-${times(hi)}</small></span>
         <span class="barw"><i style="--c:${SHARE_C(x)};width:${Math.min(100, x / maxS * 100)}%"></i><u style="left:${Math.min(100, 1 / maxS * 100)}%"></u></span></button>`; }).join("")}
     ${how(srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"]), "Utility and source come from EPA drinking-water records for the service area each campus sits in.", "F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). Middle estimate shown. A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.", "Linked to is not caused by: a campus being linked to a source does not mean it caused any change in it.")}
-    <h3>Rivers and lakes: is the water level changing?</h3>
+    </section>
+    <section class="part" style="--c:#12808F"><h2 class="ph"><span class="pn">2</span>Rivers and lakes: is the water level changing?</h2>
     ${swot.map(s => { const w = trendWords(s);
       return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${chip("swot")} ${esc(w.txt)}</small></span>
         <span>${sparkline(s.series, "#12808F")}</span></button>`; }).join("")}
     ${how(srcline(["data/sources.csv", "data/water/swot/"], ["https://podaac.github.io/hydrocron/intro.html"]), "SWOT measures river and lake water levels from space. The trend is a straight-line fit to the passes since SWOT began (2023), so it covers only a few years. A trend describes the water body; it does not show what caused the change.")}
-    <h3>Aquifers: is the ground above them sinking?</h3>
+    </section>
+    <section class="part" style="--c:#6F8FB0"><h2 class="ph"><span class="pn">3</span>Aquifers: is the ground above them sinking?</h2>
     <p class="note" style="margin-top:-2px">Pumping too much groundwater can make the ground sink. Sentinel-1 (OPERA) has measured it since 2016, NISAR since 2026.</p>
     ${aq.map(s => { const w = trendWords(s), g = GW[s.id];
       return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${chip("opera")} ${s.trend_value < 0 ? "sinking" : "rising"} ${Math.abs(s.trend_value).toFixed(1)} mm a year</small>${g ? `<small style="color:var(--nisar)">${chip("nisar")} ${g.verdict === "no_clear" ? "no clear change yet" : GW_TXT[g.verdict].toLowerCase() + " " + (Math.abs(g.change_mm) / 10).toFixed(1) + " cm"}</small>` : ""}</span>
@@ -473,6 +482,7 @@ function chWater() {
       `Both measure a 6 km window over the aquifer against its surroundings, along the radar's line of sight. "Sinking" = moving away from the satellite, which is usually, but not always, the ground going down. OPERA DISP-S1 is a straight-line rate over ${aq.length ? aq[0].trend_start.slice(0, 4) : "2016"}-2026.`,
       `NISAR adds up back-to-back 12-day image pairs (GUNW product), June-October 2026. "No clear change" = smaller than its noise (2 x the pair-to-pair spread x the square root of the number of pairs). NISAR is shown where its record was clear enough to read (${Object.keys(GW).length} of ${aq.length} aquifers).`,
       "A trend describes the water body. It does not show what caused the change, and a campus being linked to a source does not mean it caused any change in it.")}
+    </section>
     ${nextBtn("water")}</div>`;
 }
 
@@ -575,23 +585,34 @@ function curveChart(s) {
     <line x1="${X(now)}" x2="${X(now)}" y1="${T0p}" y2="${H - B0}" stroke="#C2461B" stroke-width="1.5"/><circle cx="${X(now)}" cy="${Y(curveAt(c, now))}" r="4" fill="#C2461B"/>
     <text x="${X(now) > W - 90 ? X(now) - 7 : X(now) + 7}" text-anchor="${X(now) > W - 90 ? "end" : "start"}" y="${Math.min(Y(curveAt(c, now)) + 16, H - B0 - 4)}" font-size="10.5" fill="#C2461B" font-family="IBM Plex Mono" font-weight="600">${fmt(curveAt(c, now))} ac</text></svg>`;
 }
+/* Each site panel opens with its own one-line story, before any instructions. */
+function takeaway(s) {
+  const ni = NI[s.id], cv = curveOf(s), key = lcKey(s), lcn = key ? LC.find(([k]) => k === key)[1].toLowerCase() : null;
+  const box = (col, num, unit, txt) => `<div class="take" style="--c:${col}"><div class="big" style="color:${col}">${num}<small>${unit}</small></div><p class="bigl">${txt}</p></div>`;
+  if (ni) return box("var(--nisar)", fmt(ni.brighter_acres_in_outline), `${Math.round(ni.brighter_acres_in_outline) === 1 ? "acre" : "acres"} got much brighter in NISAR radar`,
+    `${SAY[s.id] || ""} Inside the ${fmt(ni.outline_acres)}-acre campus outline, ${tnice(tOf(ni.frames[0].date))} to ${tnice(tOf(ni.frames[ni.frames.length - 1].date))}.`);
+  if (cv) { const a = cv[cv.length - 1][1], t0 = (cv.find(c => c[1] >= a * .1) || cv[0])[0], t1 = (cv.find(c => c[1] >= a * .9) || cv[cv.length - 1])[0];
+    return box("var(--rust)", fmt(a), "acres changed", `Sentinel-1 radar saw this land change${lcn ? `, mostly former ${lcn}` : ""}, most of it between ${tnice(t0)} and ${tnice(t1)}.`); }
+  if (s.footprint) return box("var(--rust)", fmt(s.footprint.final_acres), "acres changed", `Sentinel-1 radar saw this land change${lcn ? `, mostly former ${lcn}` : ""}.`);
+  if (s.projected) return box("#B9832A", short(people(s.water_ml.median[LAST])), `people's worth of water a year by ${YEARS[LAST]}`, `Announced, not built yet. If it is built as announced, it would use about ${fmt(s.acres.median[LAST])} acres of land.`);
+  return `<div class="take" style="--c:var(--muted)"><p class="bigl"><b>Announced, no estimate.</b> ${esc(s.not_projected_reason || "")}.</p></div>`;
+}
 function showSite(s) {
   const P = photos(s), lc = s.landcover, src = srcById[s.source_id], fp = s.footprint, n = ST.nisar[s.id], y = LAST;
   const key = lcKey(s);
   let h = `<div class="ch"><button class="back" data-back="1">&larr; Back to the story</button>
     <div class="chips" style="margin:0 0 8px">${fp ? chip("s1") : ""}${n ? chip("nisar") : ""}${s.projected ? chip("proj") : ""}</div>
     <h2>${esc(s.name)}</h2>
-    <p class="note">${s.status === "built" ? "Built campus" : "Announced campus"}${s.construction_start ? " · construction from " + s.construction_start : ""}${s.mw_stated ? " · " + fmt(s.mw_stated) + " MW stated" : ""}</p>`;
+    <p class="note">${s.status === "built" ? "Built campus" : "Announced campus"}${s.construction_start ? " · construction from " + s.construction_start : ""}${s.mw_stated ? " · " + fmt(s.mw_stated) + " MW stated" : ""}</p>
+    ${takeaway(s)}`;
   const rk = replayKind(s), cv = curveOf(s);
-  if (P && P.nisar) h += `<div class="card nis"><p style="margin:0"><b>Drag the divider on the map.</b> Left: aerial photo from <b>${P.before[2]}</b>, before construction.
-      Right: <b style="color:var(--nisar)">NISAR radar</b> on the timeline date, because the newest aerial photo here (${P.after[2]}) was taken ${P.after[0] < P.cs ? "before" : "only weeks after"} work began.
-      In radar, bright = strong echo from buildings and steel; <b style="color:var(--nisar)">purple</b> = ground that got much brighter between June and ${tnice(tOf(P.nisar.frames[P.nisar.frames.length - 1].date))}.</p>
-      ${srcline(["data/wayback_captures.csv", P.nisar.file], [WB.source, "https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`;
-  else if (P && !P.noAfter) h += `<div class="card"><p style="margin:0"><b>Drag the divider on the map.</b> Left: aerial photo from <b>${P.before[2]}</b>, before construction. Right: the photo for the timeline date (newest ${P.after[2]})${rk === "pixels" ? ", with the land Sentinel-1 radar saw change painted in <b style=\"color:var(--rust)\">rust</b>" : ""}.</p>
-      ${srcline(["data/wayback_captures.csv"], [WB.source])}</div>`;
-  else if (P) h += `<div class="card"><p style="margin:0">No before/after photo: the newest aerial photo of this place (${P.after[2]}) was taken ${P.after[0] < (P.cs || 0) ? "before construction began" : "less than 6 months after construction began"}, so it would look the same as "before".${rk === "pixels" ? " The rust squares show what the radar saw change since." : ""}</p></div>`;
+  if (P && P.nisar) h += `<p class="note" style="margin-top:10px">&#8596; Drag the divider on the map: aerial photo from ${P.before[2]} (before) vs. <span style="color:var(--nisar)">NISAR radar</span> on the timeline date. Bright = buildings and steel; purple = much brighter since June.</p>
+      ${how(srcline(["data/wayback_captures.csv", P.nisar.file], [WB.source, "https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"]), `The right side is radar, not a photo, because the newest aerial photo here (${P.after[2]}) was taken ${P.after[0] < P.cs ? "before" : "only weeks after"} work began. "Much brighter" = more than 3 dB, mean of the last 3 passes vs. the first 3.`)}`;
+  else if (P && !P.noAfter) h += `<p class="note" style="margin-top:10px">&#8596; Drag the divider on the map: aerial photo from ${P.before[2]} (before) vs. the photo for the timeline date (newest ${P.after[2]})${rk === "pixels" ? `, with the land radar saw change in <span style="color:var(--rust)">rust</span>` : ""}.</p>
+      ${how(srcline(["data/wayback_captures.csv"], [WB.source]))}`;
+  else if (P) h += `<p class="note" style="margin-top:10px">No before/after photo: the newest aerial photo here (${P.after[2]}) was taken ${P.after[0] < (P.cs || 0) ? "before construction began" : "less than 6 months after construction began"}.${rk === "pixels" ? " The rust squares show what the radar saw change since." : ""}</p>`;
   if (cv) h += `<h3>${chip("s1")} Acres changed, month by month</h3><div id="acurve">${curveChart(s)}</div>
-      <p class="bigl"><b>${fmt(cv[cv.length - 1][1])} acres</b> changed inside the campus outline + 200 m by ${tnice(cv[cv.length - 1][0])}.</p>`;
+      <p class="note">Inside the campus outline + 200 m, to ${tnice(cv[cv.length - 1][0])}.</p>`;
   h += rk ? `<button class="btn solid" style="margin-top:6px" data-replay="1">&#9654; ${rk === "nisar" ? "Replay NISAR, every 12 days" : "Replay the radar, month by month"}</button><p class="note" style="margin-top:6px">${esc(replayWhy(s))}</p>`
           : `<p class="note" style="margin-top:10px">${esc(replayWhy(s))}</p>`;
   if (lc) { const segs = LC.filter(([k]) => (lc.pct[k] || 0) > 0);
