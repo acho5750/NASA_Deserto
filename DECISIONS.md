@@ -230,3 +230,10 @@ Dalles, Richmond 2) and the multi-parcel Microsoft campuses (Goodyear, SAT40). B
 reported acreage includes land not yet built (Storey County 1,210 ac bought, Gallatin 800-900 ac,
 Midlothian 375-540 ac, Aiken 300 ac). The reported figures are mostly from trackers and news; each
 row has its source link.
+
+**Registry update (`--write-registry`).** `a_max_acres` and `build_months` in `data/precedent_sites.csv`
+are filled for 22 sites. They are left blank for 7 sites whose logistic never levels off inside the data
+(`curve_not_saturated` or `logistic_fit_at_grid_edge`: New Albany, Eagle Mountain, Nebius NJ,
+Midlothian, Arcola, Gallatin, Storey County), because their A_max is an extrapolation (Arcola: fit
+400 ac vs 133 ac measured), and for Jeffersonville (not run). `projection.py` drops blanks. Footprint
+flags are appended to the `flags` column as `footprint:<flag>`; the noise-flagged values are kept.

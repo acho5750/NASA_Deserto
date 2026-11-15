@@ -20,6 +20,12 @@ Outputs
 
 Usage:  python pipeline/footprint_batch.py [--only ID1,ID2] [--skip-done]
         python pipeline/footprint_batch.py --refit     # redo only the logistic fit from saved curves
+        python pipeline/footprint_batch.py --write-registry   # copy a_max_acres, build_months into precedent_sites.csv
+
+--write-registry leaves a_max_acres and build_months blank when the fit is not trustworthy
+(flag logistic_fit_at_grid_edge or curve_not_saturated: the curve never levels off inside the data,
+so A_max is an extrapolation). Sites flagged only for the 5% noise rule keep their values; the flag
+is appended to the registry's `flags` column as footprint:<flag>.
 """
 import argparse
 import sys
@@ -57,6 +63,28 @@ def refit(summary_path=Path("data/footprint/footprint_summary.csv")):
     sm.to_csv(summary_path, index=False)
 
 
+UNTRUSTED_FIT = ("logistic_fit_at_grid_edge", "curve_not_saturated")
+
+
+def write_registry(sites_path, summary_path=Path("data/footprint/footprint_summary.csv")):
+    reg = pd.read_csv(sites_path)
+    sm = pd.read_csv(summary_path).set_index("site_id")
+    for i, r in reg.iterrows():
+        flags = [f for f in str(r["flags"]).split(";") if f and f != "nan" and not f.startswith("footprint:")]
+        if r.site_id not in sm.index:
+            reg.loc[i, ["a_max_acres", "build_months"]] = [None, None]
+            flags.append("footprint:not_run")
+        else:
+            f = str(sm.loc[r.site_id, "flag"]) if pd.notna(sm.loc[r.site_id, "flag"]) else ""
+            ok = not any(u in f for u in UNTRUSTED_FIT)
+            reg.loc[i, "a_max_acres"] = sm.loc[r.site_id, "a_max_acres"] if ok else None
+            reg.loc[i, "build_months"] = sm.loc[r.site_id, "build_months"] if ok else None
+            flags += [f"footprint:{x}" for x in f.split(";") if x]
+        reg.loc[i, "flags"] = ";".join(flags)
+    reg.to_csv(sites_path, index=False)
+    print(reg[["site_id", "a_max_acres", "build_months", "flags"]].to_string(index=False))
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--sites", default="data/precedent_sites.csv")
@@ -64,9 +92,12 @@ def main():
     p.add_argument("--only", default="")
     p.add_argument("--skip-done", action="store_true")
     p.add_argument("--refit", action="store_true", help="refit the logistic from saved area curves, no download")
+    p.add_argument("--write-registry", action="store_true", help="copy a_max_acres/build_months into --sites")
     a = p.parse_args()
     if a.refit:
         return refit()
+    if a.write_registry:
+        return write_registry(a.sites)
 
     sites = pd.read_csv(a.sites)
     outl = pd.read_csv(a.outlines, dtype=str).fillna("").set_index("site_id")
