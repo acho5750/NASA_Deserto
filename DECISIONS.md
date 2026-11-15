@@ -41,20 +41,20 @@ Retries up to 4 times with backoff on HTTP errors and on ArcGIS `{"error": ...}`
 back with HTTP 200), then raises.
 
 **Matching rules (unchanged from the file-based version).**
-- No polygon contains the site: one row with empty `pwsid`, `match_status = no_utility_check_self_supply`.
+- No polygon contains the site: one row with empty `pwsid`, `match_status = self_supplied_check`.
 - Several polygons contain the site: one row per PWSID, all `matched`, reviewed by hand.
 - New: if the service returns several features with the same PWSID, that PWSID is written once.
   Duplicate PWSIDs exist in this layer (the v2.01 note mentions them) and add no information.
 - Output columns unchanged: every registry column, plus `pwsid` and `match_status`, in
   `data/site_utility_matches.csv` (new optional `--out` flag for test runs).
 
-**Open item.** `CLAUDE.md` calls the no-match status `self_supplied_check`; the code has always
-written `no_utility_check_self_supply`. Kept the code's string because the task said to handle
-no-match the same way as before. Pick one name before the projection reads this column.
+**Resolved 2026-11-15.** The no-match label was `no_utility_check_self_supply` in the code and
+`self_supplied_check` in `CLAUDE.md`. Bubba chose `self_supplied_check` everywhere; the code now
+writes that. No other file (projection, map, docs) read the old label.
 
 **Test results (2026-11-15).**
 - Demo registry: DEMO-A OK1020418 (TULSA), DEMO-B and DEMO-F AZ0407095 (MESA CITY OF),
-  DEMO-D AZ0407093 (GLENDALE CITY OF); DEMO-C, E, G, H no match.
+  DEMO-D AZ0407093 (GLENDALE CITY OF); DEMO-C, E, G, H no match (`self_supplied_check`).
 - Real addresses: Phoenix City Hall (33.4484, -112.0740) -> AZ0407025 PHOENIX CITY OF;
   Tulsa City Hall (36.1540, -95.9928) -> OK1020418 TULSA; Omaha City Hall (41.2587, -95.9378) ->
   NE3105507 METROPOLITAN UTILITIES DISTRICT.
@@ -153,3 +153,22 @@ because Epoch's 37.88 $M/MW includes compute. k = **4.49 / 4.88 / 6.43 $M per IT
 (p10/p50/p90, n=6, low confidence), labeled in METHODS.md. `k_use` column added to
 `data/precedent_capex.csv`. Sent to the announced-projects thread. Supersedes the "Case A"
 numbers in the entry above.
+## 2026-11-15 · Phase 5 NISAR coverage check: site choice, coordinates and "usable" rule
+
+**Sites.** Vantage Frontier (Shackelford Co., TX), Project Jupiter (Dona Ana Co., NM) and Stargate
+Lordstown (OH), all from `data/announced_sites.csv` (PR 5). Chosen because Epoch's timeline shows
+active construction after 2026-06-01 at each (2026-09-04, 2026-06-22, 2026-07-30 entries) and a
+campus-level coordinate could be sourced. Meta Hyperion was passed over because no source with a
+campus coordinate was found (only the Holly Ridge hamlet centroid). Built sites in
+`data/precedent_sites.csv` (PR 6) were not used: all but one are complete by Epoch's timeline.
+
+**Coordinates.** `announced_sites.csv` has only town or county centroids for these sites, which can
+fall kilometres from the campus. For this check only, Frontier and Jupiter use Baxtel's campus
+points and Lordstown uses the US Census geocode of Epoch's street address (sources per row in
+`data/nisar_coverage_sites.csv`). The registry itself is not changed.
+
+**Usable rule.** HH and HV on frequency A, >= 90% valid pixels in a 51 x 51 window at the site, no
+input-data anomaly bit, not diagnostic mode. The `inputDataExceptionMask` bits 256/512 mean "HH/HV
+fully focused" in V1 products and are not counted as anomalies. Where one acquisition has two
+products, the usable one at the track's usual bandwidth is counted and the other is marked
+`duplicate_of`.
