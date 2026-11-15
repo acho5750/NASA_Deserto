@@ -10,8 +10,7 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
-| `pipeline/water_chain.py` steps 1–3a | Written against documented file layouts and the Hydrocron API, not yet run against live data |
-| `pipeline/water_chain.py` step 3b (DISP-S1) | Placeholder: inspect one real file first |
+| `pipeline/water_chain.py` (water chain) | Run on all 54 sites: EPA match, SDWA seller chain, SWOT trend via Hydrocron (SWORD reaches), DISP-S1 reader (range reads); writes `data/sources.csv` |
 
 All rows in `data/*_demo.csv` are invented. `PER_CAPITA_L_PER_DAY` and `UTILIZATION` in
 `projection.py` are placeholders to replace with sourced values.
@@ -28,11 +27,12 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 2. Save its outline as GeoJSON in `data/footprint/` and run
    `python pipeline/footprint.py --site-id <ID> --campus data/footprint/<ID>_campus.geojson --construction-start YYYY-MM-DD`.
    It writes the area curve and `footprint_summary.csv` with `a_max_acres` and `build_months` (10%→90%).
-3. Run `python pipeline/water_chain.py match --registry data/site_registry.csv` (queries EPA's
-   service area ArcGIS service by point; no download needed).
-4. Download the ECHO SDWA zip, unzip into `data/raw/`, run `... lookup --pwsid <PWSID>`.
-5. Find the source name in the utility's water quality report. For a reservoir, find its lake ID
-   in the SWOT Prior Lake Database, then run `... swot --lake-id <ID> --start 2023-08-01 --end 2026-11-01`.
+3. Run `python pipeline/water_chain.py points` then `... match` (queries EPA's service area
+   ArcGIS service by point; no download needed).
+4. Download the ECHO SDWA zip, unzip into `data/raw/sdwa/`, run `... lookup` (all matched
+   utilities, following purchased water to sellers) or `... lookup --pwsid <PWSID>`.
+5. Name the water body per utility in `data/water/source_assignments.csv` (SDWA plus the utility's
+   water quality report), then run `... sources` (SWOT via Hydrocron, DISP-S1 for aquifers).
 6. Fill one row each in `data/site_registry.csv` and `data/sources.csv`, run the projection, open the map.
 
 ## Data links

@@ -346,28 +346,63 @@ def _disp_granules(lat: float, lon: float, start: str, end: str) -> pd.DataFrame
     return pd.DataFrame(rows)
 
 
-def _disp_window(url: str, lat: float, lon: float, fs) -> tuple:
-    import h5py, pyproj
-    with fs.open(url, block_size=2 ** 20, cache_type="blockcache") as fo, h5py.File(fo) as f:
-        gt = [float(v) for v in f["spatial_ref"].attrs["GeoTransform"].split()]
-        crs = pyproj.CRS.from_wkt(f["spatial_ref"].attrs["crs_wkt"])
-        x, y = pyproj.Transformer.from_crs(4326, crs, always_xy=True).transform(lon, lat)
-        c, r = int((x - gt[0]) / gt[1]), int((y - gt[3]) / gt[5])
-        h = DISP_HALF_WINDOW_PX
-        ny, nx = f["displacement"].shape
-        if not (h <= r < ny - h and h <= c < nx - h):
-            return np.nan, 0.0
-        d = f["displacement"][r - h:r + h, c - h:c + h]
-        m = f["recommended_mask"][r - h:r + h, c - h:c + h]
+def _unshuffle(raw: bytes, itemsize: int) -> bytes:
+    if itemsize == 1:
+        return raw
+    return np.frombuffer(raw, np.uint8).reshape(itemsize, -1).T.tobytes()
+
+
+def _disp_window(url: str, lat: float, lon: float, session) -> tuple:
+    """Median good-pixel displacement (m) in the window, read through the granule's kerchunk
+    reference file (<granule>.zarr.json.gz): one small GET for the chunk index, then HTTP range
+    reads of only the 256x256 chunks that cover the window."""
+    import gzip, zlib, pyproj
+    refs = json.loads(gzip.decompress(session.get(url[:-3] + ".zarr.json.gz", timeout=120).content))["refs"]
+    sr = json.loads(refs["spatial_ref/.zattrs"])
+    gt = [float(v) for v in sr["GeoTransform"].split()]
+    crs = pyproj.CRS.from_wkt(sr["crs_wkt"])
+    x, y = pyproj.Transformer.from_crs(4326, crs, always_xy=True).transform(lon, lat)
+    c, r, h = int((x - gt[0]) / gt[1]), int((y - gt[3]) / gt[5]), DISP_HALF_WINDOW_PX
+    ny, nx = json.loads(refs["displacement/.zarray"])["shape"]
+    if not (h <= r < ny - h and h <= c < nx - h):
+        return np.nan, 0.0
+    # Resolve the redirect to the signed S3 URL once, then range-read chunks from it.
+    loc = session.get(url, headers={"Range": "bytes=0-0"}, allow_redirects=False, timeout=120)
+    signed = loc.headers.get("Location", url) if loc.is_redirect else url
+
+    def mosaic(var, fill):
+        za = json.loads(refs[f"{var}/.zarray"])  # chunk shape and dtype differ between product versions
+        dtype = za["dtype"]
+        cy, cx = za["chunks"]
+        isz = next((f["elementsize"] for f in za["filters"] if f["id"] == "shuffle"), 1)
+        rows, cols = range((r - h) // cy, (r + h - 1) // cy + 1), range((c - h) // cx, (c + h - 1) // cx + 1)
+        big = np.full((len(rows) * cy, len(cols) * cx), fill, dtype=dtype)
+        for i, cr in enumerate(rows):
+            for j, cc in enumerate(cols):
+                ref = refs.get(f"{var}/{cr}.{cc}")
+                if ref is None:
+                    continue
+                if isinstance(ref, str):  # small chunks are stored inline in the reference file
+                    import base64
+                    raw = base64.b64decode(ref[7:]) if ref.startswith("base64:") else ref.encode()
+                else:
+                    _, off, ln = ref
+                    raw = session.get(signed, headers={"Range": f"bytes={off}-{off + ln - 1}"}, timeout=120).content
+                big[i * cy:(i + 1) * cy, j * cx:(j + 1) * cx] = np.frombuffer(
+                    _unshuffle(zlib.decompress(raw), isz), dtype=dtype).reshape(cy, cx)
+        r0, c0 = r - h - rows[0] * cy, c - h - cols[0] * cx
+        return big[r0:r0 + 2 * h, c0:c0 + 2 * h]
+
+    d = mosaic("displacement", np.nan)
+    m = mosaic("recommended_mask", 255)
     good = (m == 1) & np.isfinite(d)
     return (float(np.median(d[good])) if good.mean() >= DISP_MIN_GOOD else np.nan), float(good.mean())
 
 
 def aquifer_trend(name: str, lat: float, lon: float, start: str = "2016-07-01", end: str = "2026-11-15",
-                  out_dir: str = "data/water/disp", workers: int = 8) -> dict:
+                  out_dir: str = "data/water/disp", workers: int = 16) -> dict:
     """LOS velocity (mm/yr) over a 6 km window centred on (lat, lon), from every DISP-S1 date of the
     frame with the most dates there."""
-    import fsspec
     from concurrent.futures import ThreadPoolExecutor
     g = _disp_granules(lat, lon, start, end)
     base = {"trend_method": "disp_s1", "feature_lat": lat, "feature_lon": lon}
@@ -375,31 +410,60 @@ def aquifer_trend(name: str, lat: float, lon: float, start: str = "2016-07-01", 
         return {**base, "trend_status": "no_disp_s1_coverage"}
     frame = g.groupby("frame").sec.nunique().idxmax()
     g = g[g.frame == frame].sort_values("prod").drop_duplicates(["ref", "sec"], keep="last").sort_values(["sec", "ref"])
-    fs = fsspec.filesystem("https", client_kwargs={"trust_env": True})  # go through the proxy that adds the Earthdata token
+    session = requests.Session()  # requests honours HTTPS_PROXY, which adds the Earthdata token for ASF
+
+    def one(u):
+        for attempt in range(3):
+            try:
+                return _disp_window(u, lat, lon, session)
+            except Exception as e:  # network hiccup or a granule without a reference file
+                err = e
+                time.sleep(2 ** attempt)
+        print(f"  skipped {u.rsplit('/', 1)[-1]}: {err}")
+        return np.nan, 0.0
     with ThreadPoolExecutor(workers) as ex:
-        vals = list(ex.map(lambda u: _disp_window(u, lat, lon, fs), g.url))
+        vals = list(ex.map(one, g.url))
     g["disp_m"], g["good_frac"] = [v[0] for v in vals], [v[1] for v in vals]
     # Chain ministacks: cumulative(sec) = disp(ref -> sec) + cumulative(ref). The first reference is 0.
-    cum = {g.ref.min(): 0.0}
+    # When a date that later serves as a reference is missing (masked or skipped), the chain breaks;
+    # the next ministack then starts a new segment with its own unknown offset.
+    cum, seg = {}, {}
     rows = []
     for r in g.itertuples():
-        if r.ref in cum and np.isfinite(r.disp_m):
-            if r.sec not in cum:
-                cum[r.sec] = r.disp_m + cum[r.ref]
-                rows.append({"date": r.sec, "cum_disp_m": cum[r.sec], "ref": r.ref, "good_frac": r.good_frac})
-    ts = pd.DataFrame(rows)
+        if not np.isfinite(r.disp_m):
+            continue
+        if r.ref not in cum:
+            cum[r.ref], seg[r.ref] = 0.0, len(set(seg.values()))
+        if r.sec not in cum:
+            cum[r.sec], seg[r.sec] = r.disp_m + cum[r.ref], seg[r.ref]
+            rows.append({"date": r.sec, "cum_disp_m": cum[r.sec], "segment": seg[r.sec], "ref": r.ref,
+                         "good_frac": r.good_frac})
+    ts = pd.DataFrame(rows, columns=["date", "cum_disp_m", "segment", "ref", "good_frac"])
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     series = Path(out_dir) / f"disp_{name}_{frame}.csv"
     ts.to_csv(series, index=False)
+    # Segments with fewer than 3 dates carry no slope information.
+    ts = ts[ts.groupby("segment").date.transform("size") >= 3]
     if len(ts) < 10:
-        return {**base, "trend_status": "insufficient_disp_s1", "trend_n": len(ts), "trend_feature_id": frame}
+        return {**base, "trend_status": "insufficient_disp_s1", "trend_n": len(ts), "trend_feature_id": frame,
+                "granules_read": int(len(g)), "granules_masked": int((~np.isfinite(g.disp_m)).sum())}
     t = pd.to_datetime(ts.date, format="%Y%m%d", utc=True)
-    slope, n, dropped = _fit_trend(t, ts.cum_disp_m * 1000)
+    years = ((t - t.min()).dt.total_seconds() / (365.25 * 86400)).to_numpy()
+    v = ts.cum_disp_m.to_numpy() * 1000
+    segs = pd.get_dummies(ts.segment).to_numpy(float)
+    keep = np.ones(len(v), bool)
+    for _ in range(2):  # common slope, one offset per segment; second pass drops >4 MAD residuals
+        X = np.column_stack([years, segs])[keep]
+        coef, *_ = np.linalg.lstsq(X, v[keep], rcond=None)
+        res = v - np.column_stack([years, segs]) @ coef
+        mad = np.median(np.abs(res[keep] - np.median(res[keep]))) or 1e-9
+        keep = np.abs(res - np.median(res[keep])) <= 4 * 1.4826 * mad
+    slope, n, dropped = float(coef[0]), int(keep.sum()), int((~keep).sum())
     out = {**base, "trend_status": "ok", "trend_value": round(slope, 2), "trend_unit": "mm/yr LOS",
            "trend_n": n, "trend_outliers_dropped": dropped, "trend_feature_id": frame,
            "trend_start": t.min().date().isoformat(), "trend_end": t.max().date().isoformat(),
            "trend_series_file": str(series), "granules_read": int(len(g)),
-           "dates_unchained": int(len(g.sec.unique()) - len(ts))}
+           "granules_masked": int((~np.isfinite(g.disp_m)).sum()), "segments": int(ts.segment.nunique())}
     print(json.dumps(out, indent=2))
     return out
 
@@ -454,10 +518,18 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
         else:
             links += [DISP_LINK]
         sites = m[m.pwsid == a.pwsid].site_id.tolist()
+        lat, lon = t.get("feature_lat"), t.get("feature_lon")
+        if pd.notna(lat) and a.trend_method.startswith("swot"):
+            loc_basis = "SWORD reach prior location (Hydrocron p_lat/p_lon)"
+        elif pd.notna(lat):
+            loc_basis = "DISP-S1 window centre: point inside the utility's EPA service area"
+        else:
+            lat, lon = _service_area_point(a.pwsid)
+            loc_basis = "point inside the utility's EPA service area (water body location not in data)"
         rows.append({
             "source_id": f"SRC-{a.pwsid}", "name": f"{a.water_body} for {u['name'].title()}",
             "water_body_id": a.water_body_id, "water_body": a.water_body, "type": a.type,
-            "lat": t.get("feature_lat"), "lon": t.get("feature_lon"),
+            "lat": lat, "lon": lon, "location_basis": loc_basis,
             "utility_pwsid": a.pwsid, "utility_name": u["name"],
             "population_served": pop if pop and pop > 0 else np.nan,
             "trend_value": t.get("trend_value"), "trend_unit": t.get("trend_unit"),
@@ -492,7 +564,14 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
             links.append({"site_id": sid, "list": r0.list, "match_status": r0.match_status, "pwsid": "",
                           "source_id": "", "other_service_areas": "",
                           "candidates_within_2km": r0.get("candidates_within_2km", ""), "water_share": "exclude"})
-    pd.DataFrame(links).to_csv(site_out, index=False)
+    links = pd.DataFrame(links)
+    links.to_csv(site_out, index=False)
+    # Fill the registries' source_id column (blank = self_supplied_check, excluded from water shares).
+    sid = dict(zip(links.site_id, links.source_id))
+    for reg in ("data/precedent_sites.csv", "data/announced_sites.csv"):
+        df = pd.read_csv(reg, dtype=str, keep_default_na=False)
+        df["source_id"] = df.site_id.map(sid).fillna("")
+        df.to_csv(reg, index=False)
     print(src[["source_id", "water_body", "type", "population_served", "trend_value", "trend_unit", "trend_status"]].to_string(index=False))
     return src
 

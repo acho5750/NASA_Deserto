@@ -1,0 +1,27 @@
+water_body_id,trend_method,feature_lat,feature_lon,trend_status,trend_value,trend_unit,trend_n,trend_outliers_dropped,trend_feature_id,trend_start,trend_end,trend_series_file,granules_read,granules_masked,segments,trend_feature,feature_name
+WB-BOLING-GW,disp_s1,29.26501,-95.94011,ok,-1.13,mm/yr LOS,359.0,1.0,F38239,2016-11-15,2026-02-14,data/water/disp/disp_WB-BOLING-GW_F38239.csv,449.0,89.0,6.0,,
+WB-CHEYENNE-SW,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-COLORADO-CAP,swot_reach,,,insufficient_swot,,,0.0,,77233000293,,,,,,,Reach,
+WB-CUWCD,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-DELAWARE,swot_reach,40.21351629,-74.7804665,ok,-0.448,m/yr,6.0,1.0,73150600111,2024-03-29,2026-10-03,data/water/swot/swot_reach_73150600111.csv,,,,Reach,Delaware River
+WB-EDWARDS,disp_s1,29.43152,-98.52983,ok,2.95,mm/yr LOS,245.0,9.0,F28482,2016-09-26,2025-11-20,data/water/disp/disp_WB-EDWARDS_F28482.csv,254.0,0.0,1.0,,
+WB-HAMLET,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-HOOVER,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-HUBBARD,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-JAMES,swot_reach,37.55608504,-77.5411533,ok,-0.057,m/yr,83.0,0.0,73190600091,2023-08-03,2026-10-14,data/water/swot/swot_reach_73190600091.csv,,,,Reach,James River
+WB-JOE-POOL,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-LAKE-MEREDITH,swot_reach,35.6200653,-101.6681457,ok,-0.122,m/yr,91.0,2.0,74242300691,2023-08-02,2026-10-24,data/water/swot/swot_reach_74242300691.csv,,,,Reach,Canadian River
+WB-LAKE-MICHIGAN,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-LEBANON-GW,disp_s1,40.03964,-86.47623,ok,19.75,mm/yr LOS,223.0,1.0,F04862,2016-07-15,2026-03-01,data/water/disp/disp_WB-LEBANON-GW_F04862.csv,224.0,0.0,1.0,,
+WB-LEON-BELTON,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-MILLER-CREEK,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-MISSOURI-KC,swot_reach,39.1531174,-94.6069815,ok,0.048,m/yr,95.0,4.0,74293100011,2023-08-30,2026-10-21,data/water/swot/swot_reach_74293100011.csv,,,,Reach,Missouri River
+WB-MONTGOMERY-GW,disp_s1,38.97271,-91.50175,ok,-14.59,mm/yr LOS,160.0,4.0,F44061,2016-07-26,2026-02-04,data/water/disp/disp_WB-MONTGOMERY-GW_F44061.csv,239.0,75.0,5.0,,
+WB-OCCOQUAN,swot_lake,,,swot_lake_id_unavailable,,,,,,,,,,,,,
+WB-OHIO-OUTWASH,disp_s1,38.36996,-85.7817,ok,-10.44,mm/yr LOS,265.0,4.0,F32247,2016-08-15,2026-01-07,data/water/disp/disp_WB-OHIO-OUTWASH_F32247.csv,269.0,0.0,1.0,,
+WB-OLD-HICKORY,swot_reach,,,insufficient_swot,,,0.0,,74264500043,,,,,,,Reach,
+WB-POTOMAC,swot_reach,39.06744564,-77.3904636,ok,-0.063,m/yr,124.0,7.0,73180100101,2023-08-02,2026-10-25,data/water/swot/swot_reach_73180100101.csv,,,,Reach,Upper Potomac River
+WB-SAWS-TRP,disp_s1,29.40243,-98.77425,ok,8.45,mm/yr LOS,269.0,0.0,F01095,2016-10-19,2026-04-06,data/water/disp/disp_WB-SAWS-TRP_F01095.csv,269.0,0.0,1.0,,
+WB-WMEMPHIS-GW,disp_s1,35.14799,-90.17998,ok,-14.07,mm/yr LOS,262.0,7.0,F24459,2016-09-30,2026-01-05,data/water/disp/disp_WB-WMEMPHIS-GW_F24459.csv,269.0,0.0,1.0,,
+WB-HUECO,disp_s1,31.8121,-106.50184,ok,-1.69,mm/yr LOS,279.0,5.0,F42264,2016-07-25,2026-04-16,data/water/disp/disp_WB-HUECO_F42264.csv,284.0,0.0,1.0,,
+WB-MESILLA,disp_s1,31.8536,-106.67598,ok,-2.36,mm/yr LOS,280.0,4.0,F42264,2016-07-25,2026-04-16,data/water/disp/disp_WB-MESILLA_F42264.csv,284.0,0.0,1.0,,
