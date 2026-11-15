@@ -419,3 +419,28 @@ WUE n = 5; acres/MW 0.80 / 1.32 / 1.77; tau 47.9 months. The largest 2030 median
 rural utilities matched to large announced campuses at county-centroid points (Fort Griffin SUD 25x
 its supply, Camino Real 8.9x, Hawley WSC 6.0x). These rows are flagged `location_approx` and need real
 campus locations before the map shows them as shares.
+
+## 2026-11-15 · Phase 5 showcase: outlines, NISAR version mixing, GUNW reference
+
+- **Outlines.** Jupiter: OSM way/1476734418 "Project Jupiter" (613 ac); it misses graded land to
+  the west, so its acres are a lower bound (`outline_partial_campus`). Lordstown: OSM
+  way/473431363 "Stargate Project", the existing plant building (`outline_existing_building`).
+  Frontier: no OSM object within 8 km, so hand-drawn around the cleared campus on Sentinel-2 L2A
+  2026-10-08 (`hand_drawn_no_osm`, 1,440 ac vs 1,200 ac reported). Rows in
+  `data/footprint/campus_outlines.csv`. Registry coordinates are not changed (another thread owns them).
+- **Sentinel-1 is the pre-construction baseline.** NISAR's first GCOV over these sites is from late
+  October 2025, after construction began, so F1 uses Sentinel-1 only (`pipeline/footprint.py`,
+  `--months-after 16` so the window ends near today). The CLAUDE.md orbit rule picked ascending 5
+  (Frontier), descending 56 (Jupiter) and ascending 77 (Lordstown).
+- **Provisional and final NISAR GCOV are mixed.** No date exists in both versions. On the reference
+  ring (500 m to 1.5 km outside each outline), the step at the switch has a median of -0.28 dB (HH)
+  and -0.19 dB (HV) across 10 stacks. That is inside the 0.5 dB tolerance set before the check and
+  smaller than the normal date-to-date change on 9 of 10 stacks (`data/radar/nisar_calibration.csv`).
+  Recheck once ASF reprocesses the older dates as version 1.0.20.
+- **NISAR chart stack per site** = the stack with the most 10 m dates: Frontier 163 A/18, Jupiter
+  48 A/17, Lordstown 90 A/22. The series CSV holds every stack.
+- **GUNW reference.** Each pair is referenced to the median of a 40 km box around the aquifer
+  window, after subtracting the product's ionosphere phase screen. The result is motion relative to
+  the surroundings, not absolute, and is summed only along an unbroken chain of back-to-back pairs.
+- **Map.** The new images are in `map/img/`; wiring them into `map/index.html` needs captions,
+  which are map copy, so that waits for the person.

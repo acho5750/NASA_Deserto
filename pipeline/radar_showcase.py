@@ -95,7 +95,15 @@ def nisar_one(row, campus_ll):
         i0, i1 = np.searchsorted(-ys, -y1), np.searchsorted(-ys, -y0)
         sl = (slice(i0, i1), slice(j0, j1))
         hh, hv = g["HHHH"][sl], g["HVHV"][sl]
-        campus, ring = masks_for(xs[j0:j1], ys[i0:i1], cu)
+        # pad with NaN where the window runs past the frame edge, so every date covers the same ground
+        res = float(xs[1] - xs[0])
+        top, left = max(0, round((y1 - ys[0]) / res)), max(0, round((xs[0] - x0) / res))
+        bottom, right = max(0, round((ys[-1] - y0) / res)), max(0, round((x1 - xs[-1]) / res))
+        pad = ((top, bottom), (left, right))
+        hh, hv = (np.pad(a, pad, constant_values=np.nan) for a in (hh, hv))
+        gx = np.concatenate([xs[0] - res * np.arange(left, 0, -1), xs[j0:j1], xs[-1] + res * np.arange(1, right + 1)])
+        gy = np.concatenate([ys[0] + res * np.arange(top, 0, -1), ys[i0:i1], ys[-1] - res * np.arange(1, bottom + 1)])
+        campus, ring = masks_for(gx, gy, cu)
     out = {"epsg": epsg}
     for k, a in (("hh", hh), ("hv", hv)):
         out[f"campus_{k}_db"], out[f"ref_{k}_db"], out["campus_px"], out["campus_valid_frac"] = stats(a, campus, ring)
@@ -244,8 +252,9 @@ def panel_grid(path, panels, title):
     """panels: list of rows, each a list of (PIL image, label)."""
     from PIL import Image, ImageDraw
     w = max(im.width for row in panels for im, _ in row)
-    scale = 1 if w >= 300 else int(np.ceil(300 / w))
-    rows = [[(im.resize((im.width * scale, im.height * scale), Image.NEAREST), lab) for im, lab in row] for row in panels]
+    f = 420 / w          # every panel 420 px wide: keeps the PNG small enough for the map
+    rs = Image.LANCZOS if f < 1 else Image.NEAREST
+    rows = [[(im.resize((round(im.width * f), round(im.height * f)), rs), lab) for im, lab in row] for row in panels]
     pad, head = 6, 16
     W = max(sum(im.width for im, _ in row) + pad * (len(row) + 1) for row in rows)
     H = 20 + sum(max(im.height for im, _ in row) + head + pad for row in rows)
