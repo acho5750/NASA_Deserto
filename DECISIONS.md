@@ -822,3 +822,8 @@ GCOV files but would repeat the "something was built" message, so it was left fo
 
 - **Every site panel opens with its own one-line story.** The story sits in a colored box: NISAR sites lead with the acres that got brighter and what that means (Lordstown: "Almost nothing new outside: the data center is going into an existing factory building..."); built sites lead with acres changed, the main former land cover and when most of the change happened; announced sites lead with the projected water in people's worth. The "drag the divider" instruction is now one small grey line, with data links and photo-date reasons in the "How we measured" toggle.
 - **The Water step has three numbered, separately boxed parts**: 1 campus need vs. the town's supply, 2 rivers and lakes, 3 aquifers.
+
+## 2026-11-15: Map v5 round 7 (step 2 color, opening line)
+
+- **Step 2 now has the same neutral styling as the other steps** (QA review). This covers the nav tab, the step number, the headline number and the cards. Purple is kept only for NISAR data: the NISAR chip, rings on the map, purple change areas, the NISAR chart lines and NISAR numbers.
+- **Step 2 opens with a "we did X" lede** like steps 3 and 4: "We read every NISAR radar image of the 3 campuses it covers, one every 12 days since June 2026, and mapped where the ground got much brighter. Aerial photos can't keep up: ..." This replaces the "So what?" box, which said the same thing.
