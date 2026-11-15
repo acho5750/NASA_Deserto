@@ -499,3 +499,55 @@ changed. Added:
 Abilene system, so both count Shackelford + Stargate Abilene); Bell Milam Falls 10.3x -> 1.16x (Central
 Texas WSC + East Bell WSC system, about 61,000 people); Castalian Springs 0.28x -> 0.04x; PWCSA West
 0.12x -> 0.009x.
+
+## 2026-11-15 Phase 6: land cover converted, wetlands and protected areas
+
+**Converted-pixel maps.** F1 kept only acre curves, so `footprint.py` now also writes the final
+cumulative converted pixels inside the site (outline + 200 m) as `data/footprint/masks/<id>_converted.tif`
+(10 m UTM, 172 KB for all 29). All 29 sites were rerun. Thresholds, final acres, A_max and build
+months came out identical to the committed summary, so nothing in F1 changed. The mask is the
+`final_acres_site` area. That is the measured converted area; A_max is the logistic fit's asymptote,
+usually close to it (Osmium: 300.5 measured vs 275.1 fitted). Meta Jeffersonville has no outline, so
+it has no mask and is listed as `no_footprint_mask`.
+
+**Land cover (`pipeline/landcover.py`, `data/landcover/`).**
+- Source: NLCD Land Cover L48 from the MRLC GeoServer WCS (official USGS/MRLC, 30 m).
+- Edition: the latest one whose year is before the site's construction start year. The 2001-2021
+  editions are on the WCS. Annual NLCD years are only offered there as a 2024 test layer, and the
+  per-year bundles are 1.4 GB each, so they were not used. The gap is 1-3 years (mean 2.0), in
+  `nlcd_gap_years`.
+- Method: each 10 m converted pixel takes the NLCD class at its centre.
+- Grouped results over the 29 sites (8,462 acres converted):
+  - shrub/grassland 31.3% (Abilene and Storey County alone are 1,600 ac)
+  - cropland 30.5%
+  - developed 18.6%
+  - forest 9.8%
+  - pasture/hay 6.8%
+  - barren 1.9%
+  - NLCD wetlands 0.9% (79 ac)
+  - water 0.3%
+- "Developed" before construction partly means roads, older buildings or earlier phases inside the
+  outline (Arcola, The Dalles, Midlothian, Eagle Mountain), not necessarily new land.
+- Sites where NLCD mapped wetland under converted pixels: QTS Richmond 1 (18.2 ac), Nebius New
+  Jersey (16.5), QTS Richmond 2 (11.9), Bristow (11.2), Hillsboro 2 (10.7), plus small amounts at
+  three others. These are NLCD classes at 30 m, not a delineation.
+
+**Distances (`pipeline/proximity.py`, `data/proximity/`).**
+- Wetlands: USFWS NWI layer 0 (public ArcGIS service).
+- Protected areas: USGS PAD-US 4.1 Fee layer at edits.nationalmap.gov.
+- What counts as protected: GAP status 1-3 only (managed for biodiversity, or multiple use with
+  protection). GAP 4 (no known mandate) is left out. Easement, designation and marine layers are not
+  queried; this is a lower bound on nearby protected land.
+- Wetland types: NWI "any type" includes lakes, ponds and rivers. A second distance keeps only
+  marsh/swamp types: Freshwater Emergent, Freshwater Forested/Shrub, Estuarine and Marine Wetland.
+- Measured from: the campus outline where there is one, else the registry point; announced sites with
+  `location_missing` are not measured. Sources are measured from the point in `data/sources.csv`
+  (`measured_from` says what it is).
+- Search widens 1, 5, 25, then 100 km.
+- Results:
+  - 20 of 52 located sites have an NWI marsh/swamp polygon touching or inside the outline. Median
+    distance for sites is 50 m. NWI maps are often older than the construction, so this says where
+    NWI mapped a wetland, not that one was filled.
+  - 8 sites have GAP 1-3 protected land within 1 km. Meta Kuna is 3 m from BLM Four Rivers Field
+    Office land. The Laramie outline touches a Wyoming state land parcel.
+  - For sources, the median distance to a marsh/swamp wetland is 731 m.

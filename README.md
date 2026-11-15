@@ -10,6 +10,8 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
+| `pipeline/landcover.py` (Phase 6) | NLCD class before construction under each built site's F1 converted pixels (`data/footprint/masks/`); writes `data/landcover/` |
+| `pipeline/proximity.py` (Phase 6) | Distance from every site and source to the nearest NWI wetland and PAD-US protected area; writes `data/proximity/` |
 | `pipeline/water_chain.py` (water chain) | Run on all 54 sites: EPA match, SDWA seller chain, SWOT trend via Hydrocron (SWORD reaches), DISP-S1 reader (range reads); writes `data/sources.csv` |
 
 All rows in `data/*_demo.csv` are invented. `PER_CAPITA_L_PER_DAY` and `UTILIZATION` in
@@ -48,6 +50,7 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 - OPERA DISP-S1: https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1
 - Google per-site water: https://sustainability.google/reports/google-2026-environmental-report/
 - WRI Aqueduct: https://www.wri.org/aqueduct
+- NLCD (MRLC WCS): https://www.mrlc.gov/data · NWI: https://www.fws.gov/program/national-wetlands-inventory · PAD-US 4.1: https://www.usgs.gov/programs/gap-analysis-project/science/pad-us-data-overview
 
 ## Formulas
 - **F1** ΔVV, ΔVH vs 12-month baseline; converted if |Δ| > θ for ≥ 2 consecutive months; A(t) = converted area; fit logistic.
