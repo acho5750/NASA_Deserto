@@ -190,8 +190,11 @@ def main():
           f"(without ionosphere correction {gw.cum_los_no_iono_m.iloc[-1] * 1000:.1f} mm); "
           f"pair-to-pair s.d. {gw.los_m.std() * 1000:.1f} mm")
     img = Path("map/img") / f"{src.water_body_id}_ground_motion.png"
-    chart(gw, src.trend_series_file, src.water_body, img)
-    print(f"wrote {img}")
+    try:
+        chart(gw, src.trend_series_file, src.water_body, img)
+        print(f"wrote {img}")
+    except ImportError:
+        print("matplotlib not installed: chart skipped (the map draws its own chart from the CSV)")
 
 
 if __name__ == "__main__":

@@ -245,13 +245,16 @@
 <script src="wayback.js"></script>
 <script src="story.js"></script>
 <script src="nisar.js"></script>
+<script src="gunw.js"></script>
 <script>
-const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [], WB = window.WAYBACK || { sites: {} }, ST = window.STORY, NI = window.NISAR || {};
+const D = window.PROTO_DATA, TL = window.TIMELINE, RADAR = window.RADAR_PANELS || [], WB = window.WAYBACK || { sites: {} }, ST = window.STORY, NI = window.NISAR || {}, GW = window.GUNW || {};
 const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-US");
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const title = s => esc(String(s || "").toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
 const short = n => n == null ? "n/a" : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + " million" : n >= 1e4 ? Math.round(n / 1e3).toLocaleString("en-US") + ",000" : fmt(n);
-const times = x => x >= 1 ? (x >= 10 ? Math.round(x) : x.toFixed(1)) + "×" : Math.round(x * 100) + "%";
+const times = x => x == null ? "n/a" : x >= 1 ? (x >= 10 ? Math.round(x) : x.toFixed(1)) + "×" : x >= .1 ? Math.round(x * 100) + "%" : x >= .001 ? (x * 100).toFixed(1) + "%" : x > 0 ? "<0.1%" : "0%";
+/* "ok": a water estimate exists; "noproj": no linked campus is projected (no MW or capex), so 0 means "not estimated"; "none": the utility has no population on record. */
+const shareState = src => !src.share || src.share.median[LAST] == null ? "none" : src.share.high[LAST] > 0 ? "ok" : "noproj";
 const YEARS = D.years, LAST = YEARS.length - 1;
 const siteById = Object.fromEntries(D.sites.map(s => [s.id, s]));
 const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
@@ -368,6 +371,27 @@ function nisarPair(sid) {
       <img loading="lazy" src="${esc(n.change_png)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated"></div>
       <figcaption class="note" style="margin-top:3px">NISAR · ${f1.date} · <b style="color:var(--nisar)">purple = much brighter</b></figcaption></figure></div>`;
 }
+/* NISAR ground motion (GUNW) over a linked aquifer: cumulative mm, with the +/- 2 sigma noise band growing pair by pair. */
+const GW_TXT = { too_noisy: "Too noisy to read", no_clear: "No clear movement", toward: "Moved toward the satellite", away: "Moved away from the satellite" };
+function gwChart(g, big) {
+  const W = big ? 360 : 92, H = big ? 110 : 30, L0 = big ? 40 : 1, R0 = big ? 8 : 1, T0 = big ? 8 : 2, B0 = big ? 18 : 2;
+  const sd = g.noise_mm / Math.sqrt(g.n_pairs), t = g.t.map(Date.parse), t0 = t[0], t1 = t[t.length - 1];
+  const env = t.map((_, k) => 2 * sd * Math.sqrt(k));
+  const m = Math.max(10, ...g.v.map(Math.abs), ...(big ? env : [])) * 1.1;
+  const X = x => L0 + (x - t0) / (t1 - t0) * (W - L0 - R0), Y = v => T0 + (m - v) / (2 * m) * (H - T0 - B0);
+  const band = t.map((x, k) => `${X(x).toFixed(1)},${Y(env[k]).toFixed(1)}`).join(" ") + " " + t.map((x, k) => `${X(x).toFixed(1)},${Y(-env[k]).toFixed(1)}`).reverse().join(" ");
+  const line = g.v.map((v, k) => `${k ? "L" : "M"}${X(t[k]).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const col = g.verdict === "too_noisy" ? "#A39A8B" : "#8A2BE2";
+  const tx = (x, y, s, a = "end") => `<text x="${x}" y="${y}" font-size="9.5" text-anchor="${a}" fill="#6F675A" font-family="IBM Plex Mono">${s}</text>`;
+  return `<svg class="${big ? "chart" : "spark"}" viewBox="0 0 ${W} ${H}" ${big ? 'role="img" aria-label="NISAR ground motion over the aquifer"' : 'aria-hidden="true"'}>
+    ${g.verdict === "too_noisy" ? "" : `<polygon points="${band}" fill="#8A2BE2" opacity=".10"/>`}<line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="${big ? 2 : 1.5}"/>${big ? g.v.map((v, k) => `<circle cx="${X(t[k])}" cy="${Y(v)}" r="2.2" fill="${col}"/>`).join("") : ""}
+    ${big ? tx(L0 - 5, Y(0) + 3, "0") + tx(L0 - 5, Y(m * .9) + 3, "+" + (m * .9 / 10).toFixed(1) + " cm") + tx(L0 - 5, Y(-m * .9) + 3, "-" + (m * .9 / 10).toFixed(1) + " cm")
+      + tx(X(t0), H - 4, g.first_date.slice(5), "start") + tx(X(t1), H - 4, g.last_date.slice(5)) : ""}</svg>`;
+}
+const gwWords = g => g.verdict === "too_noisy" ? "nothing readable: much of the area lost the radar signal between passes (often wet ground or crops)"
+  : g.verdict === "no_clear" ? `no movement it can tell apart from its noise (${(g.change_mm / 10).toFixed(1)} cm, noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`
+  : `${(Math.abs(g.change_mm) / 10).toFixed(1)} cm ${g.verdict === "toward" ? "toward" : "away from"} the satellite (noise about ±${(2 * g.noise_mm / 10).toFixed(1)} cm)`;
 function chNisar() {
   const N = ST.nisar, sv = ST.sensors.nisar, ids = Object.keys(N);
   const tot = ids.reduce((a, id) => a + (NI[id] ? NI[id].brighter_acres_in_outline : 0), 0);
@@ -383,7 +407,7 @@ function chNisar() {
       ${nisarPair(sid)}
       <details style="margin-top:8px"><summary class="note" style="cursor:pointer">Brightness over time, Sentinel-1 vs NISAR</summary>${radarChart(n, s)}</details>
       ${srcline(["data/radar/nisar_change.csv", "data/radar/nisar_series.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"])}</div>`; }).join("");
-  const gm = radarById["WB-MESILLA"];
+  const gws = Object.entries(GW).map(([id, g]) => ({ id, ...g })).sort((a, b) => (a.verdict === "too_noisy") - (b.verdict === "too_noisy") || a.noise_mm - b.noise_mm), noisy = gws.filter(g => g.verdict === "too_noisy").length, moved = gws.filter(g => g.verdict === "toward" || g.verdict === "away").length;
   return `<div class="ch">
     <div class="kicker"><span class="n" style="background:var(--nisar)">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
     <h1>NISAR checks whether the announced money is turning into buildings, every 12 days</h1>
@@ -396,10 +420,16 @@ function chNisar() {
     ${srcline([sv.file, "data/radar/nisar_change.csv"], ["https://search.asf.alaska.edu"])}
     <h3>What NISAR saw, first image vs. latest</h3>
     ${cards}
-    ${gm ? `<div class="card nis"><h4>${esc(gm.name)}, the aquifer under Project Jupiter<button data-src="SRC-NM3502507">Open</button></h4>
-      <p style="margin:2px 0 0">NISAR also measures the ground itself. Over Jupiter's aquifer it found <b>no sinking above about 1 cm</b> from June to October 2026. Sentinel-1's 10-year record (OPERA) shows the ground moving away from the satellite by about 2.4 mm a year. That gives a baseline to watch as the campus starts drawing water.</p>
-      <a href="${esc(gm.images[0])}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(gm.images[0])}" alt="Ground motion over the Mesilla Bolson from Sentinel-1 and NISAR"></a>
-      ${srcline(["data/water/gunw/", "data/sources.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}</div>` : ""}
+    <h3>NISAR's second job: watching the ground over the aquifers</h3>
+    <p>${gws.length} of the campuses' water sources are aquifers (underground water). Pumping too much water out of an aquifer can make the ground above it sink, slowly. NISAR measures that too: it compares the timing of its radar echoes pass after pass and turns them into millimeters of ground movement (interferometry, the GUNW product).</p>
+    <div class="card nis" style="margin-top:6px"><p style="margin:0"><b>So what?</b> ${moved ? `NISAR saw clear movement at ${moved} of the ${gws.length - noisy} aquifers we could read.` : `At all ${gws.length - noisy} aquifers we could read, NISAR saw <b>no sinking it can tell apart from its noise</b> in its first ${Math.round(Math.max(...gws.filter(g => g.verdict !== "too_noisy").map(g => g.days)) / 30)} months.`}
+      ${noisy ? `At the other ${noisy}, too much of the area lost the radar signal between some passes (often wet ground or growing crops), so we don't read them.` : ""}
+      The 10-year Sentinel-1 record (OPERA) says why: at these places the ground moves at most about 1 cm a year, less than NISAR's noise over one season. NISAR would already have caught fast sinking of several centimeters.
+      What it gives us now is a <b>starting line</b>: if campuses and towns pump more from these aquifers, NISAR's record from 2026 on is the "before".</p></div>
+    ${gws.map(g => `<button class="rank" data-src="${g.id}" style="grid-template-columns:1fr 92px"><span class="nm">${esc(g.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${g.verdict === "too_noisy" ? "var(--muted)" : "var(--nisar)"}">${GW_TXT[g.verdict]}${g.verdict === "too_noisy" ? "" : `: ${(g.change_mm / 10).toFixed(1)} cm, noise ±${(2 * g.noise_mm / 10).toFixed(1)} cm`}</small><small>${chip("opera")} 10-yr rate ${g.opera_rate_mm_yr > 0 ? "+" : ""}${g.opera_rate_mm_yr} mm/yr</small></span><span>${gwChart(g)}</span></button>`).join("")}
+    ${srcline(["data/water/gunw/gunw_summary.csv", "data/sources.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html", "https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1"])}
+    <p class="note" style="margin-top:6px">Movement of a 6 km x 6 km window over each aquifer relative to the 40 km around it, along the radar's line of sight, adding up back-to-back 12-day pairs. Noise = 2 x the pair-to-pair spread x the square root of the number of pairs. A movement of the ground does not by itself say why it moved, and a campus being linked to an aquifer does not mean it caused any change.</p>
+    <p class="note">We also checked NISAR soil moisture: it exists only as a provisional/beta product so far, and topsoil wetness does not tell how much water a utility has, so we left it out.</p>
     ${nextBtn("nisar")}</div>`;
 }
 
@@ -420,7 +450,7 @@ function sparkline(sr, color) {
 }
 const SHARE_C = x => x >= 1 ? "#8E1F1F" : x >= .2 ? "#C2461B" : x >= .05 ? "#D9A93A" : "#9DB07A";
 function chWater() {
-  const ranked = D.sources.filter(s => s.share.median[LAST] > 0).sort((a, b) => b.share.median[LAST] - a.share.median[LAST]);
+  const ranked = D.sources.filter(s => shareState(s) === "ok").sort((a, b) => b.share.median[LAST] - a.share.median[LAST]);
   const top = ranked.slice(0, 8), maxS = Math.max(...top.map(s => s.share.median[LAST]), 1);
   const over = ranked.filter(s => s.share.median[LAST] >= 1);
   const trends = D.sources.filter(s => s.trend_status === "ok").sort((a, b) => (a.trend_value / Math.abs(a.trend_unit === "m/yr" ? .1 : 5)) - (b.trend_value / Math.abs(b.trend_unit === "m/yr" ? .1 : 5)));
@@ -588,25 +618,38 @@ function showSite(s) {
 function showSource(src) {
   const linked = D.sites.filter(s => s.source_id === src.id), w = trendWords(src), y = LAST;
   const kind = { reservoir: "Reservoir", aquifer: "Aquifer", river: "River", lake: "Lake" }[src.type] || src.type;
-  const sh = src.share;
-  const W = 360, H = 90, L0 = 40, R0 = 8, vmax = Math.max(1.1, ...sh.high) * 1.05, X = i => L0 + i / LAST * (W - L0 - R0), Y = v => 8 + (vmax - v) / vmax * (H - 26);
-  const line = a => a.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const band = sh.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + sh.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
-  const chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Campus water need as a share of supply, ${YEARS[0]}-${YEARS[LAST]}">
-    <line x1="${L0}" x2="${W - R0}" y1="${Y(1)}" y2="${Y(1)}" stroke="#1D1C1A" stroke-dasharray="3 2"/><text x="${L0 - 5}" y="${Y(1) + 3}" font-size="9.5" text-anchor="end" fill="#1D1C1A" font-family="IBM Plex Mono">100%</text>
-    <text x="${L0 - 5}" y="${Y(0) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">0</text><text x="${L0 - 5}" y="${Y(Math.max(...sh.high)) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">${times(Math.max(...sh.high))}</text><line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
+  const sh = src.share, st = shareState(src);
+  let need;
+  if (st === "ok") {
+    const top = Math.max(...sh.high), vmax = top * 1.1, W = 360, H = 90, L0 = 40, R0 = 8, X = i => L0 + i / LAST * (W - L0 - R0), Y = v => 8 + (vmax - v) / vmax * (H - 26);
+    const line = a => a.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+    const band = sh.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + sh.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
+    const lab = (v, c) => `<text x="${L0 - 5}" y="${Y(v) + 3}" font-size="9.5" text-anchor="end" fill="${c}" font-family="IBM Plex Mono">${v ? times(v) : "0"}</text>`;
+    const chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Campus water need as a share of supply, ${YEARS[0]}-${YEARS[LAST]}">
+    ${vmax >= 1 ? `<line x1="${L0}" x2="${W - R0}" y1="${Y(1)}" y2="${Y(1)}" stroke="#1D1C1A" stroke-dasharray="3 2"/>${1 / vmax > .15 ? `<text x="${L0 - 5}" y="${Y(1) + 3}" font-size="9.5" text-anchor="end" fill="#1D1C1A" font-family="IBM Plex Mono">100%</text>` : ""}` : ""}
+    ${lab(0, "#6F675A")}${Math.abs(top - 1) > .15 ? lab(top, "#6F675A") : ""}<line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
     <polygon points="${band}" fill="#C2461B" opacity=".14"/><path d="${line(sh.median)}" fill="none" stroke="#C2461B" stroke-width="2"/>
     ${YEARS.map((yy, i) => i % 3 === 0 || i === LAST ? `<text x="${X(i)}" y="${H - 4}" font-size="9.5" text-anchor="middle" fill="#6F675A" font-family="IBM Plex Mono">${yy}</text>` : "").join("")}</svg>`;
+    const wml = linked.filter(s => s.projected).reduce((a, s) => a + s.water_ml.median[y], 0);
+    need = `<div class="big" style="font-size:34px;color:${SHARE_C(sh.median[y])}">${times(sh.median[y])}<small>of its supply by ${YEARS[y]}</small></div>
+    <p class="range">range ${times(sh.low[y])} to ${times(sh.high[y])}</p>
+    <p>${sh.median[y] >= 1 ? "More water than the utility supplies to all its customers today" : sh.median[y] >= .2 ? "A large slice of what the utility supplies today" : sh.median[y] >= .05 ? "A noticeable slice of what the utility supplies today" : "A small slice of what the utility supplies today"}: about <b>${short(people(wml))} people's worth</b> of water a year, for a utility serving ${fmt(src.population_served)} people.</p>${chart}
+    <p class="note">Estimated water for the linked campus${linked.length === 1 ? "" : "es"}, divided by the utility's estimated supply (${fmt(src.supply_ml)} megaliters a year)${vmax < 1 ? ". The chart is scaled to this source; the 100% line is far above it" : ". Dashed line = 100%, the utility's whole supply today"}${src.share_wholesale ? `. Against the whole wholesale system it buys from (${esc(src.wholesale_sellers)}): ${times(src.share_wholesale.median[y])}` : ""}.</p>`;
+  } else need = `<p><b>No estimate.</b> ${st === "noproj"
+      ? `The linked campus${linked.length === 1 ? " has" : "es have"} no announced power (MW) or investment amount, so we cannot estimate ${linked.length === 1 ? "its" : "their"} water use. A share of 0% would be misleading, so none is shown.`
+      : "EPA lists no population for this utility, so we cannot estimate its supply to compare against."}</p>`;
   return `<div class="ch"><button class="back" data-back="1">&larr; Back to the story</button>
-    <div class="chips" style="margin:0 0 8px">${w ? chip(w.k) : datachip("No satellite trend")}${chip("proj")}</div>
-    <h2>${esc(src.water_body)}</h2><p class="note">${kind} · used by ${title(src.utility)} (EPA ${esc(src.pwsid)}), ${fmt(src.population_served)} people</p>
+    <div class="chips" style="margin:0 0 8px">${w ? chip(w.k) : datachip("No satellite trend")}${st === "ok" ? chip("proj") : datachip("No water estimate")}</div>
+    <h2>${esc(src.water_body)}</h2><p class="note">${kind} · used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p>
     <h3>How it is changing</h3>
     ${w ? `<p>${chip(w.k)} ${esc(w.txt[0].toUpperCase() + w.txt.slice(1))}, ${src.trend_start} to ${src.trend_end}.${w.k === "opera" && w.down ? " Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why." : ""}</p>${sparkline(src.series, w.k === "swot" ? "#12808F" : "#6F8FB0").replace('class="spark"', 'class="spark" style="width:100%;height:70px"')}`
       : `<p>No satellite trend: ${esc({ swot_lake_id_unavailable: "SWOT lake identifiers could not be downloaded", insufficient_swot: "too few good SWOT passes", insufficient_disp_s1: "too few usable OPERA dates" }[src.trend_status] || src.trend_status)}.</p>`}
+    ${GW[src.id] ? `<h3>${chip("nisar")} Ground over the aquifer, ${GW[src.id].first_date} to ${GW[src.id].last_date}</h3>
+      <p>NISAR saw ${esc(gwWords(GW[src.id]))}.${GW[src.id].opera_same_span_mm != null ? ` At the 10-year OPERA rate the ground would move only ${Math.abs(GW[src.id].opera_same_span_mm).toFixed(1)} mm in the same time.` : ""}</p>${gwChart(GW[src.id], true)}
+      <p class="note">Purple shading = NISAR's noise (±2 sigma), growing as 12-day pairs add up. Track ${GW[src.id].track}, frame ${GW[src.id].frame}, ${GW[src.id].n_pairs} pairs.</p>
+      ${srcline([GW[src.id].file, "data/water/gunw/gunw_summary.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}` : ""}
     <h3>Campus water need vs. this utility's supply</h3>
-    <div class="big" style="font-size:34px;color:${SHARE_C(sh.median[y])}">${times(sh.median[y])}<small>by ${YEARS[y]}</small></div>
-    <p class="range">range ${times(sh.low[y])} to ${times(sh.high[y])}</p>${chart}
-    <p class="note">Estimated water for the linked campus${linked.length === 1 ? "" : "es"}, divided by the utility's estimated supply (${fmt(src.supply_ml)} megaliters a year)${src.share_wholesale ? `. Against the whole wholesale system it buys from (${esc(src.wholesale_sellers)}): ${times(src.share_wholesale.median[y])}` : ""}.</p>
+    ${need}
     <p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p>
     <p class="note">Water stress (WRI Aqueduct): ${esc(src.aqueduct_label || "n/a")}. ${esc(src.identification_basis)}</p>
     ${srcline(["data/sources.csv"], src.links.slice(0, 3))}</div>`;
@@ -656,14 +699,14 @@ function renderHeadline() {
 function renderLegend() {
   const el = document.getElementById("legend");
   if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
-    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
   if (state.detail && state.detail[0] === "site" && NI[state.detail[1]]) { el.innerHTML = `<div><span class="sw" style="--c:#8A2BE2"></span>NISAR: ground much brighter since June 2026</div><div><span class="sw" style="--c:#888"></span>NISAR radar image (bright = buildings, steel)</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
   if (state.detail && state.detail[0] === "site") { el.innerHTML = `<div><span class="sw" style="--c:#C2461B"></span>Land Sentinel-1 radar saw change</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
   if (state.ch === "land") el.innerHTML = `<div class="cap" style="margin-bottom:2px">Campus, size = acres changed, color = land before</div>` +
     LC.filter(([k]) => ST.land.acres[k] > 100).map(([k, n]) => `<div><span class="sw" style="--c:${LCC[k]}"></span>${n}</div>`).join("");
   else if (state.ch === "nisar") el.innerHTML = `<div><span class="sw ring"></span>NISAR site, a pass every 12 days</div><div><span class="sw" style="--c:#3A3731"></span>Other campus (Sentinel-1 only)</div>`;
   else if (state.ch === "water") el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
-    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div>`;
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div>`;
   else el.innerHTML = `<div><span class="sw" style="--c:#B9832A"></span>Announced campus, size = projected acres</div><div><span class="sw" style="--c:#6F675A"></span>Built campus</div><div><span class="sw r" style="--c:#8E1F1F"></span>Utility needing over 100%</div>`;
 }
 
@@ -777,7 +820,8 @@ function sitesFC() {
 function sourcesFC() {
   const y = state.ch === "future" ? yIdxAt(state.t) : LAST;
   return { type: "FeatureCollection", features: D.sources.map((s, k) => { const x = s.share.median[y];
-    return { type: "Feature", id: k, properties: { id: s.id, name: s.water_body.replace(/\s*\(.*?\)/g, ""), color: SHARE_C(x), size: .42 + Math.min(.8, Math.sqrt(x) * .3), lab: x >= 1 ? times(x) + " of supply" : "" },
+    const ok = shareState(s) === "ok";
+    return { type: "Feature", id: k, properties: { id: s.id, name: s.water_body.replace(/\s*\(.*?\)/g, ""), color: ok ? SHARE_C(x) : "#A39A8B", size: ok ? .42 + Math.min(.8, Math.sqrt(x) * .3) : .36, lab: ok && x >= 1 ? times(x) + " of supply" : "" },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] } }; }) };
 }
 const outlinesFC = { type: "FeatureCollection", features: placed.filter(s => s.outline).map(s => ({ type: "Feature", properties: { id: s.id }, geometry: s.outline })) };
@@ -821,7 +865,7 @@ map.on("load", () => {
     map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; popup.remove(); });
   }
   map.on("mousemove", "site", e => tip(e, s => `${esc(s.name)}<small>${state.ch === "future" ? fmt(siteById[s.id].projected ? siteById[s.id].acres.median[yIdxAt(state.t)] : 0) + " AC PROJECTED" : fmt(s.a) + " AC CHANGED · SENTINEL-1"}</small>`));
-  map.on("mousemove", "src", e => tip(e, s => { const r = srcById[s.id]; return `${esc(r.water_body)}<small>CAMPUS NEED ${times(r.share.median[LAST])} OF SUPPLY BY ${YEARS[LAST]}</small>`; }));
+  map.on("mousemove", "src", e => tip(e, s => { const r = srcById[s.id]; return `${esc(r.water_body)}<small>${shareState(r) === "ok" ? `CAMPUS NEED ${times(r.share.median[LAST])} OF SUPPLY BY ${YEARS[LAST]}` : "NO WATER ESTIMATE FOR ITS CAMPUS"}</small>`; }));
   map.on("click", "site", e => openDetail("site", e.features[0].properties.id));
   map.on("click", "outline-fill", e => openDetail("site", e.features[0].properties.id));
   map.on("click", "src", e => openDetail("src", e.features[0].properties.id));
@@ -988,7 +1032,7 @@ function startPlay(t0, t1, step, tick) {
 }
 function playRange() {
   if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
-    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
   if (state.detail && state.detail[0] === "site") { const s = siteById[state.detail[1]], cs = s.construction_start ? tOf(s.construction_start) : T0;
     return [Math.max(T0, cs - 6), T_MEAS1, 1, 120]; }
   const c = CH[state.ch]; if (state.ch === "water") return [PROJ0, TEND, 12, 800];
