@@ -172,3 +172,61 @@ input-data anomaly bit, not diagnostic mode. The `inputDataExceptionMask` bits 2
 fully focused" in V1 products and are not counted as anomalies. Where one acquisition has two
 products, the usable one at the track's usual bandwidth is counted and the other is marked
 `duplicate_of`.
+
+## 2026-11-15 · Phase 2: footprint (F1) on the built precedent sites
+
+Scripts: `pipeline/campus_outline.py` (outlines), `pipeline/footprint_batch.py` (runs F1 on every site),
+`pipeline/footprint.py` (F1). Outputs in `data/footprint/` and `map/img/`.
+
+**Rules from the person (2026-11-15).** Reported acres = converted area inside the campus outline
+plus a 200 m buffer (`final_acres_site`, and `a_max_acres` from the logistic fitted to that curve).
+The ring from 200 m out to 1 km is reported separately as `spillover_acres`. The 5% noise rule uses
+the same outline + 200 m area. Outlines come from OpenStreetMap; hand-drawn only where OSM lacks
+the site, and flagged. Each result is checked against publicly reported campus acreage.
+
+**Outlines (`data/footprint/campus_outlines.csv`, one row per site with the OSM ids and why).**
+- Overpass is not reachable from the cloud machine (connection closed by the tunnel), so outlines come
+  from the main OSM API (`/api/0.6/map`, `/way|relation/<id>/full`) and Nominatim search. Same data.
+- Each pick was checked by eye on a cloud-free Sentinel-2 L2A scene (Planetary Computer) from
+  2025-2026 with the candidate polygons drawn on top.
+- 21 sites: a named OSM data center parcel. 5 sites: an unnamed OSM parcel that contains the owner's
+  tagged data center buildings (`osm_unnamed_parcel`). Council Bluffs East: OSM has only the four
+  Google buildings of the east expansion, so the outline is their convex hull (`osm_buildings_hull`).
+- Stargate Abilene: OSM's "Lancium Clean Campus" misses the cleared southern part of the campus, so it
+  is unioned with the PR 3 hand-drawn outline (`osm_incomplete_extended_by_hand`).
+- Papillion, Hillsboro 2 and QTS Richmond 1: the parcel also holds older buildings that Epoch does
+  not track (`outline_includes_older_buildings`). Richmond 1 and 2 are neighbours; their 200 m
+  buffers overlap, so some acres are counted at both.
+- 8 town-level coordinates and Kansas City East (no coordinates) were located through OSM by name.
+  The OSM parcels sit 2.5 to 12 km from the registry points. `precedent_sites.csv` is not changed.
+- **Meta Jeffersonville is not run** (`outline_missing`): no OSM object at River Ridge Commerce
+  Center, and public sources give only "619 acres at River Ridge", not a location to draw from.
+
+**Time window per site.** Start = construction start − 24 months (as GEE). End = the date Epoch's
+last building came online (`planned_final_date` when `buildout_complete`) + 6 months, at least
+construction start + 18 months, capped at 2026-11-01 (Sentinel-1 RTC on Planetary Computer runs to
+2026-11-12). Epoch's MW cover the whole campus as of 2026, so the acres must cover the whole buildout.
+
+**Logistic fit grid.** The PR 3 grid had linear k steps of 0.025/month, so build_months could only be
+29.5, 44.1, 58.8 or 87.9 months at slow builds. Now k is on a 400-step log grid (0.01-3 per month)
+and t0 on a 0.25-month grid reaching 12 months past either end of the data. Fits that land on the
+grid edge are flagged `logistic_fit_at_grid_edge`; fits whose 90% point falls after the last month
+are flagged `curve_not_saturated`. Formula unchanged.
+
+**Threshold rule outcome.** 25 of 29 sites end at 5 dB with pre-construction acres still above 5%
+(`noise_floor_above_5pct_at_max_threshold`), as the rule says to flag. Only SAT14 (4.0 dB),
+Fairwater Atlanta (4.0), Storey County (4.5) and Abilene (5.0, 4.0%) pass. Looking at the curves and
+radar images, the pre-construction acres have two causes:
+1. Real construction before Epoch's start date. Epoch's first timeline row is often a later
+   building on a campus that was already being built (Papillion 2018-19, Goodyear 2019-20,
+   Gallatin, Sarpy, Osmium). Their pre-construction acres are real change, not noise.
+2. Farmland seasonality that lasts two months or more and so passes the persistence rule.
+The flagged values are kept and shown with their flag; nothing was dropped.
+
+**Sanity check (`data/footprint/sanity_check.csv`).** final_acres_site / reported campus acreage is
+within 0.67-1.5 at 16 sites, above at 6, below at 4; 3 have no public figure; Jeffersonville not run.
+Above: small parcels where the 200 m buffer adds more land than the parcel itself (Hillsboro 2, The
+Dalles, Richmond 2) and the multi-parcel Microsoft campuses (Goodyear, SAT40). Below: campuses whose
+reported acreage includes land not yet built (Storey County 1,210 ac bought, Gallatin 800-900 ac,
+Midlothian 375-540 ac, Aiken 300 ac). The reported figures are mostly from trackers and news; each
+row has its source link.
