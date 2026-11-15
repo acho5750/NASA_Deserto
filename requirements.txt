@@ -6,6 +6,11 @@ shapely
 pyproj
 h5py
 xarray
+planetary-computer
+pystac-client
+stackstac
+rasterio
+pillow
 earthaccess
 asf_search
 earthengine-api

@@ -1,0 +1,2 @@
+site_id,name,construction_start,orbit_state,relative_orbit,n_images,baseline_images,thresh_db,pre_construction_acres_campus,final_acres_campus,final_acres_aoi,a_max_acres,logistic_t0_months,build_months,flag,source
+STARGATE-ABILENE,OpenAI Stargate Abilene,2024-05-31,ascending,5,130,28,4.5,26.49,1071.35,1880.07,1163.1,15.4,22.1,,https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc ; https://epoch.ai/data/data-centers
