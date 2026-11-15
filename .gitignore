@@ -5,3 +5,4 @@ data/raw/
 __pycache__/
 *.h5
 *.tif
+!data/footprint/masks/*.tif
