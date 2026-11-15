@@ -1,8 +1,1 @@
-{"type": "Feature",
- "properties": {"site_id": "STARGATE-ABILENE", "name": "OpenAI Stargate Abilene",
-   "method": "Hand-drawn around the cleared campus visible in Sentinel-2 L2A true colour, 2026-10-08 (cloud 0%), compared with 2023-11-23. Approximate.",
-   "source": "https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a"},
- "geometry": {"type": "Polygon", "coordinates": [[
-   [-99.80307, 32.50060], [-99.79031, 32.50204], [-99.78718, 32.50927], [-99.76961, 32.50938],
-   [-99.76943, 32.48773], [-99.79337, 32.48758], [-99.79343, 32.49390], [-99.80301, 32.49384],
-   [-99.80307, 32.50060]]]}}
+{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[-99.78718, 32.50927], [-99.78181473974358, 32.50930359013251], [-99.7784471, 32.5102654], [-99.7787929, 32.5104416], [-99.7783617, 32.5111006], [-99.7772818, 32.5105981], [-99.77473274764391, 32.509347928159315], [-99.76961, 32.50938], [-99.76943, 32.48773], [-99.79337, 32.48758], [-99.79343, 32.4939], [-99.80301, 32.49384], [-99.80304649604277, 32.497951887484696], [-99.8037343, 32.500444], [-99.7896719, 32.5039197], [-99.78937098631509, 32.50420903161084], [-99.78718, 32.50927]]]}, "properties": {"site_id": "STARGATE-ABILENE", "osm": "way/1432100334", "hull": false, "extra": "data/footprint/STARGATE-ABILENE_campus_handdrawn.geojson", "source": "https://www.openstreetmap.org/way/1432100334", "license": "(c) OpenStreetMap contributors, ODbL 1.0", "retrieved": "2026-11-15", "acres": 1469.2}}]}

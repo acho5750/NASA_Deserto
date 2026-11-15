@@ -1,0 +1,31 @@
+site_id,reported_acres_low,reported_acres_high,what_it_measures,source
+MICROSOFT-PROJECT-OSMIUM,200,200,land for the whole Osmium campus (160 ac Warren Co. + 40 ac Madison Co.),https://www.wdm.iowa.gov/Home/Components/News/News/4420/
+GOOGLE-PAPILLION,275,275,original Papillion campus site,https://www.sarpychamber.org/news/details/google-confirms-papillion-is-a-go-for-its-data-center-sarpy-county-s-eighth
+MICROSOFT-GOODYEAR,147,279,Goodyear parcels (147 ac Baxtel lot; 279 ac site plan),https://www.datacenterknowledge.com/hyperscalers/microsoft-to-build-fifth-massive-western-us-azure-region
+META-QTS-HILLSBORO-2,51,51,QTS Hillsboro 2 campus (QTS),https://qtsdatacenters.com/?p=1287
+GOOGLE-LANCASTER,120,121.5,land bought in 2021 (later additions unconfirmed),https://cbustoday.6amcity.com/google-data-center-columbus-lancaster-oh
+QTS-RICHMOND-1,207,207,QTS Richmond 1 campus (QTS),https://qtsdatacenters.com/?p=1251
+GOOGLE-NEW-ALBANY,440,447,original New Albany campus,https://datacenterdynamics.com/en/news/google-plans-1bn-new-albany-data-center-expansion-acquires-618-acres-for-more-data-centers
+GOOGLE-BRISTOW,,,no acreage found for the Mango Farm site (the 181-acre Wellington Road campus is a different site),
+MICROSOFT-SAT40,70,158,SAT40 building parcel (70 ac) within the 158-acre Texas Research Park campus,https://therealdeal.com/texas/2023/03/09/microsoft-plans-176m-data-center-in-s-a/
+MICROSOFT-SAT14,34,34,SAT14 lot (Baxtel; single source),https://baxtel.com/data-center/microsoft-sat14
+GOOGLE-COUNCIL-BLUFFS-EAST,,,no acreage found for the east expansion alone (928 ac whole Southlands campus),
+QTS-RICHMOND-2,81,81,QTS Richmond 2 campus (QTS),https://qtsdatacenters.com/?p=2797
+GOOGLE-THE-DALLES,74,74,former aluminum smelter site on River Road,https://baxtel.com/campus/google-the-dalles-campus
+GOOGLE-MESA,185,190,Mesa campus (most sources 187 ac),https://datacenterdynamics.com/en/news/google-breaks-ground-on-mesa-data-center-campus-in-arizona
+STARGATE-ABILENE,1000,1400,Lancium Clean Campus / Stargate site,https://www.techrepublic.com/article/news-stargate-attracts-more-funding-2025/
+MICROSOFT-FAIRWATER-ATLANTA,615,615,whole QTS Fayetteville campus that holds Fairwater,https://www.ajc.com/business/2025/11/microsofts-newest-ai-superfactory-opens-at-sprawling-fayetteville-campus
+META-EAGLE-MOUNTAIN,488,500,Eagle Mountain campus lot,https://baxtel.com/campus/meta-eagle-mountain-utah-campus
+META-TEMPLE,386,393,Temple campus,https://jedunn.com/projects/meta-temple-data-center/
+META-HUNTSVILLE,590,600,both Huntsville campuses (340 + 250 ac),https://businessalabama.com/meta-expanding-its-huntsville-campus/
+MICROSOFT-NEBIUS-NEW-JERSEY,109,109,Vineland site (Baxtel; single source),https://baxtel.com/data-center/dataone-vineland-nj
+GOOGLE-MIDLOTHIAN,375,540,375 ac bought 2017 plus 165 ac later,https://www.cbsnews.com/dfw/news/google-buys-land-north-texas/
+META-KUNA,458,485,land Meta bought (it may use only part),https://www.constructionowners.com/news/meta-nears-peak-construction-on-800m-idaho-data-center
+META-JEFFERSONVILLE,619,619,River Ridge parcel,https://www.ibj.com/articles/meta-to-build-800m-data-center-add-100-jobs-in-indiana
+GOOGLE-ARCOLA,91,91,Arcola parcel bought in 2017,https://datacenterfrontier.com/google-buys-two-data-center-sites-in-northern-virginia/
+META-ROSEMOUNT,280,280,UMore Park parcel,https://www.mprnews.org/story/2023/09/02/meta-plans-major-data-center-in-twin-cities-metro
+GOOGLE-KANSAS-CITY-EAST,315,315,Hunt Midwest Business Center site,https://huntmidwest.com/google-confirms-plans-for-1b-data-center-in-hunt-midwest-business-park/
+META-SARPY,,,no acreage found for the 2024 Springfield buildings alone (500+ ac added south of the campus in 2021),https://datacenterdynamics.com/en/news/meta-to-expand-sarpy-data-center-in-nebraska
+META-AIKEN,300,300,data center site inside Sage Mill Industrial Park (single source),https://www.fortgordonalliance.com/metas-800-million-data-center-expected-to-transform-aiken-county-economy
+META-GALLATIN,800,900,Gallatin campus,https://www.dpr.com/projects/facebook-gallatin-data-center
+GOOGLE-STOREY-COUNTY,1210,1210,land bought in 2017 (two parcels; not all built),https://9to5google.com/2017/04/17/google-picks-up-nevada-land-for-a-data-center-just-south-of-teslas-gigafactory/
