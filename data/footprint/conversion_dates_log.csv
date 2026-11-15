@@ -1,0 +1,12 @@
+site_id,status,detail,run_at
+GOOGLE-THE-DALLES,ok,"5171 px, curve match within 0.00 ac",2026-11-15 20:12
+MICROSOFT-PROJECT-OSMIUM,error,"RuntimeError: Error reading Window(col_off=0, row_off=0, width=319, height=270) from 'https://sentinel1euwestrtc.blob.core.windows.net/sentinel1-grd-rtc/GRD/2023/12/10/IW/DV/S1A_IW_GRDH_1SDV_20231210T001400_20231210T001425_051585_063A4E_AE01/measurement/iw-vv.rtc.tiff?st=2026-11-14T20%3A12%3A43Z&se=",2026-11-15 20:13
+GOOGLE-PAPILLION,ok,"16959 px, curve match within 0.00 ac",2026-11-15 20:15
+MICROSOFT-GOODYEAR,ok,"17272 px, curve match within 0.00 ac",2026-11-15 20:16
+META-QTS-HILLSBORO-2,ok,"5784 px, curve match within 0.00 ac",2026-11-15 20:17
+GOOGLE-LANCASTER,ok,"5905 px, curve match within 0.00 ac",2026-11-15 20:19
+QTS-RICHMOND-1,ok,"6087 px, curve match within 0.00 ac",2026-11-15 20:20
+GOOGLE-NEW-ALBANY,ok,"14251 px, curve match within 0.00 ac",2026-11-15 20:21
+GOOGLE-BRISTOW,ok,"6905 px, curve match within 0.00 ac",2026-11-15 20:22
+MICROSOFT-SAT40,ok,"9690 px, curve match within 0.00 ac",2026-11-15 20:24
+MICROSOFT-SAT14,ok,"1890 px, curve match within 0.00 ac",2026-11-15 20:25
