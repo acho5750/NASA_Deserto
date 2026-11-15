@@ -89,8 +89,9 @@ def build_site_points(precedent_csv: str, announced_csv: str,
 
     Built sites: a point inside the Phase 2 campus outline (data/footprint/<id>_campus.geojson),
     because 8 registry points are town centroids up to 12 km from the campus. Sites without an
-    outline keep the registry point. Announced sites keep the registry point, which is a
-    town/county centroid (location_basis says so); their matches are flagged location_approx.
+    outline keep the registry point. Announced sites use the registry point, which since the
+    campus-location pass is a point inside the OSM outline, an anchor, an address or a road
+    (location_precision; sources in data/locations/announced_locations.csv).
     """
     import geopandas as gpd
     rows = []
@@ -105,13 +106,20 @@ def build_site_points(precedent_csv: str, announced_csv: str,
                          "point_basis": f"registry point ({s.geocode_precision})",
                          "location_approx": s.geocode_precision in ("town", "none")})
     for _, s in pd.read_csv(announced_csv).iterrows():
+        # location_precision (data/locations/announced_locations.csv): osm_outline | osm_anchor |
+        # address | road | missing. Road-level points (~1-2 km) are matched but flagged approximate;
+        # missing locations are not matched at all and stay out of water shares.
+        prec = s.get("location_precision", "")
+        prec = prec if isinstance(prec, str) and prec else ("missing" if "not the campus" in str(s.location_basis) else "registry")
         rows.append({"site_id": s.site_id, "list": "announced", "lat": s.lat, "lon": s.lon,
-                     "point_basis": f"registry point: {s.location_basis}",
-                     "location_approx": "not the campus" in str(s.location_basis)})
+                     "point_basis": f"registry point ({prec}): {s.location_basis}",
+                     "location_approx": prec in ("road", "missing"), "location_missing": prec == "missing"})
     out = pd.DataFrame(rows)
+    out["location_missing"] = out.location_missing.fillna(False).astype(bool)
     Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_csv, index=False)
-    print(f"Wrote {out_csv}: {len(out)} sites, {int(out.location_approx.sum())} with approximate location")
+    print(f"Wrote {out_csv}: {len(out)} sites, {int(out.location_approx.sum())} with approximate location, "
+          f"{int(out.location_missing.sum())} with location missing")
     return out
 
 
@@ -131,9 +139,9 @@ def match_utilities(points_csv: str, out_csv: str = "data/water/site_utility_mat
     sites = pd.read_csv(points_csv)
     rows = []
     for _, site in sites.iterrows():
-        if pd.isna(site["lat"]):
-            rows.append({"site_id": site["site_id"], "match_status": "no_coordinates"})
-            print(f"{site['site_id']}: no coordinates")
+        if pd.isna(site["lat"]) or bool(site.get("location_missing", False)):
+            rows.append({"site_id": site["site_id"], "match_status": "location_missing"})
+            print(f"{site['site_id']}: location missing, not matched")
             continue
         hits = _query_service_areas(site["lat"], site["lon"])
         seen = {}
@@ -155,7 +163,7 @@ def match_utilities(points_csv: str, out_csv: str = "data/water/site_utility_mat
                          "epa_sellers": "; ".join(f"{x['SELLER_PWSID']} ({x['SELLER_NAME']})" for x in sel),
                          "match_status": "matched_approx_location" if site["location_approx"] else "matched"})
         print(f"{site['site_id']}: " + (", ".join(f"{p} ({h.get('PWS_Name')})" for p, h in seen.items()) or "no match"))
-    out = sites[["site_id", "list", "lat", "lon", "point_basis", "location_approx"]].merge(
+    out = sites[["site_id", "list", "lat", "lon", "point_basis", "location_approx", "location_missing"]].merge(
         pd.DataFrame(rows), on="site_id", how="left")
     out["match_source"] = EPA_SERVICE_AREAS.rsplit("/query", 1)[0]
     out.to_csv(out_csv, index=False)
@@ -487,6 +495,13 @@ def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="
     chain = pd.read_csv(chain_csv, dtype=str)
     assign = pd.read_csv(assign_csv, dtype=str)
     top = chain[chain.depth == "0"].drop_duplicates("pwsid").set_index("pwsid")
+    # Assignments are kept for utilities no site matches any more (e.g. after a site's location was
+    # corrected), so the curation isn't lost; they are skipped here.
+    live = set(m.pwsid.dropna()) & set(top.index)
+    stale = sorted(set(assign.pwsid) - live)
+    if stale:
+        print(f"Skipping {len(stale)} assignments with no matched site: {', '.join(stale)}")
+    assign = assign[assign.pwsid.isin(live)]
 
     # Trends: one per water body (shared by every utility that draws on it), cached on disk.
     cache = pd.read_csv(trends_cache, dtype={"water_body_id": str, "trend_feature_id": str}) \
