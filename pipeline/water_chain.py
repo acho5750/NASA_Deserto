@@ -162,83 +162,339 @@ def match_utilities(points_csv: str, out_csv: str = "data/water/site_utility_mat
     return out
 
 
-# ---------- Step 2: utility -> source ----------
+# ---------- Step 2: utility -> source (ECHO SDWA files) ----------
+SDWA_LINK = "https://echo.epa.gov/files/echodownloads/SDWA_latest_downloads.zip"
+SOURCE_FAC = {"WL": "well", "IN": "intake", "SP": "spring", "IG": "infiltration gallery",
+              "RS": "reservoir", "SI": "surface impoundment", "WH": "wellhead"}
+_SDWA = {}
+
+
+def _sdwa():
+    """Load the two SDWA tables once (only the columns we use)."""
+    if not _SDWA:
+        sys_cols = ["SUBMISSIONYEARQUARTER", "PWSID", "PWS_NAME", "PWS_TYPE_CODE", "PWS_ACTIVITY_CODE",
+                    "PRIMARY_SOURCE_CODE", "POPULATION_SERVED_COUNT", "IS_WHOLESALER_IND", "CITY_NAME", "STATE_CODE"]
+        fac_cols = ["PWSID", "FACILITY_ID", "FACILITY_NAME", "FACILITY_ACTIVITY_CODE", "FACILITY_TYPE_CODE",
+                    "IS_SOURCE_IND", "WATER_TYPE_CODE", "AVAILABILITY_CODE", "SELLER_PWSID", "SELLER_PWS_NAME"]
+        _SDWA["sys"] = pd.read_csv(RAW / "sdwa/SDWA_PUB_WATER_SYSTEMS.csv", dtype=str, usecols=sys_cols).set_index("PWSID")
+        _SDWA["fac"] = pd.read_csv(RAW / "sdwa/SDWA_FACILITIES.csv", dtype=str, usecols=fac_cols)
+        _SDWA["quarter"] = _SDWA["sys"]["SUBMISSIONYEARQUARTER"].max()
+    return _SDWA
+
+
 def lookup_sources(pwsid: str) -> dict:
-    systems = pd.read_csv(RAW / "SDWA_PUB_WATER_SYSTEMS.csv", dtype=str, low_memory=False)
-    facilities = pd.read_csv(RAW / "SDWA_FACILITIES.csv", dtype=str, low_memory=False)
-
-    sys_rows = systems[systems[COLS["pws_id"]] == pwsid]
-    if sys_rows.empty:
-        raise ValueError(f"{pwsid} not found in SDWA_PUB_WATER_SYSTEMS.csv")
-    row = sys_rows.iloc[-1]  # files can hold several reporting periods; take the last row
-
-    fac = facilities[facilities[COLS["fac_pwsid"]] == pwsid]
-    fac = fac[[COLS["fac_name"], COLS["fac_type"], COLS["fac_water_type"]]].drop_duplicates()
-
-    result = {
-        "pwsid": pwsid,
-        "name": row.get(COLS["pws_name"]),
-        "primary_source": row.get(COLS["pws_source"]),
-        "purchased": str(row.get(COLS["pws_source"], "")).endswith("P"),
-        "population_served": row.get(COLS["pws_population"]),
-        "facilities": fac.to_dict(orient="records"),
+    """Primary source, population and active source facilities of one system, from SDWA."""
+    d = _sdwa()
+    if pwsid not in d["sys"].index:
+        return {"pwsid": pwsid, "found": False}
+    row = d["sys"].loc[[pwsid]].iloc[-1]
+    fac = d["fac"][(d["fac"].PWSID == pwsid) & (d["fac"].FACILITY_ACTIVITY_CODE == "A")]
+    src = fac[(fac.IS_SOURCE_IND == "Y") & fac.FACILITY_TYPE_CODE.isin(SOURCE_FAC)]
+    # Permanent sources only when there are any; emergency/seasonal wells are not the supply.
+    if (src.AVAILABILITY_CODE == "P").any():
+        src = src[src.AVAILABILITY_CODE == "P"]
+    cc = fac[(fac.FACILITY_TYPE_CODE == "CC") & fac.SELLER_PWSID.notna()]
+    sellers = list(dict.fromkeys(cc.SELLER_PWSID))
+    return {
+        "pwsid": pwsid, "found": True, "name": row.PWS_NAME, "pws_type": row.PWS_TYPE_CODE,
+        "active": row.PWS_ACTIVITY_CODE == "A", "primary_source": row.PRIMARY_SOURCE_CODE,
+        "purchased": str(row.PRIMARY_SOURCE_CODE).endswith("P"),
+        "population_served": pd.to_numeric(row.POPULATION_SERVED_COUNT, errors="coerce"),
+        "city": row.CITY_NAME, "state": row.STATE_CODE,
+        "n_wells": int((src.FACILITY_TYPE_CODE == "WL").sum()),
+        "n_surface_intakes": int(src.FACILITY_TYPE_CODE.isin(["IN", "RS", "SI", "IG"]).sum()),
+        "source_facilities": "; ".join(f"{r.FACILITY_NAME} [{r.FACILITY_TYPE_CODE}/{r.WATER_TYPE_CODE}]"
+                                       for r in src.itertuples()),
+        "sdwa_sellers": "; ".join(f"{p} ({n})" for p, n in cc[["SELLER_PWSID", "SELLER_PWS_NAME"]]
+                                 .drop_duplicates("SELLER_PWSID").itertuples(index=False)),
+        "_sellers": sellers, "sdwa_quarter": d["quarter"],
     }
-    # If purchased, the real source sits with the selling utility: find it in the utility's
-    # water quality report (CCR) and run lookup_sources() again on the seller's PWSID.
-    print(json.dumps(result, indent=2))
-    return result
 
 
-# ---------- Step 3a: reservoir trend from SWOT via Hydrocron ----------
-def reservoir_trend(lake_id: str, start: str, end: str) -> dict:
-    params = {
-        "feature": "PriorLake",
-        "feature_id": lake_id,
-        "start_time": f"{start}T00:00:00Z",
-        "end_time": f"{end}T00:00:00Z",
-        "output": "csv",
-        "fields": "lake_id,time_str,wse,area_total,quality_f",
-    }
-    r = requests.get(HYDROCRON, params=params, timeout=120)
+def trace_chain(pwsid: str, max_depth: int = 3) -> list:
+    """Follow purchased water to the sellers named in SDWA, up to max_depth hops.
+    Returns one dict per system visited, with depth 0 = the utility serving the site."""
+    out, frontier, seen = [], [(pwsid, 0, None)], set()
+    while frontier:
+        p, depth, buyer = frontier.pop(0)
+        if p in seen:
+            continue
+        seen.add(p)
+        info = lookup_sources(p)
+        info.update({"depth": depth, "buyer_pwsid": buyer})
+        out.append(info)
+        if info.get("found") and info["purchased"] and depth < max_depth:
+            frontier += [(s, depth + 1, p) for s in info["_sellers"]]
+    return out
+
+
+def lookup_all(matches_csv: str, out_csv: str = "data/water/utility_chain.csv") -> pd.DataFrame:
+    m = pd.read_csv(matches_csv, dtype={"pwsid": str})
+    rows = []
+    for pwsid in m.pwsid.dropna().unique():
+        for info in trace_chain(pwsid):
+            info = {k: v for k, v in info.items() if not k.startswith("_")}
+            rows.append({"site_pwsid": pwsid, **info})
+    out = pd.DataFrame(rows)
+    out["source_link"] = SDWA_LINK
+    out.to_csv(out_csv, index=False)
+    print(out[["site_pwsid", "depth", "pwsid", "name", "primary_source", "population_served",
+               "n_wells", "n_surface_intakes", "sdwa_sellers"]].to_string(index=False))
+    return out
+
+
+# ---------- Step 3a: reservoir / river trend from SWOT via Hydrocron ----------
+# Prior Lake Database IDs (needed for feature=PriorLake) come from files on PO.DAAC's protected
+# archive, which this environment cannot log in to (see DECISIONS.md). Reservoirs and rivers that
+# have a SWOT River Database (SWORD) reach are read with feature=Reach instead. The reach's
+# prior location returned by Hydrocron is checked against the expected water body.
+SWOT_START, SWOT_END = "2023-08-01", "2026-11-01"
+SWOT_WIDEN_START = "2023-04-01"  # widen once (start of SWOT science orbit data) before insufficient_swot
+HYDROCRON_LINK = "https://podaac.github.io/hydrocron/"
+SWORD_LINK = "https://zenodo.org/records/23870877"
+
+
+def _hydrocron(feature: str, fid: str, start: str, end: str, fields: str) -> pd.DataFrame:
+    params = {"feature": feature, "feature_id": fid, "start_time": f"{start}T00:00:00Z",
+              "end_time": f"{end}T00:00:00Z", "output": "csv", "fields": fields}
+    for attempt in range(4):
+        r = requests.get(HYDROCRON, params=params, timeout=120)
+        if r.status_code == 400 and "not found" in r.text:
+            return pd.DataFrame()
+        if r.ok:
+            return pd.read_csv(io.StringIO(r.json()["results"]["csv"]))
+        time.sleep(2 ** attempt)
     r.raise_for_status()
-    payload = r.json()
-    csv_text = payload.get("results", {}).get("csv") if isinstance(payload, dict) else None
-    if not csv_text:
-        raise RuntimeError(f"Unexpected Hydrocron response: {str(payload)[:300]}")
 
-    df = pd.read_csv(io.StringIO(csv_text))
-    df["time"] = pd.to_datetime(df["time_str"], errors="coerce", utc=True)
-    df["wse"] = pd.to_numeric(df["wse"], errors="coerce")
-    df["quality_f"] = pd.to_numeric(df["quality_f"], errors="coerce")
-    # Drop fill values and poor-quality passes (0 = good in the SWOT quality flag).
-    df = df[(df["wse"] > -1000) & (df["quality_f"] == 0) & df["time"].notna()]
-    if len(df) < 4:
-        raise RuntimeError(f"Only {len(df)} usable SWOT passes for lake {lake_id}; widen the dates.")
 
-    years = (df["time"] - df["time"].min()).dt.total_seconds() / (365.25 * 86400)
-    slope, intercept = np.polyfit(years, df["wse"], 1)
-    out_path = Path(f"data/swot_{lake_id}.csv")
-    df[["time", "wse", "area_total"]].to_csv(out_path, index=False)
-    result = {"lake_id": lake_id, "passes": int(len(df)), "trend_m_per_yr": float(slope),
-              "series_file": str(out_path)}
-    print(json.dumps(result, indent=2))
-    return result
+def _fit_trend(t: pd.Series, v: pd.Series) -> tuple:
+    """Least-squares slope per year, after dropping points more than 4 MAD from the median."""
+    med = v.median(); mad = (v - med).abs().median() or 1e-9
+    keep = (v - med).abs() <= 4 * 1.4826 * mad
+    t, v = t[keep], v[keep]
+    years = (t - t.min()).dt.total_seconds() / (365.25 * 86400)
+    slope, _ = np.polyfit(years, v, 1)
+    return float(slope), int(keep.sum()), int((~keep).sum())
+
+
+def reservoir_trend(feature_id: str, feature: str = "Reach", start: str = SWOT_START, end: str = SWOT_END,
+                    out_dir: str = "data/water/swot") -> dict:
+    if feature == "Reach":
+        fields, qcol = "reach_id,time_str,wse,reach_q,p_lat,p_lon,river_name", "reach_q"
+    else:
+        fields, qcol = "lake_id,time_str,wse,area_total,quality_f", "quality_f"
+    result = {"trend_feature_id": feature_id, "trend_feature": feature}
+    for attempt_start in (start, SWOT_WIDEN_START):
+        df = _hydrocron(feature, feature_id, attempt_start, end, fields)
+        if df.empty:
+            return {**result, "trend_status": "swot_feature_not_found"}
+        df["time"] = pd.to_datetime(df["time_str"], errors="coerce", utc=True)
+        df["wse"] = pd.to_numeric(df["wse"], errors="coerce")
+        df[qcol] = pd.to_numeric(df[qcol], errors="coerce")
+        # Good passes: reach_q 0-1 (nominal / suspect) for rivers, quality_f 0 for lakes; drop fill values.
+        good = df[(df["wse"] > -1000) & df["time"].notna() & (df[qcol] <= (1 if feature == "Reach" else 0))]
+        if len(good) >= 4:
+            break
+    if len(good) < 4:
+        return {**result, "trend_status": "insufficient_swot", "trend_n": len(good)}
+    slope, n, dropped = _fit_trend(good["time"], good["wse"])
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    series = Path(out_dir) / f"swot_{feature.lower()}_{feature_id}.csv"
+    good[["time", "wse", qcol]].sort_values("time").to_csv(series, index=False)
+    out = {**result, "trend_status": "ok", "trend_value": round(slope, 3), "trend_unit": "m/yr",
+           "trend_n": n, "trend_outliers_dropped": dropped,
+           "trend_start": good["time"].min().date().isoformat(), "trend_end": good["time"].max().date().isoformat(),
+           "trend_series_file": str(series)}
+    if feature == "Reach":
+        out.update({"feature_lat": float(df["p_lat"].iloc[0]), "feature_lon": float(df["p_lon"].iloc[0]),
+                    "feature_name": df["river_name"].iloc[0]})
+    print(json.dumps(out, indent=2))
+    return out
 
 
 # ---------- Step 3b: aquifer trend from OPERA DISP-S1 ----------
-def aquifer_trend(wellfield_geojson: str, frame_files: list) -> dict:
-    """
-    Placeholder. DISP-S1 granules are HDF5 files on a UTM grid with cumulative line-of-sight
-    displacement per acquisition. To finish this step:
-      1. Find the frame(s) covering the wellfield in ASF Vertex (dataset: OPERA DISP-S1) or with
-         earthaccess, and download them into data/raw/disp/.
-      2. Open one file with h5py and list its datasets to confirm the displacement layer name and
-         units in the product specification before writing the reader.
-      3. Reproject the wellfield polygon to the file's UTM zone, average displacement inside it
-         for each date, then fit a linear velocity (mm/yr). Negative = moving away from the
-         satellite, usually sinking.
-    """
-    raise NotImplementedError("Implement after inspecting a real DISP-S1 file (see docstring).")
+# Inspected file (2026-11-15): OPERA_L3_DISP-S1_IW_F28482_VV_20250418T003512Z_20251108T003508Z_v1.0.
+# HDF5/netCDF, 7969 x 9584 grid at 30 m in UTM (spatial_ref: crs_wkt + GeoTransform), chunks 256x256.
+# /displacement: LOS displacement in metres, positive = towards the satellite, relative to
+# /identification/reference_datetime (the ministack reference, which changes every few months) and
+# to the frame's spatial reference point. /recommended_mask: 1 = good pixel.
+# Reader: read only a small window by HTTP range requests, take the median of good pixels per date,
+# chain ministacks (displacement at a new reference date is added to every later date), fit mm/yr.
+CMR_GRANULES = "https://cmr.earthdata.nasa.gov/search/granules.json"
+DISP_COLLECTION = "OPERA_L3_DISP-S1_V1"
+DISP_LINK = "https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1"
+DISP_HALF_WINDOW_PX = 100   # 200 x 200 pixels = 6 km x 6 km
+DISP_MIN_GOOD = 0.3         # skip a date if fewer than 30% of window pixels are good
+
+
+def _disp_granules(lat: float, lon: float, start: str, end: str) -> pd.DataFrame:
+    rows, headers = [], {}
+    while True:
+        r = requests.get(CMR_GRANULES, params={"short_name": DISP_COLLECTION, "point": f"{lon},{lat}",
+                                               "temporal": f"{start}T00:00:00Z,{end}T00:00:00Z", "page_size": 2000},
+                         headers=headers, timeout=120)
+        r.raise_for_status()
+        entries = r.json()["feed"]["entry"]
+        for e in entries:
+            url = next((l["href"] for l in e["links"] if l["href"].endswith(".nc") and l["href"].startswith("https")), None)
+            parts = e["title"].split("_")  # OPERA_L3_DISP-S1_IW_F28482_VV_<ref>_<sec>_v1.0_<prod>
+            rows.append({"title": e["title"], "url": url, "frame": parts[4], "ref": parts[6][:8],
+                         "sec": parts[7][:8], "prod": parts[9]})
+        if len(entries) < 2000 or "CMR-Search-After" not in r.headers:
+            break
+        headers = {"CMR-Search-After": r.headers["CMR-Search-After"]}
+    return pd.DataFrame(rows)
+
+
+def _disp_window(url: str, lat: float, lon: float, fs) -> tuple:
+    import h5py, pyproj
+    with fs.open(url, block_size=2 ** 20, cache_type="blockcache") as fo, h5py.File(fo) as f:
+        gt = [float(v) for v in f["spatial_ref"].attrs["GeoTransform"].split()]
+        crs = pyproj.CRS.from_wkt(f["spatial_ref"].attrs["crs_wkt"])
+        x, y = pyproj.Transformer.from_crs(4326, crs, always_xy=True).transform(lon, lat)
+        c, r = int((x - gt[0]) / gt[1]), int((y - gt[3]) / gt[5])
+        h = DISP_HALF_WINDOW_PX
+        ny, nx = f["displacement"].shape
+        if not (h <= r < ny - h and h <= c < nx - h):
+            return np.nan, 0.0
+        d = f["displacement"][r - h:r + h, c - h:c + h]
+        m = f["recommended_mask"][r - h:r + h, c - h:c + h]
+    good = (m == 1) & np.isfinite(d)
+    return (float(np.median(d[good])) if good.mean() >= DISP_MIN_GOOD else np.nan), float(good.mean())
+
+
+def aquifer_trend(name: str, lat: float, lon: float, start: str = "2016-07-01", end: str = "2026-11-15",
+                  out_dir: str = "data/water/disp", workers: int = 8) -> dict:
+    """LOS velocity (mm/yr) over a 6 km window centred on (lat, lon), from every DISP-S1 date of the
+    frame with the most dates there."""
+    import fsspec
+    from concurrent.futures import ThreadPoolExecutor
+    g = _disp_granules(lat, lon, start, end)
+    base = {"trend_method": "disp_s1", "feature_lat": lat, "feature_lon": lon}
+    if g.empty:
+        return {**base, "trend_status": "no_disp_s1_coverage"}
+    frame = g.groupby("frame").sec.nunique().idxmax()
+    g = g[g.frame == frame].sort_values("prod").drop_duplicates(["ref", "sec"], keep="last").sort_values(["sec", "ref"])
+    fs = fsspec.filesystem("https", client_kwargs={"trust_env": True})  # go through the proxy that adds the Earthdata token
+    with ThreadPoolExecutor(workers) as ex:
+        vals = list(ex.map(lambda u: _disp_window(u, lat, lon, fs), g.url))
+    g["disp_m"], g["good_frac"] = [v[0] for v in vals], [v[1] for v in vals]
+    # Chain ministacks: cumulative(sec) = disp(ref -> sec) + cumulative(ref). The first reference is 0.
+    cum = {g.ref.min(): 0.0}
+    rows = []
+    for r in g.itertuples():
+        if r.ref in cum and np.isfinite(r.disp_m):
+            if r.sec not in cum:
+                cum[r.sec] = r.disp_m + cum[r.ref]
+                rows.append({"date": r.sec, "cum_disp_m": cum[r.sec], "ref": r.ref, "good_frac": r.good_frac})
+    ts = pd.DataFrame(rows)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    series = Path(out_dir) / f"disp_{name}_{frame}.csv"
+    ts.to_csv(series, index=False)
+    if len(ts) < 10:
+        return {**base, "trend_status": "insufficient_disp_s1", "trend_n": len(ts), "trend_feature_id": frame}
+    t = pd.to_datetime(ts.date, format="%Y%m%d", utc=True)
+    slope, n, dropped = _fit_trend(t, ts.cum_disp_m * 1000)
+    out = {**base, "trend_status": "ok", "trend_value": round(slope, 2), "trend_unit": "mm/yr LOS",
+           "trend_n": n, "trend_outliers_dropped": dropped, "trend_feature_id": frame,
+           "trend_start": t.min().date().isoformat(), "trend_end": t.max().date().isoformat(),
+           "trend_series_file": str(series), "granules_read": int(len(g)),
+           "dates_unchained": int(len(g.sec.unique()) - len(ts))}
+    print(json.dumps(out, indent=2))
+    return out
+
+
+def _service_area_point(pwsid: str) -> tuple:
+    import shapely.geometry as sg
+    r = requests.get(EPA_SERVICE_AREAS, params={"where": f"PWSID='{pwsid}'", "outFields": "PWSID",
+                                                "returnGeometry": "true", "outSR": 4326, "f": "geojson"}, timeout=120)
+    r.raise_for_status()
+    geoms = [sg.shape(f["geometry"]) for f in r.json()["features"] if f.get("geometry")]
+    from shapely.ops import unary_union
+    pt = unary_union(geoms).representative_point()
+    return round(pt.y, 5), round(pt.x, 5)
+
+
+# ---------- Build data/sources.csv ----------
+def build_sources(matches_csv="data/water/site_utility_matches.csv", chain_csv="data/water/utility_chain.csv",
+                  assign_csv="data/water/source_assignments.csv", out_csv="data/sources.csv",
+                  site_out="data/water/site_sources.csv", trends_cache="data/water/trends.csv", refresh=False):
+    m = pd.read_csv(matches_csv, dtype={"pwsid": str})
+    chain = pd.read_csv(chain_csv, dtype=str)
+    assign = pd.read_csv(assign_csv, dtype=str)
+    top = chain[chain.depth == "0"].drop_duplicates("pwsid").set_index("pwsid")
+
+    # Trends: one per water body (shared by every utility that draws on it), cached on disk.
+    cache = pd.read_csv(trends_cache, dtype={"water_body_id": str, "trend_feature_id": str}) \
+        if Path(trends_cache).exists() and not refresh else pd.DataFrame(columns=["water_body_id"])
+    trends = {r.water_body_id: r._asdict() for r in cache.itertuples(index=False)}
+    for wb, grp in assign.groupby("water_body_id"):
+        if wb in trends:
+            continue
+        a = grp.iloc[0]
+        if a.trend_method == "swot_reach":
+            t = reservoir_trend(a.trend_feature_id, "Reach")
+        elif a.trend_method == "swot_lake":
+            t = {"trend_status": "swot_lake_id_unavailable"}
+        else:  # disp_s1 over the service area of the (single) utility using this aquifer
+            lat, lon = _service_area_point(grp.pwsid.iloc[0])
+            t = aquifer_trend(wb, lat, lon)
+        trends[wb] = {"water_body_id": wb, "trend_method": a.trend_method, **t}
+        pd.DataFrame(trends.values()).to_csv(trends_cache, index=False)
+    tr = pd.DataFrame(trends.values()).set_index("water_body_id")
+
+    rows = []
+    for a in assign.itertuples(index=False):
+        t = tr.loc[a.water_body_id] if a.water_body_id in tr.index else pd.Series(dtype=object)
+        u = top.loc[a.pwsid]
+        pop = pd.to_numeric(u.population_served, errors="coerce")
+        links = [a.source, SDWA_LINK]
+        if a.trend_method.startswith("swot"):
+            links += [HYDROCRON_LINK, SWORD_LINK]
+        else:
+            links += [DISP_LINK]
+        sites = m[m.pwsid == a.pwsid].site_id.tolist()
+        rows.append({
+            "source_id": f"SRC-{a.pwsid}", "name": f"{a.water_body} for {u['name'].title()}",
+            "water_body_id": a.water_body_id, "water_body": a.water_body, "type": a.type,
+            "lat": t.get("feature_lat"), "lon": t.get("feature_lon"),
+            "utility_pwsid": a.pwsid, "utility_name": u["name"],
+            "population_served": pop if pop and pop > 0 else np.nan,
+            "trend_value": t.get("trend_value"), "trend_unit": t.get("trend_unit"),
+            "trend_status": t.get("trend_status"), "trend_method": a.trend_method,
+            "trend_feature_id": t.get("trend_feature_id", a.trend_feature_id),
+            "trend_n": t.get("trend_n"), "trend_start": t.get("trend_start"), "trend_end": t.get("trend_end"),
+            "trend_series_file": t.get("trend_series_file"),
+            "aqueduct_stress": np.nan,  # Phase 4
+            "sites": "; ".join(sites), "identification_basis": a.basis, "confidence": a.confidence,
+            "flags": ";".join(f for f in [
+                "population_missing" if not (pop and pop > 0) else "",
+                "location_approx" if m[m.pwsid == a.pwsid].location_approx.any() else "",
+                "aqueduct_pending"] if f),
+            "sdwa_quarter": u.sdwa_quarter, "source": " ; ".join(dict.fromkeys(links)),
+        })
+    src = pd.DataFrame(rows)
+    src.to_csv(out_csv, index=False)
+
+    # Site -> source link. Overlapping service areas: keep the utility that has an assignment.
+    assigned = set(assign.pwsid)
+    links = []
+    for sid, grp in m.groupby("site_id", sort=False):
+        hit = grp[grp.pwsid.isin(assigned)]
+        r0 = grp.iloc[0]
+        if len(hit):
+            h = hit.iloc[0]
+            others = [p for p in grp.pwsid.dropna() if p != h.pwsid]
+            links.append({"site_id": sid, "list": r0.list, "match_status": h.match_status, "pwsid": h.pwsid,
+                          "source_id": f"SRC-{h.pwsid}", "other_service_areas": "; ".join(others),
+                          "candidates_within_2km": "", "water_share": "include"})
+        else:
+            links.append({"site_id": sid, "list": r0.list, "match_status": r0.match_status, "pwsid": "",
+                          "source_id": "", "other_service_areas": "",
+                          "candidates_within_2km": r0.get("candidates_within_2km", ""), "water_share": "exclude"})
+    pd.DataFrame(links).to_csv(site_out, index=False)
+    print(src[["source_id", "water_body", "type", "population_served", "trend_value", "trend_unit", "trend_status"]].to_string(index=False))
+    return src
 
 
 def main():
@@ -247,8 +503,10 @@ def main():
     pt = sub.add_parser("points"); pt.add_argument("--precedent", default="data/precedent_sites.csv")
     pt.add_argument("--announced", default="data/announced_sites.csv"); pt.add_argument("--out", default="data/water/site_points.csv")
     m = sub.add_parser("match"); m.add_argument("--points", default="data/water/site_points.csv"); m.add_argument("--out", default="data/water/site_utility_matches.csv")
-    l = sub.add_parser("lookup"); l.add_argument("--pwsid", required=True)
-    s = sub.add_parser("swot"); s.add_argument("--lake-id", required=True)
+    l = sub.add_parser("lookup"); l.add_argument("--pwsid"); l.add_argument("--matches", default="data/water/site_utility_matches.csv")
+    l.add_argument("--out", default="data/water/utility_chain.csv")
+    so = sub.add_parser("sources"); so.add_argument("--refresh", action="store_true")
+    s = sub.add_parser("swot"); s.add_argument("--feature-id", required=True); s.add_argument("--feature", default="Reach", choices=["Reach", "PriorLake"])
     s.add_argument("--start", required=True); s.add_argument("--end", required=True)
     a = p.parse_args()
     if a.cmd == "points":
@@ -256,9 +514,14 @@ def main():
     elif a.cmd == "match":
         match_utilities(a.points, a.out)
     elif a.cmd == "lookup":
-        lookup_sources(a.pwsid)
+        if a.pwsid:
+            print(json.dumps({k: v for k, v in trace_chain(a.pwsid)[0].items() if not k.startswith("_")}, indent=2, default=str))
+        else:
+            lookup_all(a.matches, a.out)
     elif a.cmd == "swot":
-        reservoir_trend(a.lake_id, a.start, a.end)
+        reservoir_trend(a.feature_id, a.feature, a.start, a.end)
+    elif a.cmd == "sources":
+        build_sources(refresh=a.refresh)
 
 
 if __name__ == "__main__":
