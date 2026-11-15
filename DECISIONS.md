@@ -107,3 +107,23 @@ writes that. No other file (projection, map, docs) read the old label.
 - **Logistic fit without scipy.** Grid search over (k, t0) with A_max solved in closed form by least
   squares; build_months = ln(81)/k (10% -> 90%). Result for Abilene: A_max 1,163 acres,
   t0 = +15.4 months after construction start, build_months 22.1.
+
+## 2026-11-15 · Phase 5 NISAR coverage check: site choice, coordinates and "usable" rule
+
+**Sites.** Vantage Frontier (Shackelford Co., TX), Project Jupiter (Dona Ana Co., NM) and Stargate
+Lordstown (OH), all from `data/announced_sites.csv` (PR 5). Chosen because Epoch's timeline shows
+active construction after 2026-06-01 at each (2026-09-04, 2026-06-22, 2026-07-30 entries) and a
+campus-level coordinate could be sourced. Meta Hyperion was passed over because no source with a
+campus coordinate was found (only the Holly Ridge hamlet centroid). Built sites in
+`data/precedent_sites.csv` (PR 6) were not used: all but one are complete by Epoch's timeline.
+
+**Coordinates.** `announced_sites.csv` has only town or county centroids for these sites, which can
+fall kilometres from the campus. For this check only, Frontier and Jupiter use Baxtel's campus
+points and Lordstown uses the US Census geocode of Epoch's street address (sources per row in
+`data/nisar_coverage_sites.csv`). The registry itself is not changed.
+
+**Usable rule.** HH and HV on frequency A, >= 90% valid pixels in a 51 x 51 window at the site, no
+input-data anomaly bit, not diagnostic mode. The `inputDataExceptionMask` bits 256/512 mean "HH/HV
+fully focused" in V1 products and are not counted as anomalies. Where one acquisition has two
+products, the usable one at the track's usual bandwidth is counted and the other is marked
+`duplicate_of`.
