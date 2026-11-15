@@ -140,3 +140,5 @@ Judgment calls:
     by capex, because F3 depends on k and on capex scope. `capex_includes_compute` is new: only El
     Paso and Wharton are stated as facility-only, the three developer campuses are inferred
     facility-only, and the rest are unknown.
+(g) 2026-11-15: rows tagged `no (inferred)` (facility-only, inferred) are treated as facility-only
+    for the F3 scenario rule. All three have a stated MW, so this doesn't change any number yet.

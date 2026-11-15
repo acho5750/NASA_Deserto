@@ -84,3 +84,11 @@
 | Google Ellis County, TX | Expansion, and no site-level capex in the $40B Texas total |
 | Anthropic / Fluidstack, TX and NY ($50B) | No location disclosed |
 | Crusoe / Tallgrass Project Jade, Cheyenne | Paused Jun 2026; the site is now Google Laramie County (included) |
+
+## Share of 2030 MW that depends on F3
+`pipeline/announced_f3_share.py --k 4.49 4.88 6.43` writes `data/announced_f3_share.csv`. It
+applies Bubba's F3 scenario rule: facility-only rows use k, rows that include compute use $37.88M,
+and rows with unstated scope use $37.88M in the low and median scenarios and k in the high one. k is
+4.49 / 4.88 / 6.43 $M per IT MW (n = 6, low confidence; `data/precedent_k_summary.csv`, PR #6).
+In the low scenario k is the high value, 6.43. The 7 stated-MW rows sum to 8,902 MW in every
+scenario. 9 rows depend on F3.
