@@ -1,0 +1,4 @@
+scenario,total_mw_2030,f3_mw,f3_share,n_rows,n_f3_rows,k_facility_musd_per_mw,k_epoch_musd_per_mw
+low,14976,6074,0.406,16,9,6.43,37.88
+median,15035,6133,0.408,16,9,4.88,37.88
+high,58835,49933,0.849,16,9,4.49,37.88
