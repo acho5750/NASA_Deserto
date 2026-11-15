@@ -5,8 +5,9 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 ## What runs today
 | Piece | Status |
 |---|---|
-| `pipeline/projection.py` (F2–F8) | Tested on the demo CSVs; writes `map/data.js` |
-| `map/index.html` | Render logic tested; needs internet for Leaflet and map tiles |
+| `pipeline/projection.py` (F2–F8) | Calibrated on real data (Phase 4); the demo CSVs still work for a quick test but are not shipped |
+| `pipeline/build_map.py` (Phase 7) | Builds `map/data.js` from the real CSVs: all 54 campuses, 25 water sources, projection, radar, trends, land cover, exposure |
+| `map/index.html` | Real-data map, tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
@@ -14,14 +15,16 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 | `pipeline/proximity.py` (Phase 6) | Distance from every site and source to the nearest NWI wetland and PAD-US protected area; writes `data/proximity/` |
 | `pipeline/water_chain.py` (water chain) | Run on all 54 sites: EPA match, SDWA seller chain, SWOT trend via Hydrocron (SWORD reaches), DISP-S1 reader (range reads); writes `data/sources.csv` |
 
-All rows in `data/*_demo.csv` are invented. `PER_CAPITA_L_PER_DAY` and `UTILIZATION` in
-`projection.py` are placeholders to replace with sourced values.
+All rows in `data/*_demo.csv` are invented and are used only by the demo command below; the
+shipped map is built from real data only. `UTILIZATION` and per-capita use are sourced (see DECISIONS.md, Phase 4).
 
 ## Quick start
 ```
 pip install -r requirements.txt
-python pipeline/projection.py --registry data/site_registry_demo.csv --sources data/sources_demo.csv
+python pipeline/build_map.py      # real data -> map/data.js
 python -m http.server 8000        # then open http://localhost:8000/map/
+# demo only (overwrites map/data.js with invented data; do not commit):
+# python pipeline/projection.py --registry data/site_registry_demo.csv --sources data/sources_demo.csv
 ```
 
 ## First real test (one site, end to end)

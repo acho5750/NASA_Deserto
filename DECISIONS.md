@@ -587,3 +587,40 @@ the drawn campus falls in no EPA service area, so the site is now `self_supplied
 is gone. The largest 2030 median local shares are now Bell Milam Falls 10.3x (Milam), Camino Real 8.9x
 (Dona Ana), Hawley 6.0x (Stargate Abilene), Montgomery Co PWSD 1 2.8x and Boling 2.2x.
 `proximity.py --only` now updates just those rows.
+
+## Phase 7: live map on real data (2026-11-15)
+
+**Data.** `pipeline/build_map.py` builds `map/data.js` from the real CSVs only (`demo: false`):
+54 campuses (29 built, 25 announced; 46 have what F2-F8 need), 25 water sources, 12 with a
+SWOT or DISP-S1 series. It calls `projection.calibrate / project_sites / project_sources`, so the
+map uses the same F2-F8 code as `projection.py`. The demo CSVs stay in `data/` for the quick test
+in the README but are not shipped: only `map/` is published.
+
+**Built-site markers sit inside the OSM campus outline** (representative point), as the water chain
+already does, because some registry points are town centroids and Google Kansas City East has none.
+Effect: KC East now has a location, so it joins the projection and the F2 calibration (45 -> 46 sites).
+Calibration moved from acres/MW 0.80 / 1.32 / 1.77, tau 47.9 months (checked: identical without KC
+East) to acres/MW 0.80 / 1.38 / 2.03, WUE 0.34 / 1.52 / 2.38 L/kWh, tau 46.2 months. KC East keeps
+its F1 flag (noise floor above 5% at 5 dB); flagged sites stayed in calibration in Phase 4 too, so the
+rule is unchanged.
+
+**Not projected (8):** shown on the map with the reason (no location, or no MW, capex or construction
+start). Armstrong and Haskell have no known location and are listed in a note, not drawn.
+
+**Trend charts.** Each source with a series shows the points used by `water_chain.py` and a straight
+line fit (segment-aligned for DISP-S1, MAD outliers drawn hollow). Values come from the saved series
+files listed in each source's `file`.
+
+**Wording.** No sentence says a data center caused a change in a water source. Shares say "estimated
+water for the linked campuses divided by estimated supply". DISP-S1 text: "Moving away often means
+sinking, which can come from pumping groundwater, but this measurement alone does not say why." The
+About box: "A trend describes the water body; it does not show what caused the change."
+
+**Exposure badges.** W = vegetated NWI wetland within 100 m of the outline or point; P = GAP 1-3
+protected land within 1 km. Thresholds are display choices only; the distances are in the panels.
+
+**Fix.** `proximity.py` labelled every announced outline "OSM campus outline"; Shackelford's is the
+Sentinel-2 image outline. Label fixed in code and in `data/proximity/site_proximity.csv` (no
+distance changed).
+
+**Hosting.** `.github/workflows/pages.yml` publishes `map/` to GitHub Pages on every push to main.

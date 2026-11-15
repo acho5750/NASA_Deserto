@@ -145,8 +145,9 @@ def site_geoms():
             rows.append((s.site_id, "announced", None, "location_missing"))
             continue
         g = _outline(f"data/footprint/announced/{s.site_id}_campus.geojson")
+        label = "Sentinel-2 image outline" if prec == "image_outline" else "OSM campus outline"
         rows.append((s.site_id, "announced", g if g is not None else Point(s.lon, s.lat),
-                     "OSM campus outline" if g is not None else f"registry point ({prec})"))
+                     label if g is not None else f"registry point ({prec})"))
     return rows
 
 
