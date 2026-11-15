@@ -9,10 +9,14 @@ Python port of gee/footprint_engine.js. Same logic, different data source:
   * Monthly composites = per-pixel median of each calendar-offset month; empty months dropped.
   * Flag = |VV - baseline VV| > theta OR |VH - baseline VH| > theta.
   * Persistence = flagged this composite AND the previous composite.
-  * Cumulative footprint = a pixel stays converted once it has been converted. Area is summed
-    over the AOI (campus outline buffered by 1 km, as in the GEE script) -> `acres_aoi`, and over
-    the campus outline itself -> `acres_campus`. The threshold rule and the logistic fit use
-    `acres_campus`, because the 1 km ring is not part of the site (see DECISIONS.md).
+  * Cumulative footprint = a pixel stays converted once it has been converted. Area is summed over
+      - the SITE = campus outline buffered by 200 m                -> `acres_site` (reported acres)
+      - the SPILLOVER ring = AOI minus the site (out to 1 km)      -> `acres_spillover`
+      - the AOI = campus outline buffered by 1 km (as in GEE)      -> `acres_aoi`
+      - the bare outline, for reference                            -> `acres_campus`
+    The 5% noise rule and the logistic fit both use `acres_site` (rule set by the person,
+    2026-11-15: report acres within the outline + 200 m, the 1 km ring separately as spillover,
+    and apply the noise rule to the same area as the reported acres).
 
 Decision rules from CLAUDE.md that this script applies itself:
   * Orbit: most frequent descending relative orbit; fall back to ascending if that orbit has
@@ -51,6 +55,8 @@ THRESH_MAX_DB = 5.0
 NOISE_FRACTION = 0.05      # pre-construction acres / final acres that triggers a higher threshold
 MIN_BASELINE_IMAGES = 12   # descending -> ascending fallback
 BUFFER_M = 1000            # campus.buffer(1000) in the GEE script
+SITE_BUFFER_M = 200        # reported footprint = campus outline + 200 m
+AFTER_MONTHS = 6           # "after" radar image = median of the last 6 months of the window
 
 
 # ---------- inputs ----------
@@ -210,6 +216,29 @@ def fit_logistic(t_months, acres):
     return amax, t0, k, float(np.log(81.0) / k)
 
 
+def write_radar_png(path, before_vv, after_vv, site_edge, labels):
+    """Side-by-side before | after Sentinel-1 VV backscatter (dB, -25..+5 stretch), site outline in cyan."""
+    from PIL import Image, ImageDraw
+
+    def grey(vv):
+        g = np.clip((np.nan_to_num(vv, nan=-25.0) + 25) / 30 * 255, 0, 255).astype("uint8")
+        rgb = np.stack([g, g, g], axis=-1)
+        rgb[site_edge] = (0, 220, 255)
+        return Image.fromarray(rgb)
+
+    a, b = grey(before_vv), grey(after_vv)
+    scale = max(1, int(np.ceil(360 / max(a.size))))
+    a = a.resize((a.width * scale, a.height * scale), Image.NEAREST)
+    b = b.resize((b.width * scale, b.height * scale), Image.NEAREST)
+    pad, head = 6, 18
+    out = Image.new("RGB", (a.width * 2 + pad * 3, a.height + head + pad), "white")
+    out.paste(a, (pad, head)); out.paste(b, (a.width + pad * 2, head))
+    d = ImageDraw.Draw(out)
+    d.text((pad, 3), labels[0], fill="black"); d.text((a.width + pad * 2, 3), labels[1], fill="black")
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    out.save(path, optimize=True)
+
+
 def write_quicklook(path, baseline, converted, inside):
     from PIL import Image
 
@@ -242,6 +271,9 @@ def run(args):
     inside, pixel_m2 = aoi_mask(db, aoi_utm)
     campus_utm = reproject(campus, 4326, epsg)
     inside_campus, _ = aoi_mask(db, campus_utm)
+    site_utm = campus_utm.buffer(SITE_BUFFER_M)
+    inside_site, _ = aoi_mask(db, site_utm)
+    inside_spill = inside & ~inside_site
     times = pd.DatetimeIndex(db.time.values)
     print(f"Images used {len(times)}, {state} relative orbit {orbit}, grid {db.sizes['y']}x{db.sizes['x']} @10 m EPSG:{epsg}")
 
@@ -256,11 +288,13 @@ def run(args):
         cumulative = cumulative_converted(comps, baseline, thresh)
         acres = acres_in(cumulative, inside, pixel_m2)
         campus_acres = acres_in(cumulative, inside_campus, pixel_m2)
-        final = float(campus_acres[-1])
-        pre_acres = float(campus_acres[pre][-1]) if pre.any() else 0.0
+        site_acres = acres_in(cumulative, inside_site, pixel_m2)
+        spill_acres = acres_in(cumulative, inside_spill, pixel_m2)
+        final = float(site_acres[-1])
+        pre_acres = float(site_acres[pre][-1]) if pre.any() else 0.0
         ratio = pre_acres / final if final > 0 else np.inf
-        print(f"  theta={thresh:.1f} dB: campus pre-construction {pre_acres:.1f} ac, final {final:.1f} ac, "
-              f"ratio {ratio:.1%} (AOI: {acres[pre][-1] if pre.any() else 0:.1f} / {acres[-1]:.1f} ac)")
+        print(f"  theta={thresh:.1f} dB: site (outline+{SITE_BUFFER_M} m) pre-construction {pre_acres:.1f} ac, "
+              f"final {final:.1f} ac, ratio {ratio:.1%} | spillover ring final {spill_acres[-1]:.1f} ac")
         if ratio <= NOISE_FRACTION:
             break
         if thresh + THRESH_STEP_DB > THRESH_MAX_DB + 1e-9:
@@ -274,8 +308,10 @@ def run(args):
         "date": [f"{d:%Y-%m-%d}" for d in dates[1:]],
         "months_from_start": t_months,
         "n_images": counts[1:],
-        "acres_aoi": np.round(acres, 2),
+        "acres_site": np.round(site_acres, 2),
+        "acres_spillover": np.round(spill_acres, 2),
         "acres_campus": np.round(campus_acres, 2),
+        "acres_aoi": np.round(acres, 2),
         "thresh_db": thresh,
         "source": COLLECTION_LINK,
     })
@@ -283,13 +319,34 @@ def run(args):
     curve_path = OUT_DIR / f"{args.site_id}_area_curve.csv"
     curve.to_csv(curve_path, index=False)
 
-    amax, t0, k, build_months = fit_logistic(t_months, campus_acres)
+    amax, t0, k, build_months = fit_logistic(t_months, site_acres)
+    if t0 + np.log(9.0) / k > max(t_months):   # 90% point after the last composite
+        flag = ";".join(x for x in (flag, "curve_not_saturated") if x)
+
+    site_area = site_utm.area / M2_PER_ACRE
+    after_sel = times >= month_add(end, -AFTER_MONTHS)
+    with np.errstate(all="ignore"):
+        after = np.nanmedian(db.values[after_sel], axis=0)
+    radar_png = ""
+    if args.radar_png:
+        m = inside_site
+        interior = m.copy()
+        interior[1:, :] &= m[:-1, :]; interior[:-1, :] &= m[1:, :]
+        interior[:, 1:] &= m[:, :-1]; interior[:, :-1] &= m[:, 1:]
+        b0, b1 = times[base_sel].min(), times[base_sel].max()
+        a0, a1 = times[after_sel].min(), times[after_sel].max()
+        write_radar_png(args.radar_png, baseline[0], after[0], m & ~interior,
+                        (f"BEFORE  {b0:%Y-%m} to {b1:%Y-%m}", f"AFTER  {a0:%Y-%m} to {a1:%Y-%m}"))
+        radar_png = args.radar_png
     summary = pd.DataFrame([{
         "site_id": args.site_id, "name": args.name, "construction_start": f"{cs:%Y-%m-%d}",
         "orbit_state": state, "relative_orbit": orbit, "n_images": len(times),
         "baseline_images": int(base_sel.sum()), "thresh_db": thresh,
-        "pre_construction_acres_campus": round(pre_acres, 2), "final_acres_campus": round(final, 2),
-        "final_acres_aoi": round(float(acres[-1]), 2),
+        "campus_outline_acres": round(campus_utm.area / M2_PER_ACRE, 1), "site_area_acres": round(site_area, 1),
+        "pre_construction_acres_site": round(pre_acres, 2), "final_acres_site": round(final, 2),
+        "spillover_acres": round(float(spill_acres[-1]), 2), "final_acres_campus": round(float(campus_acres[-1]), 2),
+        "final_acres_aoi": round(float(acres[-1]), 2), "window_end": f"{end:%Y-%m-%d}",
+        "radar_png": radar_png,
         "a_max_acres": round(amax, 1), "logistic_t0_months": round(t0, 1),
         "build_months": round(build_months, 1), "flag": flag,
         "source": f"{COLLECTION_LINK} ; {args.source}" if args.source else COLLECTION_LINK,
@@ -304,8 +361,9 @@ def run(args):
         write_quicklook(args.quicklook, baseline, cumulative[-1] & inside, inside)
 
     print(f"\nWrote {curve_path} and {sum_path}")
-    print(curve[["date", "months_from_start", "n_images", "acres_aoi", "acres_campus"]].to_string(index=False))
-    print(f"\nthreshold {thresh} dB | final {final:.1f} ac (campus) / {acres[-1]:.1f} ac (AOI) | "
+    print(curve[["date", "months_from_start", "n_images", "acres_site", "acres_spillover"]].to_string(index=False))
+    print(f"\nthreshold {thresh} dB | final {final:.1f} ac (site = outline+{SITE_BUFFER_M} m) | "
+          f"spillover {spill_acres[-1]:.1f} ac (ring to {BUFFER_M} m) | "
           f"logistic A_max {amax:.1f} ac, t0 {t0:+.1f} mo, build 10->90% {build_months:.1f} mo"
           + (f" | FLAG {flag}" if flag else ""))
     return curve, summary
@@ -322,6 +380,7 @@ def main():
     p.add_argument("--thresh-db", type=float, default=THRESH_START_DB)
     p.add_argument("--source", default="", help="link for the outline / construction date")
     p.add_argument("--quicklook", default="", help="optional PNG of converted pixels (write under data/raw/)")
+    p.add_argument("--radar-png", default="", help="before/after Sentinel-1 VV image for the map, e.g. map/img/<id>_radar.png")
     run(p.parse_args())
 
 

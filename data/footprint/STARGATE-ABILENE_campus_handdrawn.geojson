@@ -1,0 +1,8 @@
+{"type": "Feature",
+ "properties": {"site_id": "STARGATE-ABILENE", "name": "OpenAI Stargate Abilene",
+   "method": "Hand-drawn around the cleared campus visible in Sentinel-2 L2A true colour, 2026-10-08 (cloud 0%), compared with 2023-11-23. Approximate.",
+   "source": "https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a"},
+ "geometry": {"type": "Polygon", "coordinates": [[
+   [-99.80307, 32.50060], [-99.79031, 32.50204], [-99.78718, 32.50927], [-99.76961, 32.50938],
+   [-99.76943, 32.48773], [-99.79337, 32.48758], [-99.79343, 32.49390], [-99.80301, 32.49384],
+   [-99.80307, 32.50060]]]}}
