@@ -25,8 +25,8 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 1. Pick one built site from Epoch (https://epoch.ai/data/data-centers). Note MW, capex, construction start.
 2. Run `gee/footprint_engine.js` with its outline and start date. Export the area curve; record
    final acres (`a_max_acres`) and the 10%→90% build time (`build_months`).
-3. Download EPA service areas into `data/raw/epa_service_areas.*` and run
-   `python pipeline/water_chain.py match --registry data/site_registry.csv`.
+3. Run `python pipeline/water_chain.py match --registry data/site_registry.csv` (queries EPA's
+   service area ArcGIS service by point; no download needed).
 4. Download the ECHO SDWA zip, unzip into `data/raw/`, run `... lookup --pwsid <PWSID>`.
 5. Find the source name in the utility's water quality report. For a reservoir, find its lake ID
    in the SWOT Prior Lake Database, then run `... swot --lake-id <ID> --start 2023-08-01 --end 2026-11-01`.
@@ -38,6 +38,7 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 - Sentinel-1 in Earth Engine: https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S1_GRD
 - NISAR (ASF Vertex): https://search.asf.alaska.edu · guide: https://nisar-docs.asf.alaska.edu/availability-overview/
 - EPA water system service areas: https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
+  · ArcGIS service used by the pipeline: https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0
 - ECHO SDWA download: https://echo.epa.gov/tools/data-downloads#dwdownloads
 - SWOT lake product: https://podaac.jpl.nasa.gov/dataset/SWOT_L2_HR_LakeSP_D · Hydrocron: https://podaac.github.io/hydrocron/intro.html
 - OPERA DISP-S1: https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1
