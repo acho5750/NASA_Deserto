@@ -1,0 +1,4 @@
+site_id,map_site_id,stack_id,first_dates,last_dates,threshold_db,pixel_m,brighter_px_in_outline,brighter_acres_in_outline,outline_acres,median_change_in_outline_db,median_change_ring_db,source
+FRONTIER-SHACKELFORD,ANN-STARGATE-SHACKELFORD,163_A_018,2026-06-25;2026-07-07;2026-07-19,2026-09-29;2026-10-11;2026-10-23,3.0,10.0,12739,314.8,1438.1,-0.27,-0.92,data/nisar_gcov_coverage.csv ; https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html
+JUPITER-DONAANA,ANN-STARGATE-DONAANA,048_A_017,2026-06-17;2026-06-29;2026-07-11,2026-10-15;2026-10-27;2026-11-08,3.0,10.0,11575,286.0,611.5,2.63,1.06,data/nisar_gcov_coverage.csv ; https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html
+LORDSTOWN,ANN-STARGATE-LORDSTOWN,090_A_022,2026-06-20;2026-07-02;2026-07-14,2026-10-06;2026-10-18;2026-10-30,3.0,10.0,28,0.7,43.5,0.08,0.4,data/nisar_gcov_coverage.csv ; https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html
