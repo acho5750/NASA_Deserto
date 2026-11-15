@@ -107,3 +107,15 @@ no-match the same way as before. Pick one name before the projection reads this 
 - **Logistic fit without scipy.** Grid search over (k, t0) with A_max solved in closed form by least
   squares; build_months = ln(81)/k (10% -> 90%). Result for Abilene: A_max 1,163 acres,
   t0 = +15.4 months after construction start, build_months 22.1.
+
+## 2026-11-15 · Announced-site list: inclusion rule, dates, coordinates
+
+**What.** `data/announced_sites.csv` (24 rows, all `unverified`). The rules used to build it:
+announced projects that are not fully operating, with at least a county-level location. Expansions
+of operating campuses are excluded. Only stated values are recorded, and third-party estimates go in
+notes. Partial dates are set to the first day of the period for starts and the last day for
+operation, with precision kept in `*_basis`. Coordinates are OSM Nominatim town or county centroids.
+**Why.** Stated values keep the "never invent data" rule. Expansions would mix land converted before
+the build with new conversion. Using period start and end keeps every date ISO and follows the
+"as of December 31" convention. Rows with neither MW nor capex are marked `projection_eligible=no`,
+per the CLAUDE.md rule. Details and open questions are in `data/announced_sites_notes.md`.
