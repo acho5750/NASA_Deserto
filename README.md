@@ -8,6 +8,7 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 | `pipeline/projection.py` (F2–F8) | Calibrated on real data (Phase 4); the demo CSVs still work for a quick test but are not shipped |
 | `pipeline/build_map.py` (Phase 7) | Builds `map/data.js` from the real CSVs: all 54 campuses, 25 water sources, projection, radar, trends, land cover, exposure |
 | `map/index.html` | Four-chapter story map over US imagery (MapLibre GL 4, Esri World Imagery): 1 Land (Sentinel-1 change, land cover before, before/after aerial photos), 2 NISAR now, 3 Water (EPA chain, SWOT, OPERA DISP-S1), 4 2035 (F2-F9). A time bar shows one lane per satellite. Deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
+| `pipeline/nisar_overlays.py` | NISAR pictures for the map: one HH radar frame per 12-day pass over the 3 NISAR campuses (`map/nisar/`), and where the ground got > 3 dB brighter between the first 3 and last 3 passes (`data/radar/nisar_change.csv`, `map/nisar.js`). Reads GCOV windows with HTTP Range requests |
 | `pipeline/map_story.py` | Story numbers not in `data.js`: land-cover totals, Sentinel-1 and NISAR series for the three NISAR campuses, sensor date spans (`map/story.js`) |
 | `pipeline/conversion_dates.py` | Re-runs F1 per built campus and saves the month each converted pixel first changed (`data/footprint/masks/<id>_first_converted.tif`); refuses to write unless the final mask equals the committed one and monthly acres match the area curve |
 | `pipeline/map_timeline.py` | Turns those months into the map's Play data: per-campus pixel polygons (`map/pixels/`) and the measured area curves (`map/timeline.js`) |
@@ -30,6 +31,7 @@ python pipeline/conversion_dates.py --skip-done   # month each radar pixel chang
 python pipeline/map_timeline.py                   # -> map/pixels/, map/timeline.js
 python pipeline/map_wayback.py                    # dated aerial photos per campus -> map/wayback.js
 python pipeline/map_story.py                      # chapter numbers -> map/story.js (after build_map.py)
+python pipeline/nisar_overlays.py                 # NISAR frames + brightening map -> map/nisar/, map/nisar.js (Earthdata token)
 python -m http.server 8000        # then open http://localhost:8000/map/
 # demo only (overwrites map/data.js with invented data; do not commit):
 # python pipeline/projection.py --registry data/site_registry_demo.csv --sources data/sources_demo.csv

@@ -754,3 +754,26 @@ colored by F5 share in 2035 (thresholds 5%, 20%, 100%; display choice).
 **Wording.** Copy says "depends on" and "linked to". The water chapter says a trend describes the water body and that a
 linked campus does not mean it caused a change. Shares above 100% say the estimate is larger than today's supply and do not
 say where the water would come from.
+
+## 2026-11-15: Map v5 follow-up (person's review of PR 21)
+
+**Project Jupiter before/after looked identical.** Correct, and not a bug: the newest Esri Wayback photo at the campus centre is
+from 2025-09-21, three weeks after construction began (2025-09-01), so it still shows bare desert. Rule now: a before/after
+split is offered only when an aerial photo exists at least 6 months after construction began; otherwise the panel says why.
+For the three NISAR campuses the right-hand side is the NISAR radar frame for the timeline date instead of a photo.
+
+**NISAR pictures and a measured "so what".** New `pipeline/nisar_overlays.py` reads the HH window (outline + 1.5 km) of every
+usable, non-duplicate GCOV granule of each site's chart stack (33 granules) and writes one greyscale frame per pass, placed on
+the map by its corner coordinates. Brightening = mean linear power of the last 3 passes vs. the first 3, after a 3 x 3 boxcar,
+in dB; pixels > 3 dB (F1's starting threshold) are drawn violet and counted inside the campus outline. Averaging 3 dates and
+3 x 3 pixels damps speckle. The two GCOV product versions are mixed: the calibration check (`data/radar/nisar_calibration.csv`)
+puts every chart stack's version step well under 1 dB, far below the 3 dB threshold. Results (`data/radar/nisar_change.csv`):
+Vantage Frontier 314.8 acres of 1,438.1 (Jun-Oct 2026), Project Jupiter 286.0 of 611.5 (Jun-Nov 2026), Lordstown 0.7 of 43.5.
+Brighter means a stronger L-band echo (buildings, steel, equipment); it does not say what was built. Jupiter's surroundings
+also brightened a little (median +1.06 dB outside the outline vs. +2.63 dB inside), so the threshold is well above that.
+
+**Replay on every measured campus.** "Replay" now appears wherever a radar record exists: per-pixel months (28 campuses),
+NISAR frames every 12 days (3 NISAR campuses), or the measured acres curve with the outline filling in (Stargate Abilene, whose
+per-pixel months failed the reproduction check). Campuses without a radar record say why in one line.
+
+**Divider hidden when zoomed out** (below zoom 10), since aerial photos only load from zoom 9.
