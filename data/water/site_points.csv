@@ -1,0 +1,55 @@
+site_id,list,lat,lon,point_basis,location_approx
+MICROSOFT-PROJECT-OSMIUM,precedent,41.496873,-93.785674,inside OSM campus outline (data/footprint/MICROSOFT-PROJECT-OSMIUM_campus.geojson),False
+GOOGLE-PAPILLION,precedent,41.136397,-96.146942,inside OSM campus outline (data/footprint/GOOGLE-PAPILLION_campus.geojson),False
+MICROSOFT-GOODYEAR,precedent,33.414019,-112.366289,inside OSM campus outline (data/footprint/MICROSOFT-GOODYEAR_campus.geojson),False
+META-QTS-HILLSBORO-2,precedent,45.55907,-122.931402,inside OSM campus outline (data/footprint/META-QTS-HILLSBORO-2_campus.geojson),False
+GOOGLE-LANCASTER,precedent,39.723288,-82.688326,inside OSM campus outline (data/footprint/GOOGLE-LANCASTER_campus.geojson),False
+QTS-RICHMOND-1,precedent,37.487385,-77.246375,inside OSM campus outline (data/footprint/QTS-RICHMOND-1_campus.geojson),False
+GOOGLE-NEW-ALBANY,precedent,40.059079,-82.768826,inside OSM campus outline (data/footprint/GOOGLE-NEW-ALBANY_campus.geojson),False
+GOOGLE-BRISTOW,precedent,38.777102,-77.583913,inside OSM campus outline (data/footprint/GOOGLE-BRISTOW_campus.geojson),False
+MICROSOFT-SAT40,precedent,29.416003,-98.804375,inside OSM campus outline (data/footprint/MICROSOFT-SAT40_campus.geojson),False
+MICROSOFT-SAT14,precedent,29.476286,-98.681022,inside OSM campus outline (data/footprint/MICROSOFT-SAT14_campus.geojson),False
+GOOGLE-COUNCIL-BLUFFS-EAST,precedent,41.172126,-95.790453,inside OSM campus outline (data/footprint/GOOGLE-COUNCIL-BLUFFS-EAST_campus.geojson),False
+QTS-RICHMOND-2,precedent,37.486167,-77.241114,inside OSM campus outline (data/footprint/QTS-RICHMOND-2_campus.geojson),False
+GOOGLE-THE-DALLES,precedent,45.624051,-121.207094,inside OSM campus outline (data/footprint/GOOGLE-THE-DALLES_campus.geojson),False
+GOOGLE-MESA,precedent,33.353632,-111.676199,inside OSM campus outline (data/footprint/GOOGLE-MESA_campus.geojson),False
+STARGATE-ABILENE,precedent,32.499198,-99.786458,inside OSM campus outline (data/footprint/STARGATE-ABILENE_campus.geojson),False
+MICROSOFT-FAIRWATER-ATLANTA,precedent,33.461181,-84.525926,inside OSM campus outline (data/footprint/MICROSOFT-FAIRWATER-ATLANTA_campus.geojson),False
+META-EAGLE-MOUNTAIN,precedent,40.268826,-112.017581,inside OSM campus outline (data/footprint/META-EAGLE-MOUNTAIN_campus.geojson),False
+META-TEMPLE,precedent,31.129365,-97.367297,inside OSM campus outline (data/footprint/META-TEMPLE_campus.geojson),False
+META-HUNTSVILLE,precedent,34.847821,-86.626801,inside OSM campus outline (data/footprint/META-HUNTSVILLE_campus.geojson),False
+MICROSOFT-NEBIUS-NEW-JERSEY,precedent,39.42515,-75.013307,inside OSM campus outline (data/footprint/MICROSOFT-NEBIUS-NEW-JERSEY_campus.geojson),False
+GOOGLE-MIDLOTHIAN,precedent,32.441774,-97.059001,inside OSM campus outline (data/footprint/GOOGLE-MIDLOTHIAN_campus.geojson),False
+META-KUNA,precedent,43.464502,-116.269285,inside OSM campus outline (data/footprint/META-KUNA_campus.geojson),False
+META-JEFFERSONVILLE,precedent,38.27913,-85.73901,registry point (street),False
+GOOGLE-ARCOLA,precedent,38.940784,-77.523026,inside OSM campus outline (data/footprint/GOOGLE-ARCOLA_campus.geojson),False
+META-ROSEMOUNT,precedent,44.735,-93.062607,inside OSM campus outline (data/footprint/META-ROSEMOUNT_campus.geojson),False
+GOOGLE-KANSAS-CITY-EAST,precedent,39.180327,-94.462724,inside OSM campus outline (data/footprint/GOOGLE-KANSAS-CITY-EAST_campus.geojson),False
+META-SARPY,precedent,41.107875,-96.147164,inside OSM campus outline (data/footprint/META-SARPY_campus.geojson),False
+META-AIKEN,precedent,33.642238,-81.843962,inside OSM campus outline (data/footprint/META-AIKEN_campus.geojson),False
+META-GALLATIN,precedent,36.408405,-86.371592,inside OSM campus outline (data/footprint/META-GALLATIN_campus.geojson),False
+GOOGLE-STOREY-COUNTY,precedent,39.494801,-119.429451,inside OSM campus outline (data/footprint/GOOGLE-STOREY-COUNTY_campus.geojson),False
+ANN-META-HYPERION,announced,32.4676,-91.6268,"registry point: OSM Nominatim hamlet centroid (Holly Ridge, Richland Parish, Louisiana, United States); not the campus",True
+ANN-STARGATE-SALINE,announced,42.1245,-83.8386,"registry point: OSM Nominatim town centroid (Saline Township, Washtenaw County, Michigan, United States); not the campus",True
+ANN-STARGATE-SHACKELFORD,announced,32.7089,-99.3308,"registry point: OSM Nominatim county centroid (Shackelford County, Texas, United States); not the campus",True
+ANN-STARGATE-MILAM,announced,30.7627,-96.9982,"registry point: OSM Nominatim county centroid (Milam County, Texas, United States); not the campus",True
+ANN-META-LEBANON,announced,40.0484,-86.4692,"registry point: OSM Nominatim town centroid (Lebanon, Boone County, Indiana, 46052, United States); not the campus",True
+ANN-META-ELPASO,announced,31.7601,-106.487,"registry point: OSM Nominatim city centroid (El Paso, El Paso County, Texas, United States); not the campus",True
+ANN-STARGATE-PORTWASH,announced,43.3886,-87.8693,"registry point: OSM Nominatim town centroid (Port Washington, Ozaukee County, Wisconsin, 53074, United States); not the campus",True
+ANN-STARGATE-DONAANA,announced,31.87,-106.6866,"registry point: OSM Nominatim locality centroid (Santa Teresa, Doña Ana County, New Mexico, United States); not the campus",True
+ANN-GOOGLE-LARAMIE,announced,41.14,-104.8202,"registry point: OSM Nominatim city centroid (Cheyenne, Laramie County, Wyoming, United States); not the campus",True
+ANN-AMZN-RICHMOND-NC,announced,34.8864,-79.6972,"registry point: OSM Nominatim town centroid (Hamlet, Richmond County, North Carolina, 28345, United States); not the campus",True
+ANN-AMZN-MONTGOMERY-MO,announced,38.9775,-91.5049,"registry point: OSM Nominatim village centroid (Montgomery City, Montgomery County, Missouri, United States); not the campus",True
+ANN-AMZN-JASPER-IN,announced,41.1929,-87.0548,"registry point: OSM Nominatim village centroid (Wheatfield, Jasper County, Indiana, United States); not the campus",True
+ANN-AMZN-KINGGEORGE-VA,announced,38.2786,-77.1754,"registry point: OSM Nominatim county centroid (King George County, Virginia, United States); not the campus",True
+ANN-GOOGLE-WMEMPHIS,announced,35.1465,-90.1845,"registry point: OSM Nominatim town centroid (West Memphis, Crittenden County, Arkansas, 72301, United States); not the campus",True
+ANN-MSFT-FAIRWATER-WI-2,announced,42.7192,-87.8543,"registry point: OSM Nominatim town centroid (Mount Pleasant, Racine County, Wisconsin, United States); not the campus",True
+ANN-AMZN-WHARTON-TX,announced,29.2625,-95.9398,"registry point: OSM Nominatim village centroid (Boling, Wharton County, Texas, 77420, United States); not the campus",True
+ANN-STARGATE-LORDSTOWN,announced,41.166,-80.8574,"registry point: OSM Nominatim village centroid (Lordstown, Trumbull County, Ohio, 44481, United States); not the campus",True
+ANN-AMZN-SALEM-PA,announced,41.1078,-76.1791,"registry point: OSM Nominatim city centroid (Salem Township, Luzerne County, Pennsylvania, 18601, United States); not the campus",True
+ANN-GOOGLE-ARMSTRONG,announced,34.9296,-101.3449,"registry point: OSM Nominatim county centroid (Armstrong County, Texas, United States); not the campus",True
+ANN-GOOGLE-HASKELL,announced,33.1542,-99.72,"registry point: OSM Nominatim county centroid (Haskell County, Texas, United States); not the campus",True
+ANN-AMZN-FALLS-PA,announced,40.1741,-74.7921,"registry point: OSM Nominatim town centroid (Falls Township, Bucks County, Pennsylvania, United States); not the campus",True
+ANN-AMZN-HOMERCITY-PA,announced,40.5139,-79.1958,registry point: OSM Nominatim point for Homer City Generating Station (former coal plant on the campus site),False
+ANN-XAI-SOUTHAVEN,announced,34.9874,-90.0035,"registry point: OSM Nominatim city centroid (Southaven, DeSoto County, Mississippi, United States); not the campus",True
+ANN-FERMI-MATADOR,announced,35.2073,-101.8371,"registry point: OSM Nominatim city centroid (Amarillo, Potter County, Texas, United States); not the campus",True

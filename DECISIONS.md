@@ -272,3 +272,97 @@ are filled for 22 sites. They are left blank for 7 sites whose logistic never le
 Midlothian, Arcola, Gallatin, Storey County), because their A_max is an extrapolation (Arcola: fit
 400 ac vs 133 ac measured), and for Jeffersonville (not run). `projection.py` drops blanks. Footprint
 flags are appended to the `flags` column as `footprint:<flag>`; the noise-flagged values are kept.
+
+## 2026-11-15 · Phase 3: water chain (utility, source, trend) for all 54 sites
+
+**Deliverable.** `data/sources.csv` (one row per utility that serves a site, with its water body,
+trend and source links), `data/water/site_sources.csv` (every site -> utility -> source_id, or why
+not), and the `source_id` column filled in `data/precedent_sites.csv` and `data/announced_sites.csv`.
+Intermediate files in `data/water/`: `site_points.csv`, `site_utility_matches.csv`,
+`utility_chain.csv`, `source_assignments.csv` (hand-curated, one evidence note and link per row),
+`trends.csv`, and the per-source time series under `swot/` and `disp/`.
+Run: `python pipeline/water_chain.py points`, `match`, `lookup`, `sources`.
+
+**Step 1, site point.** Built sites are matched at a point inside their Phase 2 OSM campus outline
+(8 registry points are town centroids up to 12 km from the campus). Meta Jeffersonville has no
+outline and uses its street-level registry point. Announced sites use the registry point, which is
+a town or county centroid for 23 of 24 (Homer City is the plant itself): their matches carry
+`matched_approx_location` / `location_approx` and name the town's utility, not necessarily the
+campus's.
+
+**Step 1, no match.** 24 sites fall outside every EPA service area polygon (14 of 30 built, 10 of 24
+announced). 30 sites are matched (16 at the campus point, 14 announced at an approximate point).
+Per CLAUDE.md they are `self_supplied_check`, stay in the footprint model and are excluded from
+water shares (`water_share = exclude`). For a later manual check, `candidates_within_2km` lists the
+service areas within 2 km (e.g. Council Bluffs Water Works, Des Moines Water Works, Metropolitan
+Utilities District, City of The Dalles). These are not treated as matches.
+
+**Step 1, overlapping service areas.** Google Midlothian sits in both Mountain Peak SUD and City of
+Midlothian: City of Midlothian is used (it is one of Mountain Peak's own sellers and the only one
+with a surface intake). Google Laramie (city centroid) sits in Cheyenne BOPU and Winchester Hills
+(1,078 people): Cheyenne BOPU is used. The other PWSID is kept in `other_service_areas`.
+
+**Step 2, purchased water.** SDWA facility rows of type CC carry `SELLER_PWSID`, so purchased
+systems are followed to their sellers in SDWA itself (up to 3 hops, `utility_chain.csv`). This is
+the same information a CCR gives; where a CCR was found it is linked too. Where a buyer has several
+sellers, the water body named in `source_assignments.csv` says which one was chosen and why.
+
+**Step 2, one water body per utility.** F5/F6 take one source per site. Rule used: the largest
+share the utility publishes (Mesa: CAP 53%; SAWS: Edwards 47%; El Paso: Hueco Bolson 36-61%; PWC
+West: Occoquan 9 MGD vs Lake Manassas 5 MGD); where no split is published, SDWA's
+`PRIMARY_SOURCE_CODE` decides (SW vs GW), then the named intake. Each row has a `confidence`
+(high / medium / low) and a plain-text basis. Conflicts noted in the basis: Eagle Mountain (SDWA
+says purchased surface water, city report lists 5 wells plus CUWCD), Amarillo (SDWA SW, but 121
+Ogallala wells), El Paso (SDWA code SW, but wells are the larger supply).
+
+**Step 2, rows per utility.** `sources.csv` has one row per utility (`source_id = SRC-<PWSID>`)
+with its own `population_served` (SDWA 2026Q3), because F5 divides by the population that utility
+serves. Utilities that share a water body (Goodyear + Mesa on the Colorado/CAP, Port Washington +
+Racine on Lake Michigan, Hawley + Fort Griffin on Hubbard Creek) share `water_body_id` and trend.
+SAWS Texas Research Park reports population 0 in SDWA; it is left blank and flagged.
+
+**Step 3, SWOT.** Prior Lake Database IDs (needed for Hydrocron `PriorLake`) are only on PO.DAAC's
+protected archive (`archive.swot.podaac.earthdata.nasa.gov`), which redirects to an Earthdata
+OAuth login that the environment's token does not cover (HTTP 401, checked 2026-11-15). Hydrocron
+itself works. So reservoirs and rivers are read with Hydrocron `Reach`, using reach IDs from the
+public SWOT River Database (SWORD v17c, Zenodo 23870877). Each reach's prior location returned by
+Hydrocron was checked against the water body (James at 37.556,-77.541; Delaware at Morrisville;
+Lake Mead Boulder Basin; Old Hickory Lake near Gallatin; Lake Meredith). Reservoirs with no SWORD
+reach (Hoover, Occoquan, Hubbard Creek, CUWCD, Joe Pool, Leon/Belton, Cheyenne, Big Water Lake,
+Miller Creek, Lake Michigan) are marked `swot_lake_id_unavailable`, not filled. SWORD reaches flagged
+as lakes (Lake Mead, Old Hickory Lake) have `reach_q` 3 (bad) on every pass because SWOT measures
+lakes in the lake product, and Lake Mead's values (median 359 m) are far from its real level, so they
+are `insufficient_swot`. Lake Meredith uses its river-type reach 74242300691 (`reach_q` 1-2, median
+881.8 m, close to the lake's level). Delaware at Morrisville has only 6 good passes (most are
+`reach_q` 2, head of tide), so its trend is weak.
+Window 2023-08-01 to 2026-11-01; good passes are `reach_q` 0-1; points more than 4 scaled MAD from
+the median are dropped; trend = least-squares slope in m/yr. Fewer than 4 passes: widen once to
+2023-04-01, then `insufficient_swot`. Lake Mead is used for the CAP supply because CAP's intake pool
+(Lake Havasu) is held at a fixed level and Lake Mead is the storage that sets CAP shortages.
+
+**Step 3, DISP-S1.** Inspected one real granule first
+(`OPERA_L3_DISP-S1_IW_F28482_VV_20250418T003512Z_20251108T003508Z_v1.0_20260629T200309Z.nc`, 445 MB):
+30 m UTM grid, 256x256 gzip chunks, `/displacement` in metres along line of sight (positive =
+towards the satellite) relative to `/identification/reference_datetime` and the frame's reference
+point, `/recommended_mask` 1 = good. The reader (`aquifer_trend`) reads only a 6 km x 6 km window by
+HTTP range requests (no full downloads), takes the median of good pixels per date (dates with under
+30% good pixels skipped), keeps the latest version of each reference/secondary pair, chains
+ministacks by adding the displacement at each new reference date, and fits mm/yr. It uses the frame
+with the most dates at that point. Window centre = a point inside the utility's EPA service area,
+because SDWA's public files do not give well locations. Values are line-of-sight, relative to the
+frame reference point, and not corrected for ionosphere or tides; they are a relative subsidence
+indicator, not an aquifer water-level measurement. Older granules store displacement as float32 and
+inline small chunks in the reference file; the reader handles both. If a date that later serves as a
+reference is masked, the chain breaks; each piece then gets its own offset and the fit shares one
+slope (Boling 6 pieces, Montgomery City 5, the rest 1). Some series show steps at ministack changes
+(Lebanon: +60 mm between 2018 and 2019), so a value is a screening number to read with its series
+file, not a measured subsidence rate.
+
+**Result (2026-11-15).** 29 utility rows, 26 water bodies. Trend `ok` for 16 rows: 6 SWOT (James
+-0.057, Potomac -0.063, Missouri +0.048, Delaware -0.448, Lake Meredith -0.122 m/yr) and 10 DISP-S1
+(Edwards +2.95, SAWS Texas Research Park +8.45, Ohio River Outwash -10.44, Lebanon +19.75, Hueco
+Bolson -1.69, Mesilla Bolson -2.36, Montgomery City -14.59, West Memphis -14.07, Boling -1.13 mm/yr
+LOS). Missing: 11 rows `swot_lake_id_unavailable`, 3 `insufficient_swot` (Colorado/CAP x2, Old
+Hickory).
+
+**Aqueduct stress** is left blank (`aqueduct_pending`) for Phase 4.
