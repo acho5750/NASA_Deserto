@@ -108,6 +108,41 @@ writes that. No other file (projection, map, docs) read the old label.
   squares; build_months = ln(81)/k (10% -> 90%). Result for Abilene: A_max 1,163 acres,
   t0 = +15.4 months after construction start, build_months 22.1.
 
+## 2026-11-15 · Announced-site list: inclusion rule, dates, coordinates
+
+**What.** `data/announced_sites.csv` (24 rows, all `unverified`). The rules used to build it:
+announced projects that are not fully operating, with at least a county-level location. Expansions
+of operating campuses are excluded. Only stated values are recorded, and third-party estimates go in
+notes. Partial dates are set to the first day of the period for starts and the last day for
+operation, with precision kept in `*_basis`. Coordinates are OSM Nominatim town or county centroids.
+**Why.** Stated values keep the "never invent data" rule. Expansions would mix land converted before
+the build with new conversion. Using period start and end keeps every date ISO and follows the
+"as of December 31" convention. Rows with neither MW nor capex are marked `projection_eligible=no`,
+per the CLAUDE.md rule. Details and open questions are in `data/announced_sites_notes.md`.
+
+## 2026-11-15 · Announced list revised under the review rules
+
+**What.** Applied the four rules for the announced list in `data/announced_sites.csv`: MW in the
+2030 window, estimated construction starts with a `start_estimated` flag, MW and capex only from
+company, government or utility sources (with `low_confidence` flags), and a sort by 2030 MW.
+Judgment calls:
+(a) A stated MW with no completion year counts in full by 2030.
+(b) Where a site has both, El Paso capex uses the venture's total development cost ($14B), not
+    Meta's own share (more than $10B), because the built-site k is total capex per MW.
+(c) Hyperion capex is left blank: the share of the $50B tied to the 2 GW expected by 2030 isn't stated.
+(d) For rows without MW, the sort uses capex / $37.88M per MW (Epoch median). That figure is for
+    sorting only and is never written to `mw`.
+(e) Wharton TX dates come from the planned dates in the TDLR registrations, so they are not estimated.
+**Why.** These follow Bubba's rules 1–4. The figures for (a)–(e) are in `data/announced_sites_notes.md`.
+(f) 2026-11-15 update: rule 2 uses the built-site median gap from announcement to start, -0.6
+    months (8 sites, `data/precedent_k_summary.csv` in PR #6), applied as -18 days. The sort no
+    longer ranks capex-only rows by a derived MW. Stated-MW rows come first, then capex-only rows
+    by capex, because F3 depends on k and on capex scope. `capex_includes_compute` is new: only El
+    Paso and Wharton are stated as facility-only, the three developer campuses are inferred
+    facility-only, and the rest are unknown.
+(g) 2026-11-15: rows tagged `no (inferred)` (facility-only, inferred) are treated as facility-only
+    for the F3 scenario rule. All three have a stated MW, so this doesn't change any number yet.
+
 ## 2026-11-15 · Precedent sites from Epoch AI (Phase 1a)
 
 Details and per-site table: `data/precedent_sites_notes.md`. Script: `pipeline/precedent_sites.py`.
