@@ -1,0 +1,11 @@
+pandas
+numpy
+requests
+geopandas
+shapely
+pyproj
+h5py
+xarray
+earthaccess
+asf_search
+earthengine-api

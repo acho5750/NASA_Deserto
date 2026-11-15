@@ -1,0 +1,4 @@
+source_id,name,type,lat,lon,utility_pwsid,population_served,trend_value,trend_unit,aqueduct_stress
+SRC-1,Demo reservoir 1,reservoir,36.45,-95.70,DEMO0000001,400000,-0.15,m/yr,1.5
+SRC-2,Demo aquifer 2,aquifer,33.50,-112.05,DEMO0000002,1600000,-12,mm/yr,4.2
+SRC-3,Demo reservoir 3,reservoir,41.35,-95.60,DEMO0000003,500000,0.05,m/yr,1.0
