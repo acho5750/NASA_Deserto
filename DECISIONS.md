@@ -119,3 +119,18 @@ operation, with precision kept in `*_basis`. Coordinates are OSM Nominatim town 
 the build with new conversion. Using period start and end keeps every date ISO and follows the
 "as of December 31" convention. Rows with neither MW nor capex are marked `projection_eligible=no`,
 per the CLAUDE.md rule. Details and open questions are in `data/announced_sites_notes.md`.
+
+## 2026-11-15 · Announced list revised under the review rules
+
+**What.** Applied the four rules for the announced list in `data/announced_sites.csv`: MW in the
+2030 window, estimated construction starts with a `start_estimated` flag, MW and capex only from
+company, government or utility sources (with `low_confidence` flags), and a sort by 2030 MW.
+Judgment calls:
+(a) A stated MW with no completion year counts in full by 2030.
+(b) Where a site has both, El Paso capex uses the venture's total development cost ($14B), not
+    Meta's own share (more than $10B), because the built-site k is total capex per MW.
+(c) Hyperion capex is left blank: the share of the $50B tied to the 2 GW expected by 2030 isn't stated.
+(d) For rows without MW, the sort uses capex / $37.88M per MW (Epoch median). That figure is for
+    sorting only and is never written to `mw`.
+(e) Wharton TX dates come from the planned dates in the TDLR registrations, so they are not estimated.
+**Why.** These follow Bubba's rules 1–4. The figures for (a)–(e) are in `data/announced_sites_notes.md`.
