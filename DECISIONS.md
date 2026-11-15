@@ -777,3 +777,26 @@ NISAR frames every 12 days (3 NISAR campuses), or the measured acres curve with 
 per-pixel months failed the reproduction check). Campuses without a radar record say why in one line.
 
 **Divider hidden when zoomed out** (below zoom 10), since aerial photos only load from zoom 9.
+
+## 2026-11-15: Map v5 round 3 (water stats, NISAR over the aquifers)
+
+**No more "0% to 0%".** Every water-share number was reviewed. Three kinds of rows were showing meaningless zeros:
+(1) Delaware River (SRC-PA1090022) and Meander Creek Reservoir (SRC-OH7804403): their only linked campuses (Amazon Falls PA,
+Stargate Lordstown) have no announced MW or capex, so F4 gives no water and F5 gave 0. These now say "No estimate" and why;
+(2) SAWS Texas Research Park (SRC-TX0150497): EPA lists no population, so there is no supply to divide by; also "No estimate"
+(it showed "NaN%" before); (3) real but tiny shares (Edwards 0.11%, Missouri River 0.85%, Hoover Reservoir 1.3%, Colorado
+River via CAP 1.5%) were rounded to "0%". Shares under 10% now show one decimal, under 0.1% show "<0.1%". The source chart is
+scaled to its own maximum instead of always including 100%, and each share is also given as "people's worth" of water.
+Sources with no estimate are grey drops on the map and are left out of the chapter-3 ranking. No formula changed.
+
+**NISAR beyond buildings: ground motion over every linked aquifer.** `pipeline/gunw_aquifer.py` (already used for Mesilla)
+was run for all 8 aquifer sources (NISAR L2 GUNW, provisional + V1, longest back-to-back chain on the track/frame with the most
+pairs). New `pipeline/gunw_story.py` sums each chain and calls it: too noisy (pair s.d. > 15 mm, or any pair with < 30% of the
+6 km window usable; thresholds set before looking at the results), no clear movement (|change| < 2 x noise, noise = pair s.d.
+x sqrt(pairs)), or moved. Result: 5 readable, all "no clear movement" (Mesilla 2.1 +/- 9.0 mm, Ohio outwash 11.4 +/- 14.2,
+Hueco 4.0 +/- 20.4, SAWS -2.4 +/- 28.9, Edwards -2.3 +/- 41.5, 1 sigma); 3 too noisy (Montgomery, West Memphis, Boling: one or more
+pairs lost coherence over the window). The OPERA DISP-S1 10-year rates scaled to the same spans are all under 1 cm, below the
+noise, so this is framed as a baseline, not a finding of no change.
+**Other NISAR products checked and not used:** soil moisture (NISAR_L3_SME2) exists only as PROVISIONAL and BETA collections,
+and topsoil wetness does not measure a utility's supply. Vegetation (HV) clearing at the campuses is feasible from the same
+GCOV files but would repeat the "something was built" message, so it was left for later.
