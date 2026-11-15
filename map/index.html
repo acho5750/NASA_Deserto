@@ -3,72 +3,102 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Data center growth and water sources (prototype)</title>
+<title>Data Centers and Water</title>
+<meta name="description" content="Land converted by US data center campuses, measured with Sentinel-1 radar, the water sources their utilities depend on, and a 2026-2030 projection.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root {
-    --paper: #F3F5F2; --ink: #1C2B27; --muted: #5B6B66; --rule: #C9D2CE;
+    --paper: #F3F5F2; --ink: #1C2B27; --muted: #5B6B66; --rule: #C9D2CE; --panel: #FFFFFF;
     --water: #2C6E8E; --footprint: #B07D1A; --low: #7FA391; --high: #8C2F4B; --focus: #2C6E8E;
+    --wet: #3E8E5E; --prot: #6B4FA0; --dropped: #A9B4B0;
+    --lc-developed: #B5524B; --lc-cropland: #D9B44A; --lc-pasture_hay: #E6D58A; --lc-forest: #2F6B3E;
+    --lc-shrub_grass: #A7B98A; --lc-barren: #B9AE9E; --lc-wetlands: #5DA3A6; --lc-water: #4A78A8;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --paper: #121A18; --ink: #E4ECE8; --muted: #9AABA5; --rule: #2B3835; --focus: #7FB8D4; color-scheme: dark; }
+    :root:not([data-theme="light"]) { --paper: #121A18; --ink: #E4ECE8; --muted: #9AABA5; --rule: #2B3835; --panel: #18221F;
+      --focus: #7FB8D4; --water: #5FA3C4; --dropped: #4D5A56; color-scheme: dark; }
   }
+  :root[data-theme="dark"] { --paper: #121A18; --ink: #E4ECE8; --muted: #9AABA5; --rule: #2B3835; --panel: #18221F;
+      --focus: #7FB8D4; --water: #5FA3C4; --dropped: #4D5A56; color-scheme: dark; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body { font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink);
-         background: var(--paper); display: grid; grid-template-columns: 360px 1fr; }
-  aside { padding: 24px 22px; overflow-y: auto; border-right: 1px solid var(--rule); }
+         background: var(--paper); display: grid; grid-template-columns: 380px 1fr; }
+  aside { padding: 22px 20px 40px; overflow-y: auto; border-right: 1px solid var(--rule); }
   #map { height: 100%; background: var(--paper); }
-  h1 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; margin: 0 0 6px; }
-  .lede { color: var(--muted); font-size: .92rem; line-height: 1.5; margin: 0 0 20px; }
-  .demo { border: 1px solid var(--high); color: var(--high); padding: 8px 10px; border-radius: 6px;
-          font-size: .85rem; line-height: 1.4; margin-bottom: 18px; }
-  .year { font-size: 4.2rem; font-weight: 700; line-height: 1; letter-spacing: -.02em;
+  h1 { font-size: 1.3rem; line-height: 1.25; font-weight: 700; margin: 0 0 6px; }
+  .lede { color: var(--muted); font-size: .9rem; line-height: 1.5; margin: 0 0 16px; }
+  .year { font-size: 3.6rem; font-weight: 700; line-height: 1; letter-spacing: -.02em;
           font-variant-numeric: tabular-nums; margin: 0; }
-  label, .label { display: block; font-size: .85rem; color: var(--muted); margin: 14px 0 6px; }
+  label, .label { display: block; font-size: .84rem; color: var(--muted); margin: 12px 0 6px; }
   input[type=range] { width: 100%; accent-color: var(--water); }
   .seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
   .seg button { flex: 1; font: inherit; font-size: .88rem; padding: 7px 0; border: 0; background: transparent;
                 color: var(--ink); cursor: pointer; }
   .seg button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0 6px; }
+  .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 4px; }
   .totals div { border-top: 2px solid var(--ink); padding-top: 6px; }
-  .totals b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-  .totals span { font-size: .8rem; color: var(--muted); }
-  .weights { border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 4px; }
+  .totals b { display: block; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+  .totals span { font-size: .78rem; color: var(--muted); }
+  .note { font-size: .76rem; color: var(--muted); line-height: 1.45; }
+  fieldset { border: 0; padding: 0; margin: 14px 0 0; }
+  legend { font-size: .84rem; color: var(--muted); margin-bottom: 4px; padding: 0; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: .86rem; margin: 5px 0; color: var(--ink); }
+  .chk input { accent-color: var(--water); width: 16px; height: 16px; margin: 0; }
+  .weights { border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 2px; }
   .wrow { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 10px; }
-  .wrow label { margin: 10px 0; }
-  .key { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); margin-top: 10px; }
-  .ramp { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--low), var(--high)); }
+  .wrow label { margin: 8px 0; }
+  .key { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+  .ramp { flex: 1; min-width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--low), var(--high)); }
   .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--footprint); display: inline-block; }
   .ring { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--footprint); display: inline-block; }
-  #detail { border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 12px; font-size: .9rem; line-height: 1.5; }
-  #detail h2 { font-size: 1rem; margin: 0 0 4px; }
-  #detail p { margin: 0 0 4px; }
-  .muted { color: var(--muted); }
-  .rbadge { width: 12px; height: 12px; transform: rotate(45deg); border: 2px solid var(--water);
-            background: var(--paper); display: inline-block; }
+  .rbadge { width: 11px; height: 11px; transform: rotate(45deg); border: 2px solid var(--water); background: var(--paper); display: inline-block; }
+  .badge { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 3px; color: #fff;
+           font-size: 10px; font-weight: 700; }
+  .badge.w { background: var(--wet); } .badge.p { background: var(--prot); }
   .radar-icon div { width: 14px; height: 14px; transform: rotate(45deg); border: 2.5px solid var(--water);
                     background: var(--paper); box-sizing: border-box; }
-  #detail figure { margin: 10px 0 0; }
+  .exp-icon { display: flex; gap: 2px; }
+  #detail { border-top: 1px solid var(--rule); margin-top: 18px; padding-top: 12px; font-size: .88rem; line-height: 1.5; }
+  #detail h2 { font-size: 1.02rem; margin: 0 0 2px; }
+  #detail h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 4px; font-weight: 600; }
+  #detail p { margin: 0 0 4px; }
+  #detail table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: .84rem; }
+  #detail th, #detail td { text-align: right; padding: 2px 4px; border-bottom: 1px solid var(--rule); }
+  #detail th:first-child, #detail td:first-child { text-align: left; }
+  #detail th { font-weight: 500; color: var(--muted); }
+  #detail td.sel, #detail th.sel { font-weight: 700; }
+  #detail figure { margin: 8px 0 0; }
   #detail figure img { width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 4px; display: block; }
-  #detail figcaption { font-size: .78rem; color: var(--muted); margin-top: 3px; }
-  .real { font-size: .78rem; color: var(--water); margin-bottom: 4px; }
+  #detail figcaption { font-size: .76rem; color: var(--muted); margin-top: 3px; }
+  #detail svg { width: 100%; height: auto; display: block; }
+  .lcbar { display: flex; height: 14px; border-radius: 3px; overflow: hidden; margin: 4px 0; }
+  .lclegend { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 10px; font-size: .78rem; color: var(--muted); }
+  .lclegend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; background: var(--c); }
+  .muted { color: var(--muted); }
+  .src a, .linkbtn { color: var(--water); }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+  .real { font-size: .76rem; color: var(--water); margin-bottom: 4px; }
+  details.about { border-top: 1px solid var(--rule); margin-top: 18px; padding-top: 8px; font-size: .82rem; line-height: 1.5; }
+  details.about summary { cursor: pointer; font-weight: 500; }
+  details.about p { margin: 6px 0; }
+  code { font-size: .78rem; }
+  .leaflet-container { font: inherit; }
   @media (max-width: 760px) {
-    body { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
-    #map { grid-row: 1; } aside { grid-row: 2; border-right: 0; border-top: 1px solid var(--rule); }
+    body { grid-template-columns: 1fr; grid-template-rows: 58vh auto; }
+    #map { grid-row: 1; } aside { grid-row: 2; border-right: 0; border-top: 1px solid var(--rule); padding: 16px; }
   }
 </style>
 </head>
 <body>
 <aside>
-  <div id="demo" class="demo" hidden>Demo data. Every site, source, and number here is invented to test the pipeline. Replace the CSVs in /data with real inputs.</div>
   <h1>Data center growth and the water it depends on</h1>
-  <p class="lede">Each campus links to the reservoir or aquifer its utility draws from. Move the year to see announced projects come online.</p>
+  <p class="lede">Land converted by US data center campuses, measured with Sentinel-1 radar, and the reservoirs,
+    rivers and aquifers their water utilities draw from. Move the year to see the projection of built and announced campuses to 2030.</p>
 
   <p class="year" id="yearOut">2026</p>
   <label for="year">Year (as of December 31)</label>
@@ -82,9 +112,18 @@
   </div>
 
   <div class="totals">
-    <div><b id="totAcres">0</b><span>acres converted</span></div>
-    <div><b id="totWater">0</b><span>megaliters drawn per year</span></div>
+    <div><b id="totAcres">0</b><span>acres converted (projected campuses)</span></div>
+    <div><b id="totWater">0</b><span>megaliters of water per year</span></div>
   </div>
+  <p class="note" id="totNote"></p>
+
+  <fieldset>
+    <legend>Layers</legend>
+    <label class="chk"><input type="checkbox" id="lyrSites" checked> Campuses and measured outlines</label>
+    <label class="chk"><input type="checkbox" id="lyrWater" checked> Water sources and links</label>
+    <label class="chk"><input type="checkbox" id="lyrExposure"> Nearby wetlands and protected land</label>
+    <label class="chk"><input type="checkbox" id="lyrRadar" checked> Radar views (Sentinel-1 and NISAR)</label>
+  </fieldset>
 
   <div class="weights">
     <span class="label">Water pressure index weights</span>
@@ -92,13 +131,36 @@
     <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"></div>
     <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"></div>
     <div class="key">Lower pressure <span class="ramp" aria-hidden="true"></span> Higher pressure</div>
-    <div class="key"><span class="dot" aria-hidden="true"></span> Built campus <span class="ring" aria-hidden="true"></span> Announced campus</div>
-    <div class="key"><span class="rbadge" aria-hidden="true"></span> Radar view (real satellite data)</div>
+    <div class="key"><span class="dot" aria-hidden="true"></span> Built <span class="ring" aria-hidden="true"></span> Announced
+      <span class="rbadge" aria-hidden="true"></span> Radar view</div>
+    <div class="key"><span class="badge w" aria-hidden="true">W</span> Marsh or swamp within 100 m</div>
+    <div class="key"><span class="badge p" aria-hidden="true">P</span> Protected land within 1 km</div>
   </div>
 
   <div id="detail"><p class="muted">Select a campus or water source on the map to see its numbers.</p></div>
+
+  <details class="about">
+    <summary>About the data and methods</summary>
+    <p><b>Footprints.</b> Converted acres at built campuses come from Sentinel-1 radar (Planetary Computer
+      <code>sentinel-1-rtc</code>): a pixel counts as converted once its backscatter changes by more than a threshold
+      for two months in a row, inside the campus outline plus 200 m.</p>
+    <p><b>Projection.</b> Acres and water for 2026-2030 use ratios measured at built sites (acres per MW,
+      water per kWh from Google's per-site reports, build time) and each campus's stated MW or investment.
+      Low, median and high use the 25th, 50th and 75th percentiles.</p>
+    <p><b>Water sources.</b> Each campus is matched to the EPA water service area it sits in, then to the
+      utility's source (EPA SDWA). Trends are SWOT water surface elevation (rivers) or OPERA DISP-S1 ground motion over
+      aquifers. A trend describes the water body; it does not show what caused the change.</p>
+    <p><b>Shares.</b> "Local share" divides the campus water estimate by the utility's own supply (population
+      served x per-capita use). Where a utility buys its water, the "wholesale share" divides by the supply of the
+      whole system it buys from.</p>
+    <p><b>Exposure.</b> Land cover before construction: NLCD. Wetlands: USFWS NWI. Protected land: USGS PAD-US 4.1
+      (GAP status 1-3).</p>
+    <p id="aboutMissing"></p>
+    <p>Every number traces to a CSV in the project's <code>data/</code> folder, and each panel lists its sources.
+      Data built <span id="builtDate"></span>.</p>
+  </details>
 </aside>
-<div id="map" role="region" aria-label="Map of data centers and water sources"></div>
+<div id="map" role="region" aria-label="Map of data center campuses and water sources"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="data.js"></script>
@@ -107,49 +169,177 @@
 const D = window.PROTO_DATA;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const state = { y: 0, scn: "median", w: [1, 1, 1], selected: null };
-const fmt = n => Math.round(n).toLocaleString("en-US");
-const pct = n => (n * 100).toFixed(1) + "%";
+const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-US");
+const fmt1 = n => n == null ? "n/a" : (Math.abs(n) < 10 ? n.toFixed(1) : Math.round(n).toLocaleString("en-US"));
+const pct = n => n == null ? "n/a" : (n >= 10 ? Math.round(n * 100).toLocaleString("en-US") + "%" : (n * 100).toFixed(n < 0.01 ? 2 : 1) + "%");
+const dist = m => m == null ? "none within 100 km" : m === 0 ? "touching or inside" : m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const title = s => esc(String(s || "").toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
+const SCN = D.scenarios, YEARS = D.years;
+const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
+const siteById = Object.fromEntries(D.sites.map(s => [s.id, s]));
+const radarById = Object.fromEntries((window.RADAR_PANELS || []).map(p => [p.id, p]));
+const RADAR_FOR_SITE = { "ANN-STARGATE-SHACKELFORD": "FRONTIER-SHACKELFORD", "ANN-STARGATE-DONAANA": "JUPITER-DONAANA",
+                         "ANN-STARGATE-LORDSTOWN": "LORDSTOWN" };
 
-if (D.demo) document.getElementById("demo").hidden = false;
+document.getElementById("builtDate").textContent = D.built || "";
+const missing = D.sites.filter(s => s.location.missing);
+document.getElementById("aboutMissing").textContent = missing.length
+  ? `Not on the map because their campus location could not be found: ${missing.map(s => s.name).join("; ")}.` : "";
 
-const map = L.map("map", { zoomControl: true }).setView([38.5, -97], 4);
+const map = L.map("map", { zoomControl: true, preferCanvas: false }).fitBounds([[24.5, -124.8], [49.4, -66.9]]);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
-const layer = L.layerGroup().addTo(map);
-const radarLayer = L.layerGroup().addTo(map);   // drawn once; not tied to the year or scenario
+const outlineLayer = L.layerGroup().addTo(map);
+const siteLayer = L.layerGroup().addTo(map);
+const waterLayer = L.layerGroup().addTo(map);
+const exposureLayer = L.layerGroup();
+const radarLayer = L.layerGroup().addTo(map);
 
 function mix(a, b, t) {
   const h = s => s.replace("#", "").match(/../g).map(x => parseInt(x, 16));
   const [A, B] = [h(a), h(b)];
+  t = Math.max(0, Math.min(1, t || 0));
   return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("");
 }
 
+// F7: weighted mean of the normalized local share, the decline score and the Aqueduct stress.
 function pressure(src) {
-  const shares = D.sources.map(s => s.share[state.scn][state.y]);
-  const maxShare = Math.max(...shares, 1e-9);
-  const parts = [src.share[state.scn][state.y] / maxShare, src.decline_score, src.stress_norm];
+  const maxShare = Math.max(...D.sources.map(s => s.share[state.scn][state.y]), 1e-9);
+  const parts = [src.share[state.scn][state.y] / maxShare, src.decline_score ?? 0, src.stress_norm ?? 0];
   const wsum = state.w.reduce((a, b) => a + b, 0);
   return wsum ? parts.reduce((acc, v, i) => acc + v * state.w[i], 0) / wsum : 0;
 }
 
-function showSite(s, src) {
-  const i = state.y, c = state.scn;
-  document.getElementById("detail").innerHTML =
-    `<h2>${s.name}</h2><p class="muted">${s.status === "built" ? "Built" : "Announced"} · ${fmt(s.mw[c])} MW</p>
-     <p>${fmt(s.acres[c][i])} acres converted by ${D.years[i]}</p>
-     <p>${fmt(s.water_ml[c][i])} megaliters per year drawn</p>
-     <p>Water source: ${src ? src.name : "not matched"}</p>`;
+function linkList(urls) {
+  if (!urls || !urls.length) return "";
+  return `<p class="muted src" style="font-size:.74rem;margin-top:8px">Sources: ${urls.map(u => {
+    let h = u; try { h = new URL(u).hostname.replace(/^www\./, ""); } catch (e) {}
+    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`; }).join(" · ")}</p>`;
+}
+function scnTable(rows) {
+  const head = `<tr><th></th>${SCN.map(c => `<th class="${c === state.scn ? "sel" : ""}">${c[0].toUpperCase() + c.slice(1)}</th>`).join("")}</tr>`;
+  return `<table>${head}${rows.map(([lab, f]) => `<tr><td>${lab}</td>${SCN.map(c =>
+    `<td class="${c === state.scn ? "sel" : ""}">${f(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+
+const LC = [["developed", "Developed"], ["cropland", "Cropland"], ["pasture_hay", "Pasture/hay"], ["forest", "Forest"],
+            ["shrub_grass", "Shrub/grass"], ["barren", "Barren"], ["wetlands", "Wetland"], ["water", "Open water"]];
+function landcover(lc) {
+  const segs = LC.filter(([k]) => (lc.pct[k] || 0) > 0);
+  return `<h3>Land before construction</h3>
+    <p>${fmt(lc.converted_acres)} acres measured as converted. Mostly ${esc(lc.dominant)} (${lc.dominant_pct}%) on the NLCD ${lc.nlcd_year} map.</p>
+    <div class="lcbar" role="img" aria-label="${segs.map(([k, n]) => `${n} ${lc.pct[k]}%`).join(", ")}">
+      ${segs.map(([k, n]) => `<span title="${n} ${lc.pct[k]}%" style="width:${lc.pct[k]}%;background:var(--lc-${k})"></span>`).join("")}</div>
+    <div class="lclegend">${segs.map(([k, n]) => `<span style="--c:var(--lc-${k})">${n} ${lc.pct[k]}%</span>`).join("")}</div>`;
+}
+function exposure(e) {
+  if (!e) return "";
+  return `<h3>Nearby wetlands and protected land</h3>
+    <p>Nearest marsh or swamp (USFWS NWI): ${dist(e.wetland_vegetated_m)}${e.wetland_vegetated_type ? ` (${esc(e.wetland_vegetated_type)})` : ""}</p>
+    <p>Nearest mapped water or wetland of any type: ${dist(e.wetland_any_m)}${e.wetland_any_type ? ` (${esc(e.wetland_any_type)})` : ""}</p>
+    <p>Nearest protected land (PAD-US, GAP 1-3): ${dist(e.protected_m)}${e.protected_name ? ` (${esc(e.protected_name)}${e.protected_manager ? ", " + esc(e.protected_manager) : ""})` : ""}</p>
+    <p class="note">Measured from ${esc(e.measured_from || "")}. Wetland maps are often older than the construction.</p>`;
+}
+
+const MATCH_TEXT = {
+  self_supplied_check: "No public water utility's service area contains this campus. It may use its own wells or a private supply (not checked).",
+  location_missing: "Campus location not found, so no water source was matched.",
+};
+function showSite(s) {
+  const i = state.y, c = state.scn, src = srcById[s.source_id];
+  const st = s.status === "built" ? "Built" : "Announced";
+  let h = `<h2>${esc(s.name)}</h2><p class="muted">${st}${s.construction_start ? " · construction from " + s.construction_start : ""}${s.mw_stated ? ` · ${fmt(s.mw_stated)} MW stated` : ""}</p>`;
+  if (s.location.precision && !["osm_outline", "image_outline"].includes(s.location.precision) && s.status !== "built")
+    h += `<p class="note">Location: ${esc(s.location.basis || s.location.precision)}</p>`;
+  if (s.projected) {
+    h += `<h3>Projection, ${YEARS[i]}</h3>` + scnTable([
+      ["Capacity (MW)", c2 => fmt(s.mw[c2])],
+      ["Acres converted", c2 => fmt(s.acres[c2][i])],
+      ["Water (ML/yr)", c2 => fmt(s.water_ml[c2][i])]]);
+  } else {
+    h += `<p class="note">Not projected: ${esc(s.not_projected_reason)}.</p>`;
+  }
+  const fp = s.footprint;
+  if (fp && s.status === "built") {
+    h += `<h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
+      (Sentinel-1, ${esc(fp.orbit || "")}, threshold ${fp.threshold_db} dB, to ${esc(fp.window_end || "")}).
+      ${fp.a_max_acres ? `Fitted full-build footprint ${fmt(fp.a_max_acres)} acres; 10-90% of it took ${fmt1(fp.build_months)} months.` : "The growth curve did not level off, so no full-build footprint is fitted."}</p>`;
+    if (fp.radar_png) h += `<figure><a href="${esc(fp.radar_png)}" target="_blank" rel="noopener"><img src="${esc(fp.radar_png)}" loading="lazy"
+      alt="Sentinel-1 radar image of ${esc(s.name)} before construction and in the latest months"></a>
+      <figcaption>Sentinel-1 VV backscatter: before construction (left) and latest months (right); bright = strong echo from buildings and steel.</figcaption></figure>`;
+  }
+  const rp = radarById[RADAR_FOR_SITE[s.id]];
+  if (rp) h += `<p style="margin-top:8px"><button class="linkbtn" data-radar="${rp.id}">Open the Sentinel-1 and NISAR radar view</button></p>`;
+  if (s.landcover) h += landcover(s.landcover);
+  h += exposure(s.exposure);
+  h += `<h3>Water</h3>`;
+  if (src) h += `<p>Linked to <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button> through ${title(src.utility)}${s.water_match && s.water_match.status === "matched_approx_location" ? " (campus location is approximate)" : ""}.</p>`;
+  else h += `<p>${MATCH_TEXT[s.water_match && s.water_match.status] || "No water source linked."}</p>`;
+  h += linkList(s.links);
+  setDetail(h);
+}
+
+function chart(sr) {
+  const W = 320, H = 130, L0 = 40, R0 = 8, T0 = 8, B0 = 20;
+  const t = sr.t.map(d => Date.parse(d)), v = sr.v;
+  const tmin = Math.min(...t), tmax = Math.max(...t);
+  const kept = v.filter((_, i) => sr.keep[i]);
+  let vmin = Math.min(...kept), vmax = Math.max(...kept);
+  const pad = (vmax - vmin) * 0.1 || 1; vmin -= pad; vmax += pad;
+  const X = x => L0 + (x - tmin) / (tmax - tmin || 1) * (W - L0 - R0);
+  const Y = y => T0 + (vmax - Math.max(vmin, Math.min(vmax, y))) / (vmax - vmin) * (H - T0 - B0);
+  const t0 = Date.parse(sr.fit.t0), yr = 365.25 * 864e5;
+  const fy = x => sr.fit.at_t0 + sr.fit.per_year * (x - t0) / yr;
+  const pts = t.map((x, i) => sr.keep[i]
+    ? `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2" fill="var(--water)"/>`
+    : `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2" fill="none" stroke="var(--dropped)"/>`).join("");
+  const yl = n => sr.unit === "mm" ? n.toFixed(0) : n.toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sr.label)}, ${sr.t[0]} to ${sr.t[sr.t.length - 1]}">
+    <line x1="${L0}" x2="${W - R0}" y1="${H - B0}" y2="${H - B0}" stroke="var(--rule)"/>
+    <line x1="${L0}" x2="${L0}" y1="${T0}" y2="${H - B0}" stroke="var(--rule)"/>
+    <text x="${L0 - 4}" y="${T0 + 8}" font-size="9" text-anchor="end" fill="var(--muted)">${yl(vmax)}</text>
+    <text x="${L0 - 4}" y="${H - B0}" font-size="9" text-anchor="end" fill="var(--muted)">${yl(vmin)}</text>
+    <text x="${L0}" y="${H - 6}" font-size="9" fill="var(--muted)">${sr.t[0].slice(0, 7)}</text>
+    <text x="${W - R0}" y="${H - 6}" font-size="9" text-anchor="end" fill="var(--muted)">${sr.t[sr.t.length - 1].slice(0, 7)}</text>
+    ${pts}
+    <line x1="${X(tmin)}" y1="${Y(fy(tmin))}" x2="${X(tmax)}" y2="${Y(fy(tmax))}" stroke="var(--high)" stroke-width="1.5"/>
+  </svg>`;
+}
+const TREND_TEXT = {
+  swot_lake_id_unavailable: "No satellite trend yet: this is a lake or reservoir, and the SWOT lake identifiers could not be downloaded (archive access was refused).",
+  insufficient_swot: "No satellite trend: too few good SWOT passes over this water body.",
+  insufficient_disp_s1: "No satellite trend: too few usable OPERA DISP-S1 dates.",
+};
+function trendBlock(src) {
+  if (src.trend_status !== "ok") return `<p>${TREND_TEXT[src.trend_status] || esc(src.trend_status)}</p>`;
+  const sr = src.series;
+  let words;
+  if (src.trend_unit === "m/yr") words = `Water surface ${src.trend_value < 0 ? "fell" : "rose"} by about ${Math.abs(src.trend_value * 100).toFixed(1)} cm per year (SWOT, ${src.trend_start} to ${src.trend_end}).`;
+  else words = `The ground moved ${src.trend_value < 0 ? "away from" : "toward"} the satellite by about ${Math.abs(src.trend_value).toFixed(1)} mm per year
+    (OPERA DISP-S1, ${src.trend_start} to ${src.trend_end}). Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why.`;
+  return `<p>${words}</p>${sr ? chart(sr) + `<p class="note">${esc(sr.label)}. Filled dots used in the trend line; hollow dots set aside as outliers.${sr.segments > 1 ? ` The series was stitched from ${sr.segments} pieces.` : ""}</p>` : ""}`;
 }
 function showSource(src) {
-  const i = state.y, c = state.scn;
-  const n = D.sites.filter(s => s.source_id === src.id).length;
-  document.getElementById("detail").innerHTML =
-    `<h2>${src.name}</h2><p class="muted">${src.type === "reservoir" ? "Reservoir" : "Aquifer"} · utility ${src.pwsid}</p>
-     <p>Data centers would draw ${pct(src.share[c][i])} of this utility's estimated supply in ${D.years[i]}</p>
-     ${src.share_wholesale ? `<p>${pct(src.share_wholesale[c][i])} of the estimated supply of the wholesale system it buys from (${src.wholesale_sellers})</p>` : ""}
-     <p>Trend: ${src.trend_value} ${src.trend_unit}</p>
-     <p>${n} linked campus${n === 1 ? "" : "es"} · pressure index ${pressure(src).toFixed(2)}</p>`;
+  const i = state.y;
+  const linked = D.sites.filter(s => s.source_id === src.id);
+  const kind = { reservoir: "Reservoir", aquifer: "Aquifer", river: "River", lake: "Lake" }[src.type] || src.type;
+  let h = `<h2>${esc(src.water_body)}</h2><p class="muted">${kind} · used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p>`;
+  h += `<h3>Data center water as a share of supply, ${YEARS[i]}</h3>`;
+  const rows = [["This utility's supply", c => pct(src.share[c][i])]];
+  if (src.share_wholesale) rows.push(["Whole wholesale system", c => pct(src.share_wholesale[c][i])]);
+  h += scnTable(rows);
+  h += `<p class="note">Estimated water for the ${linked.length} linked campus${linked.length === 1 ? "" : "es"}, divided by estimated supply
+    (${fmt(src.supply_ml)} ML/yr for this utility${src.share_wholesale ? `; ${fmt(src.wholesale_supply_ml)} ML/yr for the system it buys from, ${esc(src.wholesale_sellers)}` : ""}).
+    Above 100% means the estimate is larger than the supply.</p>`;
+  h += `<p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p>`;
+  h += `<h3>How the water body is changing</h3>` + trendBlock(src);
+  h += `<h3>Water stress</h3><p>WRI Aqueduct baseline: ${esc(src.aqueduct_label || "n/a")}. Pressure index ${pressure(src).toFixed(2)} (0-1).</p>`;
+  h += exposure(src.exposure);
+  h += `<h3>How this source was identified</h3><p class="note">${esc(src.identification_basis)} Confidence: ${esc(src.confidence)}.</p>`;
+  h += linkList(src.links);
+  setDetail(h);
 }
 
 const IMG_LABEL = {
@@ -161,62 +351,96 @@ const IMG_LABEL = {
 function showRadar(p) {
   const figs = p.images.map(src => {
     const k = Object.keys(IMG_LABEL).find(k => src.includes("_" + k));
-    return `<figure><a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="${IMG_LABEL[k] || ""}, ${p.name}" loading="lazy"></a>
+    return `<figure><a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${IMG_LABEL[k] || ""}, ${esc(p.name)}" loading="lazy"></a>
             <figcaption>${IMG_LABEL[k] || ""}</figcaption></figure>`;
   }).join("");
-  const links = p.source.split(" ; ").map(s => s.startsWith("http")
-    ? `<a href="${s}" target="_blank" rel="noopener">${new URL(s).hostname}</a>` : `<code>${s}</code>`).join(" · ");
-  document.getElementById("detail").innerHTML =
-    `<div class="real">Real satellite data</div><h2>${p.name}</h2><p>${p.caption}</p>${figs}
-     <p class="muted" style="font-size:.75rem;margin-top:8px">Sources: ${links}</p>`;
-  document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  setDetail(`<div class="real">Radar view</div><h2>${esc(p.name)}</h2><p>${esc(p.caption)}</p>${figs}${linkList(p.source.split(" ; ").filter(s => s.startsWith("http")))}`);
 }
-for (const p of (window.RADAR_PANELS || [])) {
-  L.marker([p.lat, p.lon], {
-    icon: L.divIcon({ className: "radar-icon", html: "<div></div>", iconSize: [14, 14] }),
-    keyboard: true, title: `Radar view: ${p.name}`
-  }).bindTooltip(`Radar view: ${p.name}`)
-    .on("click", () => { state.selected = null; showRadar(p); }).addTo(radarLayer);
+function setDetail(h) {
+  const el = document.getElementById("detail");
+  el.innerHTML = h;
+  el.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => select("src", b.dataset.src)));
+  el.querySelectorAll("[data-site]").forEach(b => b.addEventListener("click", () => select("site", b.dataset.site)));
+  el.querySelectorAll("[data-radar]").forEach(b => b.addEventListener("click", () => { state.selected = null; showRadar(radarById[b.dataset.radar]); }));
+}
+function select(kind, id, pan = true) {
+  state.selected = [kind, id];
+  const o = kind === "site" ? siteById[id] : srcById[id];
+  if (pan && o && o.lat != null) map.panTo([o.lat, o.lon]);
+  kind === "site" ? showSite(o) : showSource(o);
+  if (matchMedia("(max-width: 760px)").matches) document.getElementById("detail").scrollIntoView({ behavior: "smooth" });
+}
+
+// Static layers: outlines, radar views, exposure badges.
+function drawStatic() {
+  outlineLayer.clearLayers(); exposureLayer.clearLayers(); radarLayer.clearLayers();
+  const fp = css("--footprint");
+  for (const s of D.sites) {
+    if (!s.outline) continue;
+    L.geoJSON(s.outline, { style: { color: fp, weight: 1.5, fillColor: fp, fillOpacity: s.status === "built" ? 0.25 : 0.08,
+                                    dashArray: s.status === "built" ? null : "4 4" } })
+      .bindTooltip(s.name).on("click", () => select("site", s.id, false)).addTo(outlineLayer);
+  }
+  for (const o of [...D.sites, ...D.sources]) {
+    const e = o.exposure; if (!e || o.lat == null) continue;
+    const w = e.wetland_vegetated_m != null && e.wetland_vegetated_m <= 100, p = e.protected_m != null && e.protected_m <= 1000;
+    if (!w && !p) continue;
+    const html = `<div class="exp-icon">${w ? '<span class="badge w">W</span>' : ""}${p ? '<span class="badge p">P</span>' : ""}</div>`;
+    const tip = [w ? `Marsh or swamp ${dist(e.wetland_vegetated_m)}` : "", p ? `Protected land ${dist(e.protected_m)}` : ""].filter(Boolean).join("; ");
+    L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "", html, iconSize: [36, 16], iconAnchor: [-8, 22] }), keyboard: false })
+      .bindTooltip(`${o.name || o.water_body}: ${tip}`)
+      .on("click", () => select(o.water_body ? "src" : "site", o.id)).addTo(exposureLayer);
+  }
+  for (const p of (window.RADAR_PANELS || [])) {
+    L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "radar-icon", html: "<div></div>", iconSize: [14, 14], iconAnchor: [-6, 20] }),
+      keyboard: true, title: `Radar view: ${p.name}` })
+      .bindTooltip(`Radar view: ${p.name}`).on("click", () => { state.selected = null; showRadar(p); }).addTo(radarLayer);
+  }
 }
 
 function render() {
-  layer.clearLayers();
+  siteLayer.clearLayers(); waterLayer.clearLayers();
   const i = state.y, c = state.scn;
-  const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
   const low = css("--low"), high = css("--high"), fp = css("--footprint"), ink = css("--ink");
-
   for (const s of D.sites) {
     const src = srcById[s.source_id];
-    if (!src) continue;
-    const announced = s.status !== "built";
-    const color = mix(low, high, pressure(src));
+    if (!src || s.lat == null) continue;
+    const on = s.projected ? s.acres[c][i] > 0 : s.status === "built";
     L.polyline([[s.lat, s.lon], [src.lat, src.lon]], {
-      color, weight: 2, opacity: s.acres[c][i] > 0 ? 0.9 : 0.25, dashArray: announced ? "4 6" : null
-    }).addTo(layer);
+      color: mix(low, high, pressure(src)), weight: 2, opacity: on ? 0.85 : 0.3, dashArray: s.status === "built" ? null : "4 6"
+    }).addTo(waterLayer);
   }
   for (const src of D.sources) {
-    L.circleMarker([src.lat, src.lon], {
-      radius: 11, color: ink, weight: 1.5, fillColor: mix(low, high, pressure(src)), fillOpacity: 0.95
-    }).bindTooltip(src.name).on("click", () => { state.selected = ["src", src.id]; showSource(src); }).addTo(layer);
+    L.circleMarker([src.lat, src.lon], { radius: 9, color: ink, weight: 1.5, fillColor: mix(low, high, pressure(src)), fillOpacity: 0.95 })
+      .bindTooltip(src.water_body).on("click", () => select("src", src.id, false)).addTo(waterLayer);
   }
   for (const s of D.sites) {
-    const acres = s.acres[c][i], announced = s.status !== "built";
-    L.circleMarker([s.lat, s.lon], {
-      radius: 3 + Math.sqrt(acres) * 0.9, color: fp, weight: 2,
-      fillColor: fp, fillOpacity: announced ? 0.15 : 0.75
-    }).bindTooltip(s.name).on("click", () => { state.selected = ["site", s.id]; showSite(s, srcById[s.source_id]); }).addTo(layer);
+    if (s.lat == null || s.location.missing) continue;
+    const acres = s.projected ? s.acres[c][i] : 0, built = s.status === "built";
+    L.circleMarker([s.lat, s.lon], { radius: 3 + Math.sqrt(acres) * 0.6, color: fp, weight: 2,
+      fillColor: fp, fillOpacity: built ? 0.75 : (acres > 0 ? 0.35 : 0.05) })
+      .bindTooltip(s.name).on("click", () => select("site", s.id, false)).addTo(siteLayer);
   }
-
-  document.getElementById("yearOut").textContent = D.years[i];
-  document.getElementById("totAcres").textContent = fmt(D.sites.reduce((a, s) => a + s.acres[c][i], 0));
-  document.getElementById("totWater").textContent = fmt(D.sites.reduce((a, s) => a + s.water_ml[c][i], 0));
-
+  const P = D.sites.filter(s => s.projected);
+  document.getElementById("yearOut").textContent = YEARS[i];
+  document.getElementById("totAcres").textContent = fmt(P.reduce((a, s) => a + s.acres[c][i], 0));
+  document.getElementById("totWater").textContent = fmt(P.reduce((a, s) => a + s.water_ml[c][i], 0));
+  document.getElementById("totNote").textContent = `${P.length} of ${D.sites.length} campuses have enough data to project.`;
   if (state.selected) {
     const [kind, id] = state.selected;
-    if (kind === "site") { const s = D.sites.find(x => x.id === id); showSite(s, srcById[s.source_id]); }
-    else showSource(srcById[id]);
+    kind === "site" ? showSite(siteById[id]) : showSource(srcById[id]);
   }
 }
+
+function toggle(id, layers) {
+  const el = document.getElementById(id);
+  const apply = () => layers.forEach(l => el.checked ? l.addTo(map) : map.removeLayer(l));
+  el.addEventListener("change", apply); apply();
+}
+toggle("lyrSites", [outlineLayer, siteLayer]);
+toggle("lyrWater", [waterLayer]);
+toggle("lyrExposure", [exposureLayer]);
+toggle("lyrRadar", [radarLayer]);
 
 document.getElementById("year").addEventListener("input", e => { state.y = +e.target.value; render(); });
 document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
@@ -224,10 +448,9 @@ document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click"
   document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
   render();
 }));
-["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => {
-  state.w[k] = +e.target.value; render();
-}));
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => { state.w[k] = +e.target.value; render(); }));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawStatic(); render(); });
+drawStatic();
 render();
 </script>
 </body>
