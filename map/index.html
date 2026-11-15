@@ -4,351 +4,227 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Data Centers and Water</title>
-<meta name="description" content="Land converted by US data center campuses, measured with Sentinel-1 and NISAR radar, the water sources their utilities depend on, and a 2026-2030 projection.">
+<meta name="description" content="US data center campuses on satellite imagery, the land Sentinel-1 radar measured as converted, the water sources their utilities depend on, and a 2026-2030 projection.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <style>
   :root {
-    --bg: #04070C; --ink: #E9EFF6; --ink2: #C5D0DC; --muted: #8494A7; --faint: #56657A;
-    --glass: rgba(9, 14, 22, .74); --glass2: rgba(255, 255, 255, .045); --edge: rgba(255, 255, 255, .09);
-    --edge2: rgba(255, 255, 255, .16);
-    --campus: #FFB547; --campus2: #FF8A3D; --water: #38BDF8; --mid: #A78BFA; --high: #FB4F72;
-    --radar: #C6F432; --wet: #34D399; --prot: #CBD5E1; --dropped: #4B5868;
-    --lc-developed: #E0685F; --lc-cropland: #E8C14E; --lc-pasture_hay: #EFE09A; --lc-forest: #3E9B58;
-    --lc-shrub_grass: #A9C38A; --lc-barren: #BFB3A2; --lc-wetlands: #4FC1C5; --lc-water: #4C8FE0;
-    --r: 16px; --shadow: 0 18px 50px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .4);
-    --disp: "Space Grotesk", "Inter", system-ui, sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    color-scheme: dark;
+    --card: #FFFFFF; --ink: #1F2328; --ink2: #3C4248; --muted: #646B73; --faint: #9AA1A9; --rule: #E6E8EB; --soft: #F4F5F7;
+    --accent: #1A73E8; --campus: #F5A623; --radar: #7CB342;
+    --lc-developed: #C9544B; --lc-cropland: #D7B13C; --lc-pasture_hay: #E3D28A; --lc-forest: #2F7D45;
+    --lc-shrub_grass: #9DB57E; --lc-barren: #B5A995; --lc-wetlands: #4BA7AA; --lc-water: #3F7CC0;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 4px 16px rgba(0, 0, 0, .22);
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; overflow: hidden; }
-  body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg);
-         -webkit-font-smoothing: antialiased; font-size: 14px; }
-  #map { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 30%, #0B1524, #04070C 70%); }
-  #map::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(2, 4, 8, .55) 100%); }
-  .glass { position: fixed; z-index: 10; background: var(--glass); border: 1px solid var(--edge); border-radius: var(--r);
-           backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); box-shadow: var(--shadow); }
-  :focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #000; }
+  body { font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  #map { position: fixed; inset: 0; }
   button { font: inherit; color: inherit; }
-  a { color: var(--water); }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card { position: fixed; z-index: 10; background: var(--card); border-radius: 12px; box-shadow: var(--shadow); }
 
-  /* ---------- left panel ---------- */
-  #side { top: 16px; left: 16px; bottom: 16px; width: 372px; display: flex; flex-direction: column; overflow: hidden; }
-  #side .scroll { overflow-y: auto; padding: 20px 20px 24px; scrollbar-width: thin; scrollbar-color: #253142 transparent; }
-  .eyebrow { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-             color: var(--muted); font-weight: 600; }
-  .eyebrow .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--radar); box-shadow: 0 0 0 0 rgba(198, 244, 50, .6);
-                    animation: ping 2.2s infinite; }
-  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(198, 244, 50, .55); } 80%, 100% { box-shadow: 0 0 0 10px rgba(198, 244, 50, 0); } }
-  h1 { font-family: var(--disp); font-size: 25px; line-height: 1.12; letter-spacing: -.02em; font-weight: 700; margin: 10px 0 8px; }
-  h1 em { font-style: normal; background: linear-gradient(90deg, var(--campus), var(--water)); -webkit-background-clip: text;
-          background-clip: text; color: transparent; }
-  .lede { color: var(--ink2); opacity: .82; font-size: 13px; line-height: 1.55; margin: 0 0 16px; }
-  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 6px; }
-  .kpi { background: var(--glass2); border: 1px solid var(--edge); border-radius: 12px; padding: 11px 12px 10px; position: relative; overflow: hidden; }
-  .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--campus)); }
-  .kpi b { display: block; font-family: var(--disp); font-size: 23px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .kpi span { font-size: 11px; color: var(--muted); line-height: 1.3; display: block; margin-top: 2px; }
-  .note { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
-  .sec { margin-top: 20px; }
-  .sec-h { display: flex; align-items: baseline; justify-content: space-between; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-           color: var(--muted); font-weight: 600; margin: 0 0 10px; }
-  .sec-h small { letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--faint); }
-  .nisar-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .ncard { position: relative; border: 1px solid var(--edge); border-radius: 12px; overflow: hidden; cursor: pointer; padding: 0;
-           background: #0A111B; text-align: left; aspect-ratio: 1.25; transition: transform .2s, border-color .2s; }
-  .ncard:hover { transform: translateY(-2px); border-color: rgba(198, 244, 50, .55); }
-  .ncard img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: invert(1) hue-rotate(180deg) saturate(1.2) contrast(1.05);
-               opacity: .85; }
-  .ncard .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 9px 8px; font-size: 11.5px; font-weight: 600; line-height: 1.25;
-                background: linear-gradient(transparent, rgba(3, 6, 10, .95)); }
-  .ncard .tag { position: absolute; top: 7px; left: 7px; font: 600 9.5px var(--mono); letter-spacing: .06em; color: #0A0F05;
-                background: var(--radar); border-radius: 4px; padding: 2px 5px; }
-  .rank { display: grid; gap: 4px; }
-  .rank button { display: grid; grid-template-columns: 1fr 64px 36px; align-items: center; gap: 8px; border: 0; background: transparent;
-                 padding: 5px 6px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 12.5px; color: var(--ink2); }
-  .rank button:hover { background: var(--glass2); color: var(--ink); }
-  .rank .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rank .bar { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .07); overflow: hidden; }
-  .rank .bar i { display: block; height: 100%; border-radius: 3px; }
-  .rank .v { font: 500 11px var(--mono); color: var(--muted); text-align: right; }
-  .wrow { display: grid; grid-template-columns: 1fr 120px 22px; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink2); margin: 6px 0; }
-  .wrow output { font: 500 11px var(--mono); color: var(--muted); text-align: right; }
-  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .12); margin: 0; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--ink);
-    border: 3px solid var(--water); cursor: pointer; }
-  input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 3px solid var(--water); cursor: pointer; }
-  .legend { display: grid; gap: 7px; font-size: 12px; color: var(--ink2); }
-  .legend > div { display: flex; align-items: center; gap: 9px; }
-  .ramp { flex: 1; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--water), var(--mid), var(--high)); }
-  .sw { flex: none; width: 14px; height: 14px; display: inline-block; }
-  .sw.col { width: 8px; height: 16px; border-radius: 2px; background: linear-gradient(var(--campus), var(--campus2)); box-shadow: 0 0 10px rgba(255, 181, 71, .6); margin: 0 3px; }
-  .sw.colo { width: 8px; height: 16px; border-radius: 2px; border: 1.5px solid var(--campus); background: rgba(255, 181, 71, .15); margin: 0 3px; }
-  .sw.src { border-radius: 50%; border: 2px solid #fff; background: var(--mid); box-shadow: 0 0 0 4px rgba(167, 139, 250, .25); }
-  .sw.flow { width: 22px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--water), var(--campus)); }
-  .sw.rad { width: 11px; height: 11px; transform: rotate(45deg); border: 2px solid var(--radar); background: rgba(198, 244, 50, .2); margin: 0 2px; }
-  .badge { flex: none; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; color: #04110B;
-           font: 700 10px var(--mono); }
-  .badge.w { background: var(--wet); } .badge.p { background: var(--prot); }
-  details.about { margin-top: 20px; border-top: 1px solid var(--edge); padding-top: 12px; font-size: 12.5px; line-height: 1.55; color: var(--ink2); }
-  details.about summary { cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; display: flex; justify-content: space-between; }
-  details.about summary::after { content: "+"; color: var(--muted); } details.about[open] summary::after { content: "–"; }
-  details.about p { margin: 8px 0; }
-  code { font: 500 11px var(--mono); background: rgba(255, 255, 255, .06); padding: 1px 4px; border-radius: 4px; }
+  /* search */
+  #searchCard { top: 12px; left: 12px; width: 380px; height: 48px; display: flex; align-items: center; gap: 4px; padding: 0 6px 0 14px; border-radius: 24px; }
+  #searchCard .mark { flex: none; width: 22px; height: 22px; }
+  #search { flex: 1; border: 0; outline: 0; font: inherit; font-size: 15px; padding: 0 8px; background: transparent; color: var(--ink); min-width: 0; }
+  #search::placeholder { color: var(--muted); }
+  .iconbtn { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; color: var(--muted); }
+  .iconbtn:hover { background: var(--soft); color: var(--ink); }
+  #results { position: fixed; z-index: 11; top: 64px; left: 12px; width: 380px; max-height: 50vh; overflow-y: auto; padding: 6px 0; display: none; }
+  #results.on { display: block; }
+  #results button { display: flex; width: 100%; gap: 12px; align-items: center; border: 0; background: transparent; padding: 8px 16px; text-align: left; cursor: pointer; }
+  #results button:hover, #results button.hi { background: var(--soft); }
+  #results .ic { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+  #results small { display: block; color: var(--muted); font-size: 12px; }
 
-  /* ---------- toolbar ---------- */
-  #tools { top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 14px; }
-  #search { width: 230px; background: rgba(255, 255, 255, .06); border: 1px solid var(--edge); border-radius: 9px; color: var(--ink);
-            padding: 7px 10px 7px 30px; font: inherit; font-size: 13px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%238494A7' stroke-width='2'%3E%3Ccircle cx='6' cy='6' r='4.5'/%3E%3Cpath d='M9.5 9.5 13 13'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: 10px 50%; }
-  #search::placeholder { color: var(--faint); }
-  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--edge); background: transparent; border-radius: 9px;
-          padding: 7px 10px; font-size: 12.5px; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .15s; }
-  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); opacity: .35; }
-  .chip[aria-pressed=true] { color: var(--ink); border-color: var(--edge2); background: rgba(255, 255, 255, .06); }
-  .chip[aria-pressed=true] i { opacity: 1; box-shadow: 0 0 8px var(--c); }
-  .chip:hover { color: var(--ink); }
-  .divider { width: 1px; height: 22px; background: var(--edge); margin: 0 2px; }
-  .seg { display: inline-flex; background: rgba(255, 255, 255, .05); border: 1px solid var(--edge); border-radius: 9px; padding: 2px; }
-  .seg button { border: 0; background: transparent; border-radius: 7px; padding: 5px 10px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-  .seg button[aria-pressed=true] { background: rgba(255, 255, 255, .12); color: var(--ink); }
-  .iconbtn { border: 1px solid var(--edge); background: transparent; border-radius: 9px; width: 32px; height: 32px; display: grid; place-items: center;
-             cursor: pointer; color: var(--muted); } .iconbtn:hover { color: var(--ink); }
-
-  /* ---------- timeline ---------- */
-  #timeline { left: 404px; right: 16px; bottom: 16px; padding: 14px 20px 14px 14px; display: flex; align-items: center; gap: 18px;
-              transition: right .35s cubic-bezier(.2, .8, .2, 1); }
-  body.drawer-open #timeline { right: 448px; }
-  #tools { transition: right .35s cubic-bezier(.2, .8, .2, 1); }
-  #play { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
-          background: linear-gradient(135deg, var(--campus), var(--campus2)); color: #1A0E00; box-shadow: 0 0 24px rgba(255, 150, 60, .45); }
-  #play svg { width: 18px; height: 18px; }
-  .yearbox { flex: none; min-width: 96px; }
-  .yearbox .y { font-family: var(--disp); font-size: 38px; font-weight: 700; letter-spacing: -.03em; line-height: .95; font-variant-numeric: tabular-nums; }
-  .yearbox .l { font-size: 10.5px; color: var(--muted); letter-spacing: .04em; margin-top: 3px; }
-  .track { flex: 1; min-width: 160px; position: relative; padding: 18px 0 6px; }
-  .track input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 3; margin: 0; }
-  .rail { position: relative; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); }
-  .rail .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: linear-gradient(90deg, var(--water), var(--campus));
-                box-shadow: 0 0 12px rgba(255, 181, 71, .5); transition: width .45s cubic-bezier(.2, .8, .2, 1); }
-  .ticks { position: relative; height: 0; }
-  .ticks span { position: absolute; top: -10px; transform: translateX(-50%); width: 12px; height: 12px; border-radius: 50%; background: #0B121C;
-                border: 2px solid rgba(255, 255, 255, .25); transition: all .3s; }
-  .ticks span.on { border-color: var(--campus); background: var(--campus); box-shadow: 0 0 10px var(--campus); }
-  .ticks b { position: absolute; top: 10px; transform: translateX(-50%); font: 500 11px var(--mono); color: var(--muted); }
-  .ticks b.on { color: var(--ink); }
-  .tl-side { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-  .tl-side .l { font-size: 10.5px; color: var(--muted); letter-spacing: .04em; }
-
-  /* ---------- drawer ---------- */
-  #drawer { top: 76px; right: 16px; bottom: 16px; width: 416px; display: flex; flex-direction: column; overflow: hidden;
-            transform: translateX(calc(100% + 32px)); transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
-  body.drawer-open #drawer { transform: none; }
-  #drawer .close { position: absolute; top: 12px; right: 12px; z-index: 2; }
-  #detail { overflow-y: auto; padding: 20px 22px 28px; font-size: 13px; line-height: 1.55; color: var(--ink2); scrollbar-width: thin;
-            scrollbar-color: #253142 transparent; }
-  #detail .kind { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-                  font-weight: 600; color: var(--c, var(--campus)); }
-  #detail .kind::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: currentColor; box-shadow: 0 0 10px currentColor; }
-  #detail h2 { font-family: var(--disp); color: var(--ink); font-size: 21px; line-height: 1.2; letter-spacing: -.015em; margin: 8px 36px 4px 0; }
-  #detail h3 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin: 22px 0 8px; font-weight: 600;
-               display: flex; align-items: center; gap: 8px; }
-  #detail h3::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
-  #detail p { margin: 0 0 6px; }
-  #detail .sub { color: var(--muted); font-size: 12.5px; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0 2px; }
-  .stat { background: var(--glass2); border: 1px solid var(--edge); border-radius: 10px; padding: 9px 10px; }
-  .stat b { display: block; font-family: var(--disp); color: var(--ink); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-  .stat span { font-size: 10.5px; color: var(--muted); }
-  #detail table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 12.5px; }
-  #detail th, #detail td { text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--edge); }
-  #detail th:first-child, #detail td:first-child { text-align: left; }
-  #detail th { font-weight: 500; color: var(--muted); font-size: 11px; }
-  #detail td.sel, #detail th.sel { color: var(--ink); font-weight: 600; background: rgba(255, 255, 255, .04); }
-  #detail figure { margin: 10px 0 0; }
-  #detail figure .img { background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid var(--edge); }
-  #detail figure img { width: 100%; height: auto; display: block; }
-  #detail figcaption { font-size: 11.5px; color: var(--muted); margin-top: 5px; display: flex; gap: 6px; align-items: baseline; }
-  #detail figcaption .tag { flex: none; font: 600 9.5px var(--mono); letter-spacing: .05em; border-radius: 4px; padding: 1px 5px; color: #0A0F05; background: var(--radar); }
-  #detail figcaption .tag.s1 { background: var(--water); }
-  #detail svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .lcbar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 6px 0 8px; gap: 2px; }
-  .lclegend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 11.5px; color: var(--muted); }
+  /* side card */
+  #panel { top: 72px; left: 12px; width: 380px; bottom: 84px; overflow: hidden; display: flex; flex-direction: column; }
+  #panel .body { overflow-y: auto; flex: 1; scrollbar-width: thin; }
+  .pad { padding: 18px 20px; }
+  h1 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
+  h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -.01em; margin: 0 0 4px; }
+  .lede { color: var(--ink2); font-size: 13.5px; margin: 0; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0; }
+  .kicker { font-size: 12px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+  .kicker i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--c); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .stats div { padding: 12px 14px; } .stats div + div { border-left: 1px solid var(--rule); }
+  .stats b { display: block; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .stats span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  .sec { padding: 16px 20px 4px; }
+  .sec h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--ink); }
+  .sec p { margin: 0 0 8px; color: var(--ink2); font-size: 13.5px; }
+  .list { margin: 0 -20px; }
+  .list button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: transparent; padding: 8px 20px; cursor: pointer; text-align: left; }
+  .list button:hover { background: var(--soft); }
+  .list .th { flex: none; width: 56px; height: 42px; border-radius: 6px; overflow: hidden; background: var(--soft); border: 1px solid var(--rule); }
+  .list .th img { width: 100%; height: 100%; object-fit: cover; }
+  .list .nm { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.35; }
+  .list .nm small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list .v { flex: none; font-size: 12.5px; color: var(--ink2); font-variant-numeric: tabular-nums; text-align: right; }
+  .list .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--accent); cursor: pointer; padding: 0; font-weight: 500; font-size: 13px; margin-bottom: 10px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 13px; }
+  th, td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--rule); }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 500; color: var(--muted); font-size: 12px; }
+  td.sel, th.sel { font-weight: 600; color: var(--ink); }
+  figure { margin: 8px 0 4px; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--rule); }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  svg.chart { width: 100%; height: auto; display: block; }
+  .lcbar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 6px 0 8px; }
+  .lclegend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 12px; color: var(--muted); }
   .lclegend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; background: var(--c); }
-  .muted { color: var(--muted); }
-  .src-links { font-size: 11px; color: var(--muted); margin-top: 18px !important; padding-top: 12px; border-top: 1px solid var(--edge); }
-  .src-links a { color: var(--ink2); text-decoration: none; border-bottom: 1px dotted var(--faint); }
-  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--water); cursor: pointer; text-decoration: underline;
-             text-decoration-color: rgba(56, 189, 248, .4); text-underline-offset: 2px; }
-  .cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; border: 1px solid rgba(198, 244, 50, .4); color: var(--radar);
-         background: rgba(198, 244, 50, .08); border-radius: 9px; padding: 8px 12px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
-  .cta:hover { background: rgba(198, 244, 50, .16); }
-  .chain { display: grid; grid-template-columns: auto 1fr; gap: 0 12px; margin: 4px 0; }
-  .chain .dotc { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: var(--c); box-shadow: 0 0 8px var(--c); }
-  .chain .ln { width: 2px; margin: 2px auto; background: linear-gradient(var(--a), var(--b)); min-height: 14px; }
-  .chain .t { font-size: 12.5px; color: var(--ink2); padding-bottom: 6px; }
-  .chain .t b { color: var(--ink); font-weight: 600; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; }
+  .linkbtn:hover { text-decoration: underline; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule); background: #fff; border-radius: 18px; padding: 7px 14px;
+          font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; margin: 4px 0 6px; }
+  .pill:hover { background: #F1F6FE; }
+  .srcs { font-size: 12px; color: var(--muted); padding: 14px 20px 20px; border-top: 1px solid var(--rule); margin-top: 12px; }
+  .srcs a { color: var(--muted); }
+  .chain { display: grid; grid-template-columns: 14px 1fr; gap: 0 10px; margin: 2px 0 8px; font-size: 13.5px; }
+  .chain .d { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; background: var(--c); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .chain .l { width: 2px; margin: 0 auto; background: var(--rule); min-height: 16px; }
+  .chain .t { color: var(--ink2); padding-bottom: 4px; }
+  details.about summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink); }
+  details.about p { font-size: 12.5px; color: var(--ink2); margin: 8px 0; }
+  code { font-size: 11.5px; background: var(--soft); padding: 1px 4px; border-radius: 4px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; background: rgba(240,75,46,.7); outline: 1.5px solid #FFD678; margin-right: 6px; vertical-align: -1px; }
 
-  /* ---------- map chrome ---------- */
-  .maplibregl-ctrl-attrib { background: rgba(4, 7, 12, .6) !important; color: var(--faint) !important; font-size: 10px !important; }
-  .maplibregl-ctrl-attrib a { color: var(--muted) !important; }
-  .maplibregl-ctrl-bottom-right { bottom: 96px; }
-  body.drawer-open .maplibregl-ctrl-bottom-right { right: 432px; }
-  .deck-tooltip { font-family: "Inter", system-ui, sans-serif !important; }
-  .deck-tooltip .tk { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
-  .deck-tooltip b { font-weight: 600; font-size: 13px; }
-  .deck-tooltip .tr { color: #8494A7; margin-top: 3px; } .deck-tooltip .tr span { color: #E9EFF6; font-variant-numeric: tabular-nums; }
-  #loading { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bg); transition: opacity .8s; pointer-events: none; }
-  #loading div { font: 600 11px var(--mono); letter-spacing: .2em; color: var(--muted); }
-  #loading.done { opacity: 0; }
-  #mobileToggle { display: none; }
+  /* timeline */
+  #timeline { bottom: 16px; left: calc(50% + 196px); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 30px; white-space: nowrap; }
+  #play { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+  #play:hover { background: #1765CC; }
+  .years { display: flex; gap: 2px; }
+  .years button { border: 0; background: transparent; border-radius: 16px; padding: 6px 11px; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .years button:hover { background: var(--soft); color: var(--ink); }
+  .years button[aria-pressed=true] { background: #E8F0FE; color: var(--accent); font-weight: 600; }
+  .vsep { width: 1px; height: 24px; background: var(--rule); }
+  .seg { display: flex; background: var(--soft); border-radius: 16px; padding: 2px; }
+  .seg button { border: 0; background: transparent; border-radius: 14px; padding: 5px 11px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed=true] { background: #fff; color: var(--ink); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .tl-label { font-size: 11px; color: var(--muted); line-height: 1.2; }
 
-  @media (max-width: 900px) {
-    #side { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 44vh; border-radius: 18px 18px 0 0; }
-    #side.collapsed { max-height: 64px; }
-    #mobileToggle { display: grid; position: absolute; top: 12px; right: 12px; z-index: 3; }
-    #tools { left: 8px; right: 8px !important; top: 8px; flex-wrap: wrap; }
-    #search { flex: 1; width: auto; min-width: 120px; }
-    #timeline { left: 8px; right: 8px !important; bottom: calc(44vh + 8px); padding: 10px 12px; gap: 6px 10px; flex-wrap: wrap; }
-    #timeline .track { flex-basis: calc(100% - 130px); margin: 0 12px 18px 4px; }
-    .tl-side { width: 100%; align-items: stretch; } .tl-side .seg { display: flex; } .tl-side .seg button { flex: 1; }
-    #side.collapsed ~ #timeline { bottom: 72px; }
-    .yearbox .y { font-size: 28px; } .yearbox { min-width: 64px; } .yearbox .l, .tl-side .l { display: none; }
-    #play { width: 38px; height: 38px; }
-    #drawer { top: 8px; left: 8px; right: 8px; bottom: 8px; width: auto; z-index: 20; }
-    .maplibregl-ctrl-bottom-right { display: none; }
+  /* right controls */
+  #ctrl { position: fixed; z-index: 10; right: 12px; bottom: 34px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .fab { width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--shadow); display: grid; place-items: center; cursor: pointer; color: var(--ink2); }
+  .fab:hover { color: var(--ink); background: #F8F9FA; }
+  .fab.txt { font-size: 13px; font-weight: 600; }
+  .zoom { display: flex; flex-direction: column; background: #fff; border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+  .zoom button { width: 40px; height: 40px; border: 0; background: #fff; cursor: pointer; font-size: 20px; color: var(--ink2); }
+  .zoom button + button { border-top: 1px solid var(--rule); }
+  #layers { top: 12px; right: 12px; width: 320px; max-height: calc(100vh - 100px); overflow-y: auto; padding: 14px 16px 16px; display: none; }
+  #layers.on { display: block; }
+  #layersBtn { position: fixed; z-index: 10; top: 16px; right: 12px; }
+  #layers h3 { font-size: 13px; font-weight: 600; margin: 4px 0 8px; }
+  .tog { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 13.5px; cursor: pointer; }
+  .tog input { width: 16px; height: 16px; accent-color: var(--accent); margin: 2px 0 0; flex: none; }
+  .tog .sw { flex: none; width: 18px; height: 12px; border-radius: 3px; margin-top: 3px; }
+  .tog small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+  .wrow { display: grid; grid-template-columns: 1fr 110px 18px; gap: 8px; align-items: center; font-size: 13px; color: var(--ink2); margin: 4px 0; }
+  .wrow output { font-size: 12px; color: var(--muted); text-align: right; }
+  .wrow input { accent-color: var(--accent); width: 100%; }
+  .ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #29B6F6, #FFD54F, #E53935); margin: 6px 0 2px; }
+  .rampl { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 12px 0; }
+
+  /* map chrome */
+  .maplibregl-ctrl-attrib { font-size: 10.5px; }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale { margin: 0 0 10px 404px; border-color: rgba(255,255,255,.9); color: #fff; background: rgba(0,0,0,.35); }
+  .maplibregl-popup-content { padding: 8px 12px; border-radius: 8px; font: 13px/1.4 "Inter", sans-serif; box-shadow: var(--shadow); }
+  .maplibregl-popup-content small { display: block; color: var(--muted); font-size: 12px; }
+  .maplibregl-popup-tip { display: none; }
+  #intro { position: fixed; z-index: 30; inset: 0; background: #000; transition: opacity 1.2s; pointer-events: none; }
+  #intro.done { opacity: 0; }
+
+  @media (max-width: 860px) {
+    #searchCard, #results { left: 8px; right: 8px; width: auto; top: 8px; }
+    #results { top: 60px; }
+    #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 42vh; border-radius: 16px 16px 0 0; }
+    #timeline { left: 8px; right: 8px; transform: none; bottom: calc(42vh + 10px); gap: 4px 6px; padding: 6px; flex-wrap: wrap; justify-content: center; border-radius: 22px; }
+    .years { flex: 1; justify-content: space-between; } #scn { flex-basis: 100%; justify-content: center; } #scn button { flex: 1; }
+    .tl-label, .vsep { display: none; } .years button { padding: 6px 6px; font-size: 12.5px; } .seg button { padding: 5px 7px; font-size: 12px; }
+    #play { width: 32px; height: 32px; }
+    #ctrl { display: none; }
+    #layersBtn { top: 64px; right: 8px; } #layers { top: 64px; right: 8px; left: 8px; width: auto; }
+    .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale { display: none; }
   }
 </style>
 </head>
 <body>
-<div id="map" role="region" aria-label="3D map of data center campuses and water sources"></div>
-<div id="loading"><div>LOADING RADAR MAP</div></div>
+<div id="map" role="region" aria-label="Satellite map of data center campuses and water sources"></div>
+<div id="intro"></div>
 
-<section id="side" class="glass" aria-label="Overview">
-  <button class="iconbtn" id="mobileToggle" aria-label="Collapse or expand the overview">&#8597;</button>
-  <div class="scroll">
-    <div class="eyebrow"><span class="pulse" aria-hidden="true"></span>NASA Space Apps · Dancing with the SARs</div>
-    <h1>Data center growth and <em>the water it depends on</em></h1>
-    <p class="lede">Land converted by US data center campuses, measured with Sentinel-1 radar, and the reservoirs,
-      rivers and aquifers their water utilities draw from. Move the year to see the projection of built and announced campuses to 2030.</p>
+<div id="searchCard" class="card" role="search">
+  <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1A73E8"/><path d="M5 13.5c2.5-1 4.2 1.4 7 .4s4-3.3 7-2.4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="12" cy="8" r="2.2" fill="#FFD678"/></svg>
+  <input id="search" placeholder="Search campuses and water sources" aria-label="Search campuses and water sources" autocomplete="off">
+  <button class="iconbtn" id="homeBtn" title="Overview" aria-label="Show the overview">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/></svg></button>
+</div>
+<div id="results" class="card" role="listbox" aria-label="Search results"></div>
 
-    <div class="kpis">
-      <div class="kpi"><b id="totAcres">0</b><span>acres converted (projected campuses)</span></div>
-      <div class="kpi" style="--c: var(--water)"><b id="totWater">0</b><span>megaliters of water per year</span></div>
-    </div>
-    <p class="note" id="totNote"></p>
+<section id="panel" class="card" aria-label="Details"><div class="body" id="detail"></div></section>
 
-    <div class="sec">
-      <div class="sec-h">Seen by NISAR <small>NASA-ISRO L-band radar</small></div>
-      <div class="nisar-cards" id="nisarCards"></div>
-      <p class="note" style="margin-top:8px">NISAR's long L-band radar waves see the ground day or night and through clouds.
-        Each card opens the Sentinel-1 and NISAR views of one place.</p>
-    </div>
+<button id="layersBtn" class="fab" title="Layers" aria-label="Open layers" aria-expanded="false">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 2.5 8 12 13l9.5-5z"/><path d="m2.5 12.5 9.5 5 9.5-5"/><path d="m2.5 16.5 9.5 5 9.5-5" opacity=".55"/></svg></button>
+<section id="layers" class="card" aria-label="Layers">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0;font-size:15px">Layers</h3>
+    <button class="iconbtn" id="layersClose" aria-label="Close layers"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 3l10 10M13 3 3 13"/></svg></button></div>
+  <label class="tog"><input type="checkbox" id="lyrChange" checked><span class="sw" style="background:rgba(240,75,46,.7);outline:1.5px solid #FFD678"></span>
+    <span>Land changed, seen by radar<small>Sentinel-1 pixels that changed during construction (zoom in on a built campus)</small></span></label>
+  <label class="tog"><input type="checkbox" id="lyrSites" checked><span class="sw" style="background:#F5A623;border-radius:50%;width:12px;height:12px;margin:3px 3px 0;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.3)"></span>
+    <span>Campuses and outlines<small>Orange: built. White: announced. Size grows with acres in the selected year.</small></span></label>
+  <label class="tog"><input type="checkbox" id="lyrWater" checked><span class="sw" style="background:#29B6F6;border-radius:50%;width:12px;height:12px;margin:3px 3px 0;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.3)"></span>
+    <span>Water sources<small>Lines to campuses appear when you select one</small></span></label>
+  <label class="tog"><input type="checkbox" id="lyrRadar" checked><span class="sw" style="background:#C5E1A5"></span>
+    <span>Radar views<small>Places with Sentinel-1 and NISAR image comparisons</small></span></label>
+  <label class="tog"><input type="checkbox" id="lyrExposure"><span class="sw" style="background:linear-gradient(90deg,#43C08A 50%,#A47BE6 50%)"></span>
+    <span>Nearby wetlands and protected land<small>Green ring: marsh or swamp within 100 m. Purple ring: protected land within 1 km.</small></span></label>
+  <label class="tog"><input type="checkbox" id="lyrLabels" checked><span class="sw" style="background:#fff;border:1px solid #ccc"></span><span>Place names and roads</span></label>
+  <label class="tog"><input type="checkbox" id="lyrTerrain" checked><span class="sw" style="background:linear-gradient(135deg,#8D6E63,#C5B49A)"></span><span>3D terrain</span></label>
+  <hr>
+  <h3>Water pressure index</h3>
+  <div class="ramp" aria-hidden="true"></div><div class="rampl"><span>Lower</span><span>Higher</span></div>
+  <p class="note" style="margin:8px 0 4px">Colors the water sources. Weights:</p>
+  <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"><output id="w1o">1</output></div>
+  <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"><output id="w2o">1</output></div>
+  <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"><output id="w3o">1</output></div>
+</section>
 
-    <div class="sec">
-      <div class="sec-h">Water pressure index <small id="rankYear"></small></div>
-      <div class="rank" id="rank"></div>
-      <div style="margin-top:12px">
-        <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"><output id="w1o">1</output></div>
-        <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"><output id="w2o">1</output></div>
-        <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"><output id="w3o">1</output></div>
-      </div>
-    </div>
+<div id="ctrl">
+  <button class="fab txt" id="tilt" title="Tilt the view" aria-label="Switch between 2D and 3D view">3D</button>
+  <button class="fab" id="compass" title="Point north" aria-label="Point north"><svg id="needle" width="22" height="22" viewBox="0 0 24 24"><path d="M12 3l3.5 9h-7z" fill="#E53935"/><path d="M12 21l-3.5-9h7z" fill="#9AA1A9"/></svg></button>
+  <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button></div>
+</div>
 
-    <div class="sec">
-      <div class="sec-h">Legend</div>
-      <div class="legend">
-        <div><span class="sw col" aria-hidden="true"></span> Built campus (height grows with acres converted)</div>
-        <div><span class="sw colo" aria-hidden="true"></span> Announced campus</div>
-        <div><span class="sw src" aria-hidden="true"></span> Water source (color = pressure index)</div>
-        <div style="padding-left:23px"><span class="muted" style="font-size:11px">Lower</span><span class="ramp" aria-hidden="true"></span><span class="muted" style="font-size:11px">Higher</span></div>
-        <div><span class="sw flow" aria-hidden="true"></span> Campus linked to the source its utility uses</div>
-        <div><span class="sw rad" aria-hidden="true"></span> Radar view (Sentinel-1 and NISAR)</div>
-        <div><span class="badge w" aria-hidden="true">W</span> Marsh or swamp within 100 m</div>
-        <div><span class="badge p" aria-hidden="true">P</span> Protected land within 1 km</div>
-      </div>
-    </div>
-
-    <details class="about">
-      <summary>About the data and methods</summary>
-      <p><b>Footprints.</b> Converted acres at built campuses come from Sentinel-1 radar (Planetary Computer
-        <code>sentinel-1-rtc</code>): a pixel counts as converted once its backscatter changes by more than a threshold
-        for two months in a row, inside the campus outline plus 200 m.</p>
-      <p><b>Projection.</b> Acres and water for 2026-2030 use ratios measured at built sites (acres per MW,
-        water per kWh from Google's per-site reports, build time) and each campus's stated MW or investment.
-        Low, median and high use the 25th, 50th and 75th percentiles.</p>
-      <p><b>Water sources.</b> Each campus is matched to the EPA water service area it sits in, then to the
-        utility's source (EPA SDWA). Trends are SWOT water surface elevation (rivers) or OPERA DISP-S1 ground motion over
-        aquifers. A trend describes the water body; it does not show what caused the change.</p>
-      <p><b>Shares.</b> "Local share" divides the campus water estimate by the utility's own supply (population
-        served x per-capita use). Where a utility buys its water, the "wholesale share" divides by the supply of the
-        whole system it buys from.</p>
-      <p><b>Exposure.</b> Land cover before construction: NLCD. Wetlands: USFWS NWI. Protected land: USGS PAD-US 4.1
-        (GAP status 1-3).</p>
-      <p><b>On the map.</b> Column heights and line paths are drawn for readability; the numbers are in the panels.
-        Basemaps: CARTO and OpenStreetMap (night), Esri World Imagery and Esri reference labels (satellite).</p>
-      <p id="aboutMissing"></p>
-      <p>Every number traces to a CSV in the project's <code>data/</code> folder, and each panel lists its sources.
-        Data built <span id="builtDate"></span>.</p>
-    </details>
+<section id="timeline" class="card" aria-label="Year and scenario">
+  <button id="play" aria-label="Play the years 2026 to 2030"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="playIcon"><path d="M4 2v12l10-6z"/></svg></button>
+  <span class="tl-label">Year<br>(Dec 31)</span>
+  <div class="years" id="years" role="group" aria-label="Year"></div>
+  <span class="vsep" aria-hidden="true"></span>
+  <span class="tl-label">Scenario</span>
+  <div class="seg" id="scn" role="group" aria-label="Scenario">
+    <button type="button" data-scn="low" aria-pressed="false">Low</button>
+    <button type="button" data-scn="median" aria-pressed="true">Median</button>
+    <button type="button" data-scn="high" aria-pressed="false">High</button>
   </div>
 </section>
 
-<nav id="tools" class="glass" aria-label="Map controls">
-  <input id="search" list="searchList" placeholder="Find a campus or water source" aria-label="Find a campus or water source">
-  <datalist id="searchList"></datalist>
-  <span class="divider" aria-hidden="true"></span>
-  <button class="chip" id="lyrSites" aria-pressed="true" style="--c: var(--campus)"><i></i>Campuses</button>
-  <button class="chip" id="lyrWater" aria-pressed="true" style="--c: var(--water)"><i></i>Water links</button>
-  <button class="chip" id="lyrRadar" aria-pressed="true" style="--c: var(--radar)"><i></i>Radar</button>
-  <button class="chip" id="lyrExposure" aria-pressed="false" style="--c: var(--wet)" title="Nearby wetlands and protected land"><i></i>Wetlands</button>
-  <span class="divider" aria-hidden="true"></span>
-  <div class="seg" role="group" aria-label="Basemap">
-    <button type="button" data-base="night" aria-pressed="true">Night</button>
-    <button type="button" data-base="sat" aria-pressed="false">Satellite</button>
-  </div>
-  <button class="iconbtn" id="home" title="Back to the whole country" aria-label="Back to the whole country">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7.5 8 2.5l6 5"/><path d="M3.5 6.5V13h9V6.5"/></svg></button>
-</nav>
-
-<section id="timeline" class="glass" aria-label="Year and scenario">
-  <button id="play" aria-label="Play the years 2026 to 2030"><svg viewBox="0 0 18 18" fill="currentColor" id="playIcon"><path d="M4 2.5v13l11-6.5z"/></svg></button>
-  <div class="yearbox"><div class="y" id="yearOut">2026</div><div class="l">AS OF DECEMBER 31</div></div>
-  <div class="track">
-    <label for="year" class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Year (as of December 31)</label>
-    <input id="year" type="range" min="0" max="4" step="1" value="0">
-    <div class="rail"><div class="fill" id="railFill"></div></div>
-    <div class="ticks" id="ticks"></div>
-  </div>
-  <div class="tl-side">
-    <span class="l" id="scnLabel">SCENARIO</span>
-    <div class="seg" role="group" aria-labelledby="scnLabel" id="scn">
-      <button type="button" data-scn="low" aria-pressed="false">Low</button>
-      <button type="button" data-scn="median" aria-pressed="true">Median</button>
-      <button type="button" data-scn="high" aria-pressed="false">High</button>
-    </div>
-  </div>
-</section>
-
-<aside id="drawer" class="glass" aria-label="Details" aria-hidden="true">
-  <button class="iconbtn close" id="closeDrawer" aria-label="Close details">
-    <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.8"><path d="M2 2l10 10M12 2 2 12"/></svg></button>
-  <div id="detail"></div>
-</aside>
-
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <script src="data.js"></script>
 <script src="radar_panels.js"></script>
+<script src="overlays.js"></script>
 <script>
 const D = window.PROTO_DATA;
-const state = { y: 0, scn: "median", w: [1, 1, 1], selected: null, base: "night", zoom: 3.6,
-                layers: { sites: true, water: true, radar: true, exposure: false }, playing: false };
+const OVERLAYS = window.OVERLAYS || {};
+const RADAR = window.RADAR_PANELS || [];
+const state = { y: 0, scn: "median", w: [1, 1, 1], selected: null };
 const fmt = n => n == null ? "n/a" : Math.round(n).toLocaleString("en-US");
 const fmt1 = n => n == null ? "n/a" : (Math.abs(n) < 10 ? n.toFixed(1) : Math.round(n).toLocaleString("en-US"));
 const pct = n => n == null ? "n/a" : (n >= 10 ? Math.round(n * 100).toLocaleString("en-US") + "%" : (n * 100).toFixed(n < 0.01 ? 2 : 1) + "%");
@@ -358,95 +234,77 @@ const title = s => esc(String(s || "").toLowerCase().replace(/\b\w/g, c => c.toU
 const SCN = D.scenarios, YEARS = D.years;
 const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
 const siteById = Object.fromEntries(D.sites.map(s => [s.id, s]));
-const RADAR = window.RADAR_PANELS || [];
 const radarById = Object.fromEntries(RADAR.map(p => [p.id, p]));
 const RADAR_FOR_SITE = { "ANN-STARGATE-SHACKELFORD": "FRONTIER-SHACKELFORD", "ANN-STARGATE-DONAANA": "JUPITER-DONAANA",
                          "ANN-STARGATE-LORDSTOWN": "LORDSTOWN" };
 const SITE_FOR_RADAR = Object.fromEntries(Object.entries(RADAR_FOR_SITE).map(([a, b]) => [b, a]));
+const placed = D.sites.filter(s => s.lat != null && !s.location.missing);
+const isNarrow = () => matchMedia("(max-width: 860px)").matches;
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-document.getElementById("builtDate").textContent = D.built || "";
-const missing = D.sites.filter(s => s.location.missing);
-document.getElementById("aboutMissing").textContent = missing.length
-  ? `Not on the map because their campus location could not be found: ${missing.map(s => s.name).join("; ")}.` : "";
-
-/* ---------------- colors and the F7 pressure index ---------------- */
-const RGB = { campus: [255, 181, 71], campus2: [255, 138, 61], water: [56, 189, 248], mid: [167, 139, 250], high: [251, 79, 114],
-              radar: [198, 244, 50], wet: [52, 211, 153], prot: [203, 213, 225], white: [255, 255, 255] };
-const lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-function ramp(t) {
-  t = Math.max(0, Math.min(1, t || 0));
-  return t < .5 ? lerp(RGB.water, RGB.mid, t * 2) : lerp(RGB.mid, RGB.high, (t - .5) * 2);
-}
-const hex = c => "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
-
-// F7: weighted mean of the normalized local share, the decline score and the Aqueduct stress.
+/* ---------------- F7 pressure index and its color ---------------- */
 function pressure(src) {
   const maxShare = Math.max(...D.sources.map(s => s.share[state.scn][state.y]), 1e-9);
   const parts = [src.share[state.scn][state.y] / maxShare, src.decline_score ?? 0, src.stress_norm ?? 0];
   const wsum = state.w.reduce((a, b) => a + b, 0);
   return wsum ? parts.reduce((acc, v, i) => acc + v * state.w[i], 0) / wsum : 0;
 }
+const STOPS = [[41, 182, 246], [255, 213, 79], [229, 57, 53]];
+function pcolor(t) {
+  t = Math.max(0, Math.min(1, t || 0));
+  const [a, b, k] = t < .5 ? [STOPS[0], STOPS[1], t * 2] : [STOPS[1], STOPS[2], (t - .5) * 2];
+  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, "0")).join("");
+}
+const acresNow = s => s.projected ? s.acres[state.scn][state.y] : 0;
+const activeNow = s => s.projected ? s.acres[state.scn][state.y] > 0 : s.status === "built";
 
-/* ---------------- detail panel content ---------------- */
+/* ---------------- panel content ---------------- */
 function linkList(urls) {
   if (!urls || !urls.length) return "";
-  return `<p class="src-links">Sources: ${urls.map(u => {
+  return `<div class="srcs">Sources: ${urls.map(u => {
     let h = u; try { h = new URL(u).hostname.replace(/^www\./, ""); } catch (e) {}
-    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`; }).join(" · ")}</p>`;
+    return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`; }).join(" · ")}</div>`;
 }
 function scnTable(rows) {
   const head = `<tr><th></th>${SCN.map(c => `<th class="${c === state.scn ? "sel" : ""}">${c[0].toUpperCase() + c.slice(1)}</th>`).join("")}</tr>`;
   return `<table>${head}${rows.map(([lab, f]) => `<tr><td>${lab}</td>${SCN.map(c =>
     `<td class="${c === state.scn ? "sel" : ""}">${f(c)}</td>`).join("")}</tr>`).join("")}</table>`;
 }
-
-// Projection band: low-high range shaded, selected scenario as a line, selected year marked.
 function bandChart(series, label, color, unit) {
-  const W = 360, H = 120, L0 = 44, R0 = 10, T0 = 12, B0 = 22;
-  const all = SCN.flatMap(c => series[c]);
-  const vmax = Math.max(...all) * 1.08 || 1, vmin = 0;
+  const W = 340, H = 118, L0 = 44, R0 = 8, T0 = 14, B0 = 22;
+  const vmax = Math.max(...SCN.flatMap(c => series[c])) * 1.08 || 1;
   const X = i => L0 + i / (YEARS.length - 1) * (W - L0 - R0);
-  const Y = v => T0 + (vmax - v) / (vmax - vmin) * (H - T0 - B0);
-  const id = "g" + Math.random().toString(36).slice(2, 8);
-  const band = series.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " +
-               series.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
+  const Y = v => T0 + (vmax - v) / vmax * (H - T0 - B0);
+  const band = series.high.map((v, i) => `${X(i)},${Y(v)}`).join(" ") + " " + series.low.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(" ");
   const line = series[state.scn].map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const grid = [0, .5, 1].map(f => { const v = vmin + (vmax - vmin) * f;
-    return `<line x1="${L0}" x2="${W - R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/>
-            <text x="${L0 - 6}" y="${Y(v) + 3}" font-size="9.5" text-anchor="end" fill="#8494A7" font-family="JetBrains Mono">${fmt(v)}</text>`; }).join("");
-  const xl = YEARS.map((y, i) => `<text x="${X(i)}" y="${H - 6}" font-size="9.5" text-anchor="middle" fill="${i === state.y ? "#E9EFF6" : "#8494A7"}" font-family="JetBrains Mono">${y}</text>`).join("");
-  const v = series[state.scn][state.y];
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}, low to high range, 2026 to 2030">
-    <defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".38"/><stop offset="1" stop-color="${color}" stop-opacity=".04"/></linearGradient>
-    <filter id="${id}f"><feGaussianBlur stdDeviation="2.5"/></filter></defs>
-    ${grid}<polygon points="${band}" fill="url(#${id})"/>
-    <path d="${line}" fill="none" stroke="${color}" stroke-width="5" opacity=".35" filter="url(#${id}f)"/>
+  const grid = [0, .5, 1].map(f => { const v = vmax * f;
+    return `<line x1="${L0}" x2="${W - R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E6E8EB"/><text x="${L0 - 6}" y="${Y(v) + 3.5}" font-size="10" text-anchor="end" fill="#646B73">${fmt(v)}</text>`; }).join("");
+  const xl = YEARS.map((y, i) => `<text x="${X(i)}" y="${H - 6}" font-size="10" text-anchor="middle" fill="${i === state.y ? "#1F2328" : "#646B73"}" font-weight="${i === state.y ? 600 : 400}">${y}</text>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}, low to high range, 2026 to 2030">
+    ${grid}<polygon points="${band}" fill="${color}" opacity=".16"/>
     <path d="${line}" fill="none" stroke="${color}" stroke-width="2"/>
-    <line x1="${X(state.y)}" x2="${X(state.y)}" y1="${T0}" y2="${H - B0}" stroke="rgba(255,255,255,.25)" stroke-dasharray="2 3"/>
-    <circle cx="${X(state.y)}" cy="${Y(v)}" r="4.5" fill="${color}" stroke="#04070C" stroke-width="2"/>
-    ${xl}
-    <text x="${L0}" y="${T0 - 2}" font-size="9.5" fill="#8494A7">${esc(unit)}</text>
-  </svg>`;
+    <circle cx="${X(state.y)}" cy="${Y(series[state.scn][state.y])}" r="4" fill="${color}" stroke="#fff" stroke-width="2"/>
+    ${xl}<text x="${L0}" y="9" font-size="10" fill="#646B73">${esc(unit)}</text></svg>`;
 }
-
 const LC = [["developed", "Developed"], ["cropland", "Cropland"], ["pasture_hay", "Pasture/hay"], ["forest", "Forest"],
             ["shrub_grass", "Shrub/grass"], ["barren", "Barren"], ["wetlands", "Wetland"], ["water", "Open water"]];
 function landcover(lc) {
   const segs = LC.filter(([k]) => (lc.pct[k] || 0) > 0);
-  return `<h3>Land before construction</h3>
+  return `<div class="sec"><h3>Land before construction</h3>
     <p>${fmt(lc.converted_acres)} acres measured as converted. Mostly ${esc(lc.dominant)} (${lc.dominant_pct}%) on the NLCD ${lc.nlcd_year} map.</p>
     <div class="lcbar" role="img" aria-label="${segs.map(([k, n]) => `${n} ${lc.pct[k]}%`).join(", ")}">
       ${segs.map(([k, n]) => `<span title="${n} ${lc.pct[k]}%" style="width:${lc.pct[k]}%;background:var(--lc-${k})"></span>`).join("")}</div>
-    <div class="lclegend">${segs.map(([k, n]) => `<span style="--c:var(--lc-${k})">${n} ${lc.pct[k]}%</span>`).join("")}</div>`;
+    <div class="lclegend">${segs.map(([k, n]) => `<span style="--c:var(--lc-${k})">${n} ${lc.pct[k]}%</span>`).join("")}</div></div>`;
 }
 function exposure(e) {
   if (!e) return "";
-  return `<h3>Nearby wetlands and protected land</h3>
+  return `<div class="sec"><h3>Nearby wetlands and protected land</h3>
     <p>Nearest marsh or swamp (USFWS NWI): ${dist(e.wetland_vegetated_m)}${e.wetland_vegetated_type ? ` (${esc(e.wetland_vegetated_type)})` : ""}</p>
     <p>Nearest mapped water or wetland of any type: ${dist(e.wetland_any_m)}${e.wetland_any_type ? ` (${esc(e.wetland_any_type)})` : ""}</p>
     <p>Nearest protected land (PAD-US, GAP 1-3): ${dist(e.protected_m)}${e.protected_name ? ` (${esc(e.protected_name)}${e.protected_manager ? ", " + esc(e.protected_manager) : ""})` : ""}</p>
-    <p class="note">Measured from ${esc(e.measured_from || "")}. Wetland maps are often older than the construction.</p>`;
+    <p class="note">Measured from ${esc(e.measured_from || "")}. Wetland maps are often older than the construction.</p></div>`;
 }
+const BACK = `<button class="back" data-home="1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3 5 8l5 5"/></svg>Overview</button>`;
 
 const MATCH_TEXT = {
   self_supplied_check: "No public water utility's service area contains this campus. It may use its own wells or a private supply (not checked).",
@@ -454,54 +312,47 @@ const MATCH_TEXT = {
 };
 function showSite(s) {
   const i = state.y, c = state.scn, src = srcById[s.source_id];
-  const st = s.status === "built" ? "Built campus" : "Announced campus";
-  let h = `<span class="kind" style="--c:var(--campus)">${st}</span><h2>${esc(s.name)}</h2>
-    <p class="sub">${s.construction_start ? "Construction from " + s.construction_start : ""}${s.mw_stated ? `${s.construction_start ? " · " : ""}${fmt(s.mw_stated)} MW stated` : ""}</p>`;
+  let h = `<div class="pad">${BACK}<p class="kicker" style="--c:var(--campus)"><i></i>${s.status === "built" ? "Built data center campus" : "Announced data center campus"}</p>
+    <h2>${esc(s.name)}</h2><p class="sub">${[s.construction_start ? "Construction from " + s.construction_start : "", s.mw_stated ? fmt(s.mw_stated) + " MW stated" : ""].filter(Boolean).join(" · ")}</p>`;
   if (s.location.precision && !["osm_outline", "image_outline"].includes(s.location.precision) && s.status !== "built")
-    h += `<p class="note">Location: ${esc(s.location.basis || s.location.precision)}</p>`;
+    h += `<p class="note" style="margin-top:6px">Location: ${esc(s.location.basis || s.location.precision)}</p>`;
+  h += `</div>`;
   if (s.projected) {
-    h += `<div class="stats">
-      <div class="stat"><b>${fmt(s.mw[c])}</b><span>MW (${c})</span></div>
-      <div class="stat"><b>${fmt(s.acres[c][i])}</b><span>acres by ${YEARS[i]}</span></div>
-      <div class="stat"><b>${fmt(s.water_ml[c][i])}</b><span>ML/yr water by ${YEARS[i]}</span></div></div>`;
-    h += `<h3>Projection, ${YEARS[i]}</h3>` + scnTable([
-      ["Capacity (MW)", c2 => fmt(s.mw[c2])],
-      ["Acres converted", c2 => fmt(s.acres[c2][i])],
-      ["Water (ML/yr)", c2 => fmt(s.water_ml[c2][i])]]);
-    h += `<h3>Water use, 2026-2030</h3>${bandChart(s.water_ml, "Water use", "#38BDF8", "ML/yr")}
-      <p class="note">Shaded band: low to high scenario. Line: ${c} scenario.</p>
-      <h3>Land converted, 2026-2030</h3>${bandChart(s.acres, "Acres converted", "#FFB547", "acres")}`;
-  } else {
-    h += `<p class="note" style="margin-top:12px">Not projected: ${esc(s.not_projected_reason)}.</p>`;
+    h += `<div class="stats"><div><b>${fmt(s.mw[c])}</b><span>MW, ${c}</span></div><div><b>${fmt(s.acres[c][i])}</b><span>acres converted, ${YEARS[i]}</span></div>
+      <div><b>${fmt(s.water_ml[c][i])}</b><span>ML of water per year, ${YEARS[i]}</span></div></div>`;
   }
-  const fp = s.footprint;
+  const fp = s.footprint, ov = OVERLAYS[s.id];
   if (fp && s.status === "built") {
-    h += `<h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
+    h += `<div class="sec"><h3>Measured with radar</h3><p>${fmt(fp.final_acres)} acres changed inside the campus outline + 200 m
       (Sentinel-1, ${esc(fp.orbit || "")}, threshold ${fp.threshold_db} dB, to ${esc(fp.window_end || "")}).
-      ${fp.a_max_acres ? `Fitted full-build footprint ${fmt(fp.a_max_acres)} acres; 10-90% of it took ${fmt1(fp.build_months)} months.` : "The growth curve did not level off, so no full-build footprint is fitted."}</p>`;
-    if (fp.radar_png) h += `<figure><a class="img" href="${esc(fp.radar_png)}" target="_blank" rel="noopener" style="display:block"><img src="${esc(fp.radar_png)}" loading="lazy"
-      alt="Sentinel-1 radar image of ${esc(s.name)} before construction and in the latest months"></a>
-      <figcaption><span class="tag s1">S1 C-BAND</span><span>Sentinel-1 VV backscatter: before construction (left) and latest months (right); bright = strong echo from buildings and steel.</span></figcaption></figure>`;
+      ${fp.a_max_acres ? `Fitted full-build footprint ${fmt(fp.a_max_acres)} acres; 10-90% of it took ${fmt1(fp.build_months)} months.` : "The growth curve did not level off, so no full-build footprint is fitted."}</p>
+      ${ov ? `<p class="note"><span class="swatch"></span>On the map, the red pixels are this changed land, drawn on the satellite photo. The dotted yellow line is the campus outline.</p>` : ""}
+      ${fp.radar_png ? `<figure><a href="${esc(fp.radar_png)}" target="_blank" rel="noopener"><img src="${esc(fp.radar_png)}" loading="lazy" alt="Sentinel-1 radar image of ${esc(s.name)} before construction and in the latest months"></a>
+      <figcaption>Sentinel-1 VV backscatter: before construction (left) and latest months (right); bright = strong echo from buildings and steel.</figcaption></figure>` : ""}</div>`;
   }
   const rp = radarById[RADAR_FOR_SITE[s.id]];
-  if (rp) h += `<button class="cta" data-radar="${rp.id}">&#9670; Open the Sentinel-1 and NISAR radar view</button>`;
-  if (s.landcover) h += landcover(s.landcover);
-  h += exposure(s.exposure);
-  h += `<h3>Water</h3>`;
+  if (rp) h += `<div class="sec" style="padding-top:8px"><button class="pill" data-radar="${rp.id}">See the Sentinel-1 and NISAR radar view</button></div>`;
+  if (s.projected) {
+    h += `<div class="sec"><h3>Projection, ${YEARS[i]}</h3>` + scnTable([
+      ["Capacity (MW)", c2 => fmt(s.mw[c2])], ["Acres converted", c2 => fmt(s.acres[c2][i])], ["Water (ML/yr)", c2 => fmt(s.water_ml[c2][i])]]) +
+      `<h3 style="margin-top:16px">Water use, 2026-2030</h3>${bandChart(s.water_ml, "Water use", "#1A73E8", "ML/yr")}
+      <h3 style="margin-top:12px">Land converted, 2026-2030</h3>${bandChart(s.acres, "Acres converted", "#E8710A", "acres")}
+      <p class="note">Shaded: low to high scenario. Line: ${c} scenario.</p></div>`;
+  } else h += `<div class="sec"><p class="note">Not projected: ${esc(s.not_projected_reason)}.</p></div>`;
+  h += `<div class="sec"><h3>Water</h3>`;
   if (src) {
-    const pc = hex(ramp(pressure(src)));
-    h += `<div class="chain">
-      <span class="dotc" style="--c:var(--campus)"></span><span class="t"><b>${esc(s.name)}</b></span>
-      <span class="ln" style="--a:var(--campus);--b:${pc}"></span><span class="t">served by ${title(src.utility)}</span>
-      <span class="dotc" style="--c:${pc}"></span><span class="t">draws from <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button></span></div>`;
-    h += `<p>Linked to <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button> through ${title(src.utility)}${s.water_match && s.water_match.status === "matched_approx_location" ? " (campus location is approximate)" : ""}.</p>`;
+    h += `<div class="chain"><span class="d" style="--c:var(--campus)"></span><span class="t">${esc(s.name)}</span>
+      <span class="l"></span><span class="t note">served by ${title(src.utility)}</span>
+      <span class="d" style="--c:${pcolor(pressure(src))}"></span><span class="t"><button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button></span></div>
+      <p>Linked to <button class="linkbtn" data-src="${src.id}">${esc(src.water_body)}</button> through ${title(src.utility)}${s.water_match && s.water_match.status === "matched_approx_location" ? " (campus location is approximate)" : ""}.</p>`;
   } else h += `<p>${MATCH_TEXT[s.water_match && s.water_match.status] || "No water source linked."}</p>`;
-  h += linkList(s.links);
+  h += `</div>`;
+  if (s.landcover) h += landcover(s.landcover);
+  h += exposure(s.exposure) + linkList(s.links);
   setDetail(h);
 }
-
 function chart(sr) {
-  const W = 360, H = 150, L0 = 46, R0 = 10, T0 = 10, B0 = 22;
+  const W = 340, H = 140, L0 = 44, R0 = 8, T0 = 8, B0 = 22;
   const t = sr.t.map(d => Date.parse(d)), v = sr.v;
   const tmin = Math.min(...t), tmax = Math.max(...t);
   const kept = v.filter((_, i) => sr.keep[i]);
@@ -512,24 +363,15 @@ function chart(sr) {
   const t0 = Date.parse(sr.fit.t0), yr = 365.25 * 864e5;
   const fy = x => sr.fit.at_t0 + sr.fit.per_year * (x - t0) / yr;
   const yl = n => sr.unit === "mm" ? n.toFixed(0) : n.toFixed(1);
-  const id = "c" + Math.random().toString(36).slice(2, 8);
   const grid = [0, 1 / 3, 2 / 3, 1].map(f => { const yv = vmin + (vmax - vmin) * f;
-    return `<line x1="${L0}" x2="${W - R0}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="rgba(255,255,255,.07)"/>
-      <text x="${L0 - 6}" y="${Y(yv) + 3}" font-size="9.5" text-anchor="end" fill="#8494A7" font-family="JetBrains Mono">${yl(yv)}</text>`; }).join("");
-  const y0 = new Date(tmin).getUTCFullYear() + 1, y1 = new Date(tmax).getUTCFullYear();
+    return `<line x1="${L0}" x2="${W - R0}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="#E6E8EB"/><text x="${L0 - 6}" y="${Y(yv) + 3.5}" font-size="10" text-anchor="end" fill="#646B73">${yl(yv)}</text>`; }).join("");
   let xt = "";
-  for (let y = y0; y <= y1; y++) { const x = X(Date.UTC(y, 0, 1));
-    xt += `<line x1="${x}" x2="${x}" y1="${T0}" y2="${H - B0}" stroke="rgba(255,255,255,.05)"/>
-      <text x="${x}" y="${H - 6}" font-size="9.5" text-anchor="middle" fill="#8494A7" font-family="JetBrains Mono">${y}</text>`; }
-  const pts = t.map((x, i) => sr.keep[i]
-    ? `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2.3" fill="#38BDF8"/>`
-    : `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2.3" fill="none" stroke="#4B5868"/>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sr.label)}, ${sr.t[0]} to ${sr.t[sr.t.length - 1]}">
-    <defs><filter id="${id}"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
-    ${grid}${xt}${pts}
-    <line x1="${X(tmin)}" y1="${Y(fy(tmin))}" x2="${X(tmax)}" y2="${Y(fy(tmax))}" stroke="#FB4F72" stroke-width="5" opacity=".4" filter="url(#${id})"/>
-    <line x1="${X(tmin)}" y1="${Y(fy(tmin))}" x2="${X(tmax)}" y2="${Y(fy(tmax))}" stroke="#FB4F72" stroke-width="1.8"/>
-  </svg>`;
+  for (let y = new Date(tmin).getUTCFullYear() + 1; y <= new Date(tmax).getUTCFullYear(); y++)
+    xt += `<text x="${X(Date.UTC(y, 0, 1))}" y="${H - 6}" font-size="10" text-anchor="middle" fill="#646B73">${y}</text>`;
+  const pts = t.map((x, i) => sr.keep[i] ? `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2.2" fill="#1A73E8"/>`
+    : `<circle cx="${X(x).toFixed(1)}" cy="${Y(v[i]).toFixed(1)}" r="2.2" fill="none" stroke="#9AA1A9"/>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sr.label)}, ${sr.t[0]} to ${sr.t[sr.t.length - 1]}">
+    ${grid}${xt}${pts}<line x1="${X(tmin)}" y1="${Y(fy(tmin))}" x2="${X(tmax)}" y2="${Y(fy(tmax))}" stroke="#E53935" stroke-width="1.8"/></svg>`;
 }
 const TREND_TEXT = {
   swot_lake_id_unavailable: "No satellite trend yet: this is a lake or reservoir, and the SWOT lake identifiers could not be downloaded (archive access was refused).",
@@ -546,410 +388,354 @@ function trendBlock(src) {
   return `<p>${words}</p>${sr ? chart(sr) + `<p class="note">${esc(sr.label)}. Filled dots used in the trend line; hollow dots set aside as outliers.${sr.segments > 1 ? ` The series was stitched from ${sr.segments} pieces.` : ""}</p>` : ""}`;
 }
 function showSource(src) {
-  const i = state.y;
+  const i = state.y, p = pressure(src);
   const linked = D.sites.filter(s => s.source_id === src.id);
   const kind = { reservoir: "Reservoir", aquifer: "Aquifer", river: "River", lake: "Lake" }[src.type] || src.type;
-  const p = pressure(src), pc = hex(ramp(p));
-  let h = `<span class="kind" style="--c:${pc}">Water source · ${kind}</span><h2>${esc(src.water_body)}</h2>
-    <p class="sub">Used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p>`;
-  h += `<div class="stats">
-    <div class="stat"><b>${pct(src.share[state.scn][i])}</b><span>share of supply, ${YEARS[i]}</span></div>
-    <div class="stat"><b style="color:${pc}">${p.toFixed(2)}</b><span>pressure index (0-1)</span></div>
-    <div class="stat"><b>${linked.length}</b><span>linked campus${linked.length === 1 ? "" : "es"}</span></div></div>`;
-  h += `<h3>Data center water as a share of supply, ${YEARS[i]}</h3>`;
+  let h = `<div class="pad">${BACK}<p class="kicker" style="--c:${pcolor(p)}"><i></i>Water source · ${kind}</p><h2>${esc(src.water_body)}</h2>
+    <p class="sub">Used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p></div>
+    <div class="stats"><div><b>${pct(src.share[state.scn][i])}</b><span>share of supply, ${YEARS[i]}</span></div>
+    <div><b>${p.toFixed(2)}</b><span>pressure index (0-1)</span></div><div><b>${linked.length}</b><span>linked campus${linked.length === 1 ? "" : "es"}</span></div></div>`;
   const rows = [["This utility's supply", c => pct(src.share[c][i])]];
   if (src.share_wholesale) rows.push(["Whole wholesale system", c => pct(src.share_wholesale[c][i])]);
-  h += scnTable(rows);
-  h += `<p class="note" style="margin-top:6px">Estimated water for the ${linked.length} linked campus${linked.length === 1 ? "" : "es"}, divided by estimated supply
+  h += `<div class="sec"><h3>Data center water as a share of supply, ${YEARS[i]}</h3>${scnTable(rows)}
+    <p class="note" style="margin-top:6px">Estimated water for the ${linked.length} linked campus${linked.length === 1 ? "" : "es"}, divided by estimated supply
     (${fmt(src.supply_ml)} ML/yr for this utility${src.share_wholesale ? `; ${fmt(src.wholesale_supply_ml)} ML/yr for the system it buys from, ${esc(src.wholesale_sellers)}` : ""}).
-    Above 100% means the estimate is larger than the supply.</p>`;
-  h += `<p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p>`;
-  h += `<h3>How the water body is changing</h3>` + trendBlock(src);
+    Above 100% means the estimate is larger than the supply.</p>
+    <p>Linked campuses: ${linked.map(s => `<button class="linkbtn" data-site="${s.id}">${esc(s.name)}</button>`).join(", ") || "none"}</p></div>`;
+  h += `<div class="sec"><h3>How the water body is changing</h3>${trendBlock(src)}`;
   const rp = RADAR.find(r => r.kind !== "site" && Math.abs(r.lat - src.lat) < .2 && Math.abs(r.lon - src.lon) < .2);
-  if (rp) h += `<button class="cta" data-radar="${rp.id}">&#9670; Open the Sentinel-1 and NISAR ground motion view</button>`;
-  h += `<h3>Water stress</h3><p>WRI Aqueduct baseline: ${esc(src.aqueduct_label || "n/a")}. Pressure index ${p.toFixed(2)} (0-1).</p>`;
+  if (rp) h += `<button class="pill" data-radar="${rp.id}">See the Sentinel-1 and NISAR ground motion view</button>`;
+  h += `</div><div class="sec"><h3>Water stress</h3><p>WRI Aqueduct baseline: ${esc(src.aqueduct_label || "n/a")}. Pressure index ${p.toFixed(2)} (0-1).</p></div>`;
   h += exposure(src.exposure);
-  h += `<h3>How this source was identified</h3><p class="note">${esc(src.identification_basis)} Confidence: ${esc(src.confidence)}.</p>`;
+  h += `<div class="sec"><h3>How this source was identified</h3><p class="note">${esc(src.identification_basis)} Confidence: ${esc(src.confidence)}.</p></div>`;
   h += linkList(src.links);
   setDetail(h);
 }
-
 const IMG_LABEL = {
-  radar: ["S1 C-BAND", "Sentinel-1 C-band: before construction vs. latest months"],
-  nisar: ["NISAR L-BAND", "NISAR L-band: first vs. latest date in 2026 (top HH, bottom HV)"],
-  timeseries: ["S1 + NISAR", "Average brightness inside the outline over time"],
-  ground_motion: ["S1 + NISAR", "Ground motion: Sentinel-1 (left) and NISAR (right)"]
+  radar: "Sentinel-1 C-band: before construction vs. latest months",
+  nisar: "NISAR L-band: first vs. latest date in 2026 (top HH, bottom HV)",
+  timeseries: "Average brightness inside the outline over time",
+  ground_motion: "Ground motion: Sentinel-1 (left) and NISAR (right)"
 };
 function showRadar(p) {
-  const figs = p.images.map(src => {
-    const k = Object.keys(IMG_LABEL).find(k => src.includes("_" + k));
-    const [tag, lab] = IMG_LABEL[k] || ["", ""];
-    return `<figure><a class="img" href="${esc(src)}" target="_blank" rel="noopener" style="display:block"><img src="${esc(src)}" alt="${lab}, ${esc(p.name)}" loading="lazy"></a>
-            <figcaption>${tag ? `<span class="tag${k === "radar" ? " s1" : ""}">${tag}</span>` : ""}<span>${lab}</span></figcaption></figure>`;
-  }).join("");
   const site = siteById[SITE_FOR_RADAR[p.id]];
-  setDetail(`<span class="kind" style="--c:var(--radar)">Radar view</span><h2>${esc(p.name)}</h2><p>${esc(p.caption)}</p>${figs}
-    ${site ? `<p style="margin-top:12px"><button class="linkbtn" data-site="${site.id}">See this campus's projection and water link</button></p>` : ""}
+  const figs = p.images.map(src => { const k = Object.keys(IMG_LABEL).find(k => src.includes("_" + k));
+    return `<figure><a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${IMG_LABEL[k] || ""}, ${esc(p.name)}" loading="lazy"></a><figcaption>${IMG_LABEL[k] || ""}</figcaption></figure>`; }).join("");
+  setDetail(`<div class="pad">${BACK}<p class="kicker" style="--c:var(--radar)"><i></i>Radar view · Sentinel-1 and NISAR</p><h2>${esc(p.name)}</h2></div>
+    <div class="sec" style="padding-top:0"><p>${esc(p.caption)}</p>${figs}
+    ${site ? `<button class="pill" data-site="${site.id}">See this campus's projection and water link</button>` : ""}</div>
     ${linkList(p.source.split(" ; ").filter(s => s.startsWith("http")))}`);
 }
+
+function rowSite(s, v) {
+  return `<button data-site="${s.id}"><span class="dot" style="background:${s.status === "built" ? "#F5A623" : "#fff"}"></span>
+    <span class="nm">${esc(s.name)}<small>${s.status === "built" ? "Built" : "Announced"}${s.mw_stated ? ` · ${fmt(s.mw_stated)} MW` : ""}</small></span><span class="v">${v}</span></button>`;
+}
+function showHome() {
+  const i = state.y, c = state.scn, P = D.sites.filter(s => s.projected);
+  const acres = P.reduce((a, s) => a + s.acres[c][i], 0), water = P.reduce((a, s) => a + s.water_ml[c][i], 0);
+  const radarRows = RADAR.map(p => {
+    const img = p.images.find(x => x.includes("_nisar")) || p.images[0];
+    return `<button data-radar="${p.id}"><span class="th"><img src="${esc(img)}" alt="" loading="lazy"></span>
+      <span class="nm">${esc(p.name.replace(/\s*\(.*\)/, ""))}<small>${p.kind === "site" ? "Construction seen by NISAR and Sentinel-1" : "Ground motion over an aquifer"}</small></span></button>`; }).join("");
+  const big = D.sites.filter(s => s.footprint && s.status === "built" && OVERLAYS[s.id]).sort((a, b) => b.footprint.final_acres - a.footprint.final_acres).slice(0, 5);
+  const top = D.sources.map(s => [s, pressure(s)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const missing = D.sites.filter(s => s.location.missing);
+  setDetail(`<div class="pad"><h1>Data centers and the water they depend on</h1>
+    <p class="lede">Land converted by US data center campuses, measured with Sentinel-1 radar, and the reservoirs,
+      rivers and aquifers their water utilities draw from. Move the year to see the projection of built and announced campuses to 2030.</p></div>
+    <div class="stats"><div><b>${fmt(acres)}</b><span>acres converted, ${YEARS[i]}</span></div><div><b>${fmt(water)}</b><span>ML of water per year</span></div>
+      <div><b>${P.length}<span style="display:inline;font-size:13px;color:var(--muted)"> of ${D.sites.length}</span></b><span>campuses projected (${c})</span></div></div>
+    <div class="sec"><h3>Radar views</h3><div class="list">${radarRows}</div></div>
+    <div class="sec"><h3>Most land changed, seen by radar</h3><div class="list">${big.map(s => rowSite(s, fmt(s.footprint.final_acres) + " ac")).join("")}</div></div>
+    <div class="sec"><h3>Highest water pressure index, ${YEARS[i]}</h3><div class="list">${top.map(([s, p]) => `<button data-src="${s.id}">
+      <span class="dot" style="background:${pcolor(p)}"></span><span class="nm">${esc(s.water_body)}<small>${title(s.utility)}</small></span><span class="v">${p.toFixed(2)}</span></button>`).join("")}</div></div>
+    <div class="sec" style="padding-bottom:20px"><details class="about"><summary>About the data and methods</summary>
+      <p><b>Footprints.</b> Converted acres at built campuses come from Sentinel-1 radar (Planetary Computer <code>sentinel-1-rtc</code>):
+        a pixel counts as converted once its backscatter changes by more than a threshold for two months in a row, inside the campus outline plus 200 m.
+        Those pixels are drawn in red on the satellite photo.</p>
+      <p><b>Projection.</b> Acres and water for 2026-2030 use ratios measured at built sites (acres per MW, water per kWh from Google's per-site reports,
+        build time) and each campus's stated MW or investment. Low, median and high use the 25th, 50th and 75th percentiles.</p>
+      <p><b>Water sources.</b> Each campus is matched to the EPA water service area it sits in, then to the utility's source (EPA SDWA).
+        Trends are SWOT water surface elevation (rivers) or OPERA DISP-S1 ground motion over aquifers. A trend describes the water body; it does not show what caused the change.</p>
+      <p><b>Shares.</b> "Local share" divides the campus water estimate by the utility's own supply (population served x per-capita use).
+        Where a utility buys its water, the "wholesale share" divides by the supply of the whole system it buys from.</p>
+      <p><b>Exposure.</b> Land cover before construction: NLCD. Wetlands: USFWS NWI. Protected land: USGS PAD-US 4.1 (GAP status 1-3).</p>
+      <p><b>Imagery.</b> Esri World Imagery and reference labels; terrain from Mapzen/AWS Terrain Tiles. The photo date differs by place and may be older or newer than the radar.</p>
+      ${missing.length ? `<p>Not on the map because their campus location could not be found: ${missing.map(s => esc(s.name)).join("; ")}.</p>` : ""}
+      <p>Every number traces to a CSV in the project's <code>data/</code> folder, and each panel lists its sources. Data built ${esc(D.built || "")}.</p></details></div>`);
+}
+
 function setDetail(h) {
   const el = document.getElementById("detail");
   el.innerHTML = h;
-  el.scrollTop = 0;
+  document.querySelector("#panel .body").scrollTop = 0;
   el.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => select("src", b.dataset.src)));
   el.querySelectorAll("[data-site]").forEach(b => b.addEventListener("click", () => select("site", b.dataset.site)));
   el.querySelectorAll("[data-radar]").forEach(b => b.addEventListener("click", () => select("radar", b.dataset.radar)));
-  document.body.classList.add("drawer-open");
-  document.getElementById("drawer").setAttribute("aria-hidden", "false");
-}
-function closeDrawer() {
-  state.selected = null;
-  document.body.classList.remove("drawer-open");
-  document.getElementById("drawer").setAttribute("aria-hidden", "true");
-  renderLayers();
+  el.querySelectorAll("[data-home]").forEach(b => b.addEventListener("click", goHome));
 }
 function objOf(kind, id) { return kind === "site" ? siteById[id] : kind === "src" ? srcById[id] : radarById[id]; }
-function select(kind, id, fly = true) {
-  const o = objOf(kind, id);
-  if (!o) return;
-  state.selected = [kind, id];
-  if (fly && o.lat != null) {
-    const close = kind !== "src";
-    map.flyTo({ center: [o.lon, o.lat], zoom: close ? 13.2 : 9.6, pitch: close ? 62 : 50, bearing: close ? -28 : -12,
-                duration: 2600, curve: 1.6, essential: true,
-                padding: isNarrow() ? {} : { left: 380, right: 430, top: 40, bottom: 110 } });
-  }
-  showDetail();
-  renderLayers();
-}
 function showDetail() {
-  if (!state.selected) return;
+  if (!state.selected) return showHome();
   const [kind, id] = state.selected, o = objOf(kind, id);
   kind === "site" ? showSite(o) : kind === "src" ? showSource(o) : showRadar(o);
 }
 
 /* ---------------- map ---------------- */
-const BASES = {
-  night: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  sat: {
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
+const map = new maplibregl.Map({
+  container: "map",
+  style: {
     version: 8,
-    glyphs: "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf",
+    projection: { type: "globe" },
+    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+    sky: { "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0] },
     sources: {
-      sat: { type: "raster", tileSize: 256, maxzoom: 19,
-             tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-             attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics" },
-      labels: { type: "raster", tileSize: 256,
-                tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
-                attribution: "Labels &copy; Esri" }
+      imagery: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
+                 attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community" },
+      roads: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`] },
+      places: { type: "raster", tileSize: 256, maxzoom: 19, tiles: [`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`],
+                attribution: "Labels &copy; Esri" },
+      dem: { type: "raster-dem", encoding: "terrarium", tileSize: 256, maxzoom: 14,
+             tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+             attribution: "Terrain: Mapzen, AWS Terrain Tiles" }
     },
     layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#04070C" } },
-      { id: "sat", type: "raster", source: "sat", paint: { "raster-saturation": -0.35, "raster-brightness-max": 0.72, "raster-contrast": 0.1 } },
-      { id: "labels", type: "raster", source: "labels", paint: { "raster-opacity": 0.9 } }
-    ]
-  }
-};
-const US = [[-124.8, 24.5], [-66.9, 49.4]];
-const isNarrow = () => matchMedia("(max-width: 900px)").matches;
-function home(duration) {
-  const pad = isNarrow() ? { top: 110, bottom: 230, left: 6, right: 6 }
-                         : { top: 70, bottom: 120, left: 400, right: 30 };
-  map.fitBounds(US, { padding: pad, pitch: isNarrow() ? 35 : 48, bearing: -10, duration, essential: true });
-}
-const map = new maplibregl.Map({
-  container: "map", style: BASES.night, center: [-97, 33], zoom: 2.6, pitch: 20, bearing: 0,
-  maxPitch: 80, attributionControl: { compact: true }, antialias: true
+      { id: "space", type: "background", paint: { "background-color": "#000" } },
+      { id: "imagery", type: "raster", source: "imagery", paint: { "raster-fade-duration": 200 } },
+      { id: "roads", type: "raster", source: "roads", minzoom: 9, paint: { "raster-opacity": ["interpolate", ["linear"], ["zoom"], 9, 0, 11, .55, 15, .4] } },
+      { id: "places", type: "raster", source: "places", minzoom: 2.5, paint: { "raster-opacity": .95 } }
+    ],
+    terrain: { source: "dem", exaggeration: 1.4 }
+  },
+  center: [-98, 39], zoom: 1.4, pitch: 0, bearing: 0, maxPitch: 75,
+  attributionControl: { compact: true }
 });
-map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
+map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
 
-// Tint the dark basemap toward deep navy so water and land read apart.
-map.on("style.load", () => {
-  if (state.base !== "night") return;
-  for (const l of map.getStyle().layers) {
-    try {
-      if (l.type === "background") map.setPaintProperty(l.id, "background-color", "#070B12");
-      else if (l.id === "water" && l.type === "fill") map.setPaintProperty(l.id, "fill-color", "#0A1726");
-      else if (l.type === "fill" && /landcover|landuse|park/.test(l.id)) map.setPaintProperty(l.id, "fill-opacity", 0.35);
-      else if (l.type === "line" && /boundary_state|boundary_county/.test(l.id)) map.setPaintProperty(l.id, "line-color", "#1E2A3A");
-    } catch (e) {}
-  }
-});
-
-/* ---------------- deck.gl layers ---------------- */
-const placed = D.sites.filter(s => s.lat != null && !s.location.missing);
-const acresNow = s => s.projected ? s.acres[state.scn][state.y] : 0;
-const activeNow = s => s.projected ? s.acres[state.scn][state.y] > 0 : s.status === "built";
-// Column height: square root so a 300-acre campus is still visible beside an 8,000-acre one. Display only.
-const colHeight = s => 6000 + Math.sqrt(Math.max(acresNow(s), 0)) * 5000;
-// Columns shrink as you zoom in so they stay readable, then hand over to the campus outlines.
-const colScale = z => Math.max(0.03, Math.min(3, Math.pow(2, 4.5 - z)));
-
-// Water link paths: a raised curve from the source to the campus, sampled so a pulse can travel along it.
-function arcPath(a, b, n = 40) {
-  const kx = Math.cos((a[1] + b[1]) / 2 * Math.PI / 180) * 111320, ky = 110540;
-  const d = Math.hypot((b[0] - a[0]) * kx, (b[1] - a[1]) * ky);
-  const hgt = Math.max(1500, d * 0.28);
-  const out = [];
-  for (let k = 0; k <= n; k++) { const t = k / n;
-    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, Math.sin(Math.PI * t) * hgt]); }
-  return out;
-}
-const LOOP = 1000;
-const links = placed.filter(s => srcById[s.source_id]).map(s => {
+const linkFeatures = placed.filter(s => srcById[s.source_id]).map(s => {
   const src = srcById[s.source_id];
-  const path = arcPath([src.lon, src.lat], [s.lon, s.lat]);
-  return { site: s, src, path, ts: path.map((_, k) => k / (path.length - 1) * LOOP * 0.55) };
+  return { type: "Feature", properties: { site: s.id, src: src.id },
+           geometry: { type: "LineString", coordinates: [[s.lon, s.lat], [src.lon, src.lat]] } };
 });
-// Two pulses per active link, offset by half a loop.
-const pulses = links.flatMap((l, j) => [0, 0.5].map(off => ({ ...l, ts: l.ts.map(t => t + ((off + (j * 0.137) % 1) % 1) * LOOP) })));
-
-const RADAR_ICON = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><defs><filter id="g"><feGaussianBlur stdDeviation="3"/></filter></defs>
-   <rect x="20" y="20" width="24" height="24" transform="rotate(45 32 32)" fill="#C6F432" opacity=".55" filter="url(#g)"/>
-   <rect x="22" y="22" width="20" height="20" transform="rotate(45 32 32)" fill="#0B1305" stroke="#C6F432" stroke-width="4"/>
-   <circle cx="32" cy="32" r="4" fill="#C6F432"/></svg>`);
-
-const exposureItems = [];
-for (const o of [...D.sites, ...D.sources]) {
-  const e = o.exposure; if (!e || o.lat == null || (o.location && o.location.missing)) continue;
+const exposureFC = { type: "FeatureCollection", features: [] };
+for (const o of [...placed, ...D.sources]) {
+  const e = o.exposure; if (!e || o.lat == null) continue;
   const w = e.wetland_vegetated_m != null && e.wetland_vegetated_m <= 100, p = e.protected_m != null && e.protected_m <= 1000;
-  const kind = o.water_body ? "src" : "site";
-  if (w) exposureItems.push({ o, kind, ch: "W", off: [16, -18], col: RGB.wet });
-  if (p) exposureItems.push({ o, kind, ch: "P", off: [w ? 36 : 16, -18], col: RGB.prot });
+  const props = k => ({ k, id: o.id, kind: o.water_body ? "src" : "site" });
+  if (w) exposureFC.features.push({ type: "Feature", properties: props("w"), geometry: { type: "Point", coordinates: [o.lon, o.lat] } });
+  if (p) exposureFC.features.push({ type: "Feature", properties: props("p"), geometry: { type: "Point", coordinates: [o.lon, o.lat] } });
 }
+function sitesFC() {
+  return { type: "FeatureCollection", features: placed.map((s, k) => ({ type: "Feature", id: k,
+    properties: { id: s.id, name: s.name, built: s.status === "built", active: activeNow(s),
+                  r: 5 + Math.sqrt(Math.max(acresNow(s), 0)) * 0.22 },
+    geometry: { type: "Point", coordinates: [s.lon, s.lat] } })) };
+}
+function sourcesFC() {
+  return { type: "FeatureCollection", features: D.sources.map((s, k) => ({ type: "Feature", id: k,
+    properties: { id: s.id, name: s.water_body, color: pcolor(pressure(s)) }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } })) };
+}
+const outlinesFC = { type: "FeatureCollection", features: placed.filter(s => s.outline).map(s => ({ type: "Feature",
+  properties: { id: s.id, built: s.status === "built" }, geometry: s.outline })) };
+const radarFC = { type: "FeatureCollection", features: RADAR.map(p => ({ type: "Feature", properties: { id: p.id, label: p.kind === "site" ? "NISAR radar view" : "NISAR ground motion" },
+  geometry: { type: "Point", coordinates: [p.lon, p.lat] } })) };
 
-let t0 = performance.now(), clock = 0;
-function layerList() {
-  const i = state.y, c = state.scn, key = `${i}|${c}|${state.w.join(",")}`;
-  const L = [], z = state.zoom;
-  const colAlpha = Math.max(0, Math.min(1, (11.5 - z) / 2.5));   // columns hand over to outlines when zoomed in
-  const sel = state.selected;
-  const selObj = sel && objOf(sel[0], sel[1]);
-  if (state.layers.water) {
-    L.push(new deck.PathLayer({
-      id: "links", data: links, getPath: d => d.path, widthUnits: "pixels", getWidth: 1.6, widthMinPixels: 1,
-      getColor: d => [...ramp(pressure(d.src)), activeNow(d.site) ? 110 : 45], capRounded: true, jointRounded: true,
-      updateTriggers: { getColor: key }, pickable: false
-    }));
-    L.push(new deck.TripsLayer({
-      id: "flow", data: pulses.filter(d => activeNow(d.site)), getPath: d => d.path, getTimestamps: d => d.ts,
-      getColor: d => lerp(ramp(pressure(d.src)), RGB.white, .25), widthUnits: "pixels", getWidth: 3.2, capRounded: true, jointRounded: true,
-      fadeTrail: true, trailLength: 180, currentTime: clock % LOOP, updateTriggers: { getColor: key, getPath: key },
-      parameters: { depthWriteEnabled: false }
-    }));
+const TEXT = { "text-font": ["Open Sans Semibold"], "text-size": 12.5, "text-offset": [0, 1.25], "text-anchor": "top", "text-max-width": 11, "text-optional": true };
+const HALO = { "text-color": "#fff", "text-halo-color": "rgba(0,0,0,.85)", "text-halo-width": 1.4, "text-halo-blur": .4 };
+
+map.on("load", () => {
+  // Radar-measured change: one image per built campus, drawn pixel-sharp on the photo.
+  for (const [id, o] of Object.entries(OVERLAYS)) {
+    map.addSource("ov-" + id, { type: "image", url: o.file, coordinates: o.coords });
+    map.addLayer({ id: "ov-" + id, type: "raster", source: "ov-" + id, minzoom: 10,
+      paint: { "raster-resampling": "nearest", "raster-fade-duration": 0, "raster-opacity": ["interpolate", ["linear"], ["zoom"], 10.5, 0, 12.5, 1] } }, "places");
   }
-  if (state.layers.sites) {
-    L.push(new deck.ScatterplotLayer({
-      id: "site-glow", data: placed, getPosition: d => [d.lon, d.lat], radiusUnits: "pixels",
-      getRadius: d => activeNow(d) ? 10 + Math.sqrt(acresNow(d)) * .22 : 5,
-      getFillColor: d => [...RGB.campus, d.status === "built" ? 55 : (activeNow(d) ? 30 : 12)], stroked: false,
-      updateTriggers: { getRadius: key, getFillColor: key }, transitions: { getRadius: 500 }
-    }));
-    if (colAlpha > 0.02) L.push(new deck.ColumnLayer({
-      id: "columns", data: placed, getPosition: d => [d.lon, d.lat], diskResolution: 6, radius: 11000 * colScale(z), extruded: true,
-      getElevation: d => colHeight(d), elevationScale: colScale(z), opacity: colAlpha,
-      getFillColor: d => d.status === "built" ? [...RGB.campus, 235] : (activeNow(d) ? [...RGB.campus2, 150] : [...RGB.campus, 40]),
-      getLineColor: [255, 220, 160, 200], wireframe: false, pickable: true,
-      material: { ambient: .55, diffuse: .6, shininess: 40, specularColor: [255, 220, 180] },
-      updateTriggers: { getElevation: key, getFillColor: key }, transitions: { getElevation: { duration: 900, easing: t => 1 - Math.pow(1 - t, 3) } },
-      onClick: ({ object }) => object && select("site", object.id)
-    }));
-    L.push(new deck.GeoJsonLayer({
-      id: "outlines", data: { type: "FeatureCollection", features: placed.filter(s => s.outline).map(s => ({ type: "Feature", geometry: s.outline, properties: { id: s.id } })) },
-      extruded: true, wireframe: true, getElevation: f => activeNow(siteById[f.properties.id]) ? 45 : 8,
-      getFillColor: f => siteById[f.properties.id].status === "built" ? [...RGB.campus, 190] : [...RGB.campus2, 95],
-      getLineColor: [255, 214, 150, 230], lineWidthMinPixels: 1.5, pickable: true,
-      material: { ambient: .6, diffuse: .55, shininess: 30 },
-      updateTriggers: { getElevation: key }, transitions: { getElevation: 700 },
-      onClick: ({ object }) => object && select("site", object.properties.id)
-    }));
-    // Columns stop being pickable when faded, so also pick the base disk.
-    L.push(new deck.ScatterplotLayer({
-      id: "site-hit", data: placed, getPosition: d => [d.lon, d.lat], radiusUnits: "pixels", getRadius: 9,
-      getFillColor: [0, 0, 0, 0], pickable: true, onClick: ({ object }) => object && select("site", object.id)
-    }));
+  map.addSource("outlines", { type: "geojson", data: outlinesFC });
+  map.addLayer({ id: "outline-fill", type: "fill", source: "outlines", minzoom: 9, paint: { "fill-color": "#FFD678", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 9, 0, 11, .06] } }, "places");
+  map.addLayer({ id: "outline-shadow", type: "line", source: "outlines", minzoom: 9, paint: { "line-color": "#000", "line-opacity": .45, "line-width": 4, "line-blur": 2 } });
+  map.addLayer({ id: "outline", type: "line", source: "outlines", minzoom: 9,
+    paint: { "line-color": "#FFD678", "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 15, 2.5], "line-dasharray": [2, 1.5] } });
+
+  map.addSource("links", { type: "geojson", data: { type: "FeatureCollection", features: linkFeatures } });
+  map.addLayer({ id: "link-glow", type: "line", source: "links", filter: ["==", "site", "__none__"],
+    paint: { "line-color": "#000", "line-opacity": .45, "line-width": 5, "line-blur": 3 } });
+  map.addLayer({ id: "link", type: "line", source: "links", filter: ["==", "site", "__none__"],
+    layout: { "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 2, "line-dasharray": [2, 2] } });
+
+  map.addSource("exposure", { type: "geojson", data: exposureFC });
+  map.addLayer({ id: "exposure", type: "circle", source: "exposure", layout: { visibility: "none" },
+    paint: { "circle-radius": ["case", ["==", ["get", "k"], "w"], 15, 20], "circle-opacity": 0,
+             "circle-stroke-width": 2.5, "circle-stroke-color": ["case", ["==", ["get", "k"], "w"], "#43C08A", "#A47BE6"],
+             "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 12, 1, 13.5, 0] } });
+
+  map.addSource("sources", { type: "geojson", data: sourcesFC() });
+  map.addLayer({ id: "src-halo", type: "circle", source: "sources",
+    paint: { "circle-radius": 13, "circle-color": ["get", "color"], "circle-opacity": .3, "circle-blur": .6 } });
+  map.addLayer({ id: "src", type: "circle", source: "sources",
+    paint: { "circle-radius": ["case", ["boolean", ["feature-state", "hover"], false], 8.5, 7], "circle-color": ["get", "color"],
+             "circle-stroke-color": "#fff", "circle-stroke-width": 2.2 } });
+  map.addLayer({ id: "src-label", type: "symbol", source: "sources", minzoom: 6.5,
+    layout: { ...TEXT, "text-field": ["get", "name"] }, paint: { ...HALO, "text-color": "#D7F1FF" } });
+
+  map.addSource("sites", { type: "geojson", data: sitesFC() });
+  const fadeOut = ["interpolate", ["linear"], ["zoom"], 11.5, 1, 13, 0];
+  map.addLayer({ id: "site", type: "circle", source: "sites",
+    paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, ["*", ["get", "r"], .5], 5, ["get", "r"]],
+             "circle-color": ["case", ["get", "built"], "#F5A623", ["get", "active"], "#FFE2A8", "#FFFFFF"],
+             "circle-opacity": ["interpolate", ["linear"], ["zoom"], 11.5, ["case", ["get", "active"], 1, .55], 13, 0],
+             "circle-stroke-color": ["case", ["get", "built"], "#FFFFFF", "#F5A623"],
+             "circle-stroke-width": ["case", ["boolean", ["feature-state", "hover"], false], 3.5, 2],
+             "circle-stroke-opacity": fadeOut } });
+  map.addLayer({ id: "site-label", type: "symbol", source: "sites", minzoom: 6,
+    layout: { ...TEXT, "text-field": ["get", "name"], "text-offset": [0, 1.1] }, paint: { ...HALO, "text-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0, 6.6, 1] } });
+
+  map.addSource("radar", { type: "geojson", data: radarFC });
+  map.addLayer({ id: "radar", type: "symbol", source: "radar", minzoom: 4.5,
+    layout: { "text-field": ["get", "label"], "text-font": ["Open Sans Semibold"], "text-size": 11, "text-anchor": "bottom", "text-offset": [0, -1.3] },
+    paint: { "text-color": "#1F2328", "text-halo-color": "#C5E1A5", "text-halo-width": 6 } });
+
+  for (const id of ["site", "src", "radar", "outline-fill"]) {
+    map.on("mouseenter", id, () => map.getCanvas().style.cursor = "pointer");
+    map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; popup.remove(); clearHover(); });
   }
-  if (state.layers.water) {
-    const ph = (clock / 1600) % 1;
-    L.push(new deck.ScatterplotLayer({
-      id: "src-pulse", data: D.sources, getPosition: d => [d.lon, d.lat], radiusUnits: "pixels",
-      getRadius: (d, { index }) => 9 + ((ph + index * .23) % 1) * 26, stroked: true, filled: false, lineWidthUnits: "pixels", getLineWidth: 1.5,
-      getLineColor: (d, { index }) => [...ramp(pressure(d)), Math.round(200 * (1 - (ph + index * .23) % 1))],
-      updateTriggers: { getRadius: ph, getLineColor: [ph, key] }, parameters: { depthWriteEnabled: false }
-    }));
-    L.push(new deck.ScatterplotLayer({
-      id: "sources", data: D.sources, getPosition: d => [d.lon, d.lat], radiusUnits: "pixels", getRadius: 8,
-      getFillColor: d => ramp(pressure(d)), stroked: true, getLineColor: [255, 255, 255, 235], lineWidthUnits: "pixels", getLineWidth: 2,
-      pickable: true, updateTriggers: { getFillColor: key }, transitions: { getFillColor: 500 },
-      onClick: ({ object }) => object && select("src", object.id)
-    }));
+  map.on("mousemove", "site", e => hover(e, "sites", f => { const s = siteById[f.properties.id];
+    return `<b>${esc(s.name)}</b><small>${s.status === "built" ? "Built" : "Announced"}${s.projected ? ` · ${fmt(acresNow(s))} acres, ${fmt(s.water_ml[state.scn][state.y])} ML/yr in ${YEARS[state.y]}` : ""}</small>`; }));
+  map.on("mousemove", "src", e => hover(e, "sources", f => { const s = srcById[f.properties.id];
+    return `<b>${esc(s.water_body)}</b><small>Water source · pressure index ${pressure(s).toFixed(2)}</small>`; }));
+  map.on("click", "site", e => select("site", e.features[0].properties.id));
+  map.on("click", "outline-fill", e => select("site", e.features[0].properties.id));
+  map.on("click", "src", e => select("src", e.features[0].properties.id));
+  map.on("click", "radar", e => select("radar", e.features[0].properties.id));
+  map.on("click", "exposure", e => { const p = e.features[0].properties; select(p.kind, p.id); });
+
+  applyLayers();
+  document.getElementById("intro").classList.add("done");
+  setTimeout(() => { if (!state.selected) home(still ? 0 : 4200); }, 500);
+});
+
+const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
+let hovered = null;
+function clearHover() { if (hovered) map.setFeatureState({ source: hovered[0], id: hovered[1] }, { hover: false }); hovered = null; }
+function hover(e, source, html) {
+  const f = e.features[0];
+  if (!hovered || hovered[0] !== source || hovered[1] !== f.id) { clearHover(); hovered = [source, f.id]; map.setFeatureState({ source, id: f.id }, { hover: true }); }
+  if (matchMedia("(hover: hover)").matches) popup.setLngLat(f.geometry.coordinates).setHTML(html(f)).addTo(map);
+}
+
+const US = [[-124.8, 24.5], [-66.9, 49.4]];
+function pad() { return isNarrow() ? { top: 70, bottom: Math.round(innerHeight * .42) + 70, left: 20, right: 20 } : { top: 60, bottom: 90, left: 420, right: 70 }; }
+function home(duration = 2400) { map.fitBounds(US, { padding: pad(), pitch: 0, bearing: 0, duration, essential: true }); }
+function bboxOf(coords) {
+  const xs = coords.map(c => c[0]), ys = coords.map(c => c[1]);
+  return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
+}
+function flatten(g) { return g.type === "Polygon" ? g.coordinates.flat() : g.coordinates.flat(2); }
+function flyToSite(s) {
+  const ov = OVERLAYS[s.id];
+  const pts = [...(s.outline ? flatten(s.outline) : []), ...(ov ? ov.coords : [])];
+  if (pts.length) map.fitBounds(bboxOf(pts), { padding: pad(), pitch: 52, bearing: -15, maxZoom: 16, duration: still ? 0 : 3200, essential: true });
+  else map.flyTo({ center: [s.lon, s.lat], zoom: 13.5, pitch: 52, bearing: -15, padding: pad(), duration: still ? 0 : 3200, essential: true });
+}
+function select(kind, id) {
+  const o = objOf(kind, id); if (!o) return;
+  state.selected = [kind, id];
+  closeResults();
+  if (kind === "site" && o.lat != null) flyToSite(o);
+  else if (kind === "src") {
+    const linked = placed.filter(s => s.source_id === id);
+    map.fitBounds(bboxOf([[o.lon, o.lat], ...linked.map(s => [s.lon, s.lat])]), { padding: pad(), pitch: 45, bearing: -10, maxZoom: 11.5, duration: still ? 0 : 3000, essential: true });
+  } else if (kind === "radar") {
+    const site = siteById[SITE_FOR_RADAR[id]];
+    if (site) flyToSite(site); else map.flyTo({ center: [o.lon, o.lat], zoom: 11, pitch: 50, padding: pad(), duration: still ? 0 : 3000, essential: true });
   }
-  if (state.layers.radar) L.push(new deck.IconLayer({
-    id: "radar", data: RADAR, getPosition: d => [d.lon, d.lat], getIcon: () => ({ url: RADAR_ICON, width: 64, height: 64, anchorY: 32 }),
-    getSize: 30, sizeUnits: "pixels", getPixelOffset: [0, -26], pickable: true, billboard: true,
-    parameters: { depthCompare: "always" }, onClick: ({ object }) => object && select("radar", object.id)
-  }));
-  if (state.layers.exposure) L.push(new deck.TextLayer({
-    id: "exposure", data: exposureItems, getPosition: d => [d.o.lon, d.o.lat], getText: d => d.ch, getPixelOffset: d => d.off,
-    getSize: 11, fontFamily: "JetBrains Mono, monospace", fontWeight: 700, getColor: [4, 17, 11], background: true,
-    getBackgroundColor: d => d.col, backgroundPadding: [4, 2], pickable: true, parameters: { depthCompare: "always" },
-    onClick: ({ object }) => object && select(object.kind, object.o.id)
-  }));
-  if (selObj && selObj.lat != null) {
-    const ph = (clock / 1200) % 1;
-    L.push(new deck.ScatterplotLayer({
-      id: "sel", data: [selObj], getPosition: d => [d.lon, d.lat], radiusUnits: "pixels", getRadius: 16 + ph * 14,
-      stroked: true, filled: false, lineWidthUnits: "pixels", getLineWidth: 2, getLineColor: [255, 255, 255, Math.round(255 * (1 - ph))],
-      updateTriggers: { getRadius: ph, getLineColor: ph }, parameters: { depthCompare: "always" }
-    }));
+  showDetail(); showLinks();
+}
+function goHome() { state.selected = null; showHome(); showLinks(); home(); }
+function showLinks() {
+  if (!map.getLayer("link")) return;
+  let f = ["==", "site", "__none__"];
+  if (state.selected) {
+    const [kind, id] = state.selected;
+    if (kind === "site") f = ["==", "site", id];
+    else if (kind === "src") f = ["==", "src", id];
+    else if (SITE_FOR_RADAR[id]) f = ["==", "site", SITE_FOR_RADAR[id]];
   }
-  return L;
+  map.setFilter("link", f); map.setFilter("link-glow", f);
 }
 
-function tooltip({ object, layer }) {
-  if (!object || !layer) return null;
-  let h;
-  const id = layer.id;
-  if (id === "columns" || id === "site-hit") {
-    const s = object;
-    h = `<div class="tk" style="color:#FFB547">${s.status === "built" ? "Built campus" : "Announced campus"}</div><b>${esc(s.name)}</b>
-      ${s.projected ? `<div class="tr"><span>${fmt(acresNow(s))}</span> acres · <span>${fmt(s.water_ml[state.scn][state.y])}</span> ML/yr in ${YEARS[state.y]}</div>` : `<div class="tr">Not projected</div>`}`;
-  } else if (id === "outlines") {
-    const s = siteById[object.properties.id];
-    h = `<div class="tk" style="color:#FFB547">Campus outline</div><b>${esc(s.name)}</b>`;
-  } else if (id === "sources") {
-    const p = pressure(object);
-    h = `<div class="tk" style="color:${hex(ramp(p))}">Water source · ${esc(object.type)}</div><b>${esc(object.water_body)}</b>
-      <div class="tr">Pressure index <span>${p.toFixed(2)}</span> · share <span>${pct(object.share[state.scn][state.y])}</span></div>`;
-  } else if (id === "radar") {
-    h = `<div class="tk" style="color:#C6F432">Radar view</div><b>${esc(object.name)}</b><div class="tr">Sentinel-1 and NISAR</div>`;
-  } else if (id === "exposure") {
-    const e = object.o.exposure;
-    h = `<b>${esc(object.o.name || object.o.water_body)}</b><div class="tr">${object.ch === "W" ? `Marsh or swamp ${dist(e.wetland_vegetated_m)}` : `Protected land ${dist(e.protected_m)}`}</div>`;
-  } else return null;
-  return { html: h, style: { background: "rgba(8,13,21,.92)", border: "1px solid rgba(255,255,255,.12)", borderRadius: "10px",
-           padding: "9px 11px", color: "#E9EFF6", fontSize: "12.5px", lineHeight: "1.45", maxWidth: "280px",
-           boxShadow: "0 10px 30px rgba(0,0,0,.5)", backdropFilter: "blur(10px)" } };
+const LAYERS = {
+  lyrChange: () => Object.keys(OVERLAYS).map(id => "ov-" + id),
+  lyrSites: () => ["site", "site-label", "outline", "outline-fill", "outline-shadow"],
+  lyrWater: () => ["src", "src-halo", "src-label", "link", "link-glow"],
+  lyrRadar: () => ["radar"], lyrExposure: () => ["exposure"], lyrLabels: () => ["places", "roads"]
+};
+function applyLayers() {
+  for (const [el, ids] of Object.entries(LAYERS)) {
+    const on = document.getElementById(el).checked;
+    for (const id of ids()) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  }
+  map.setTerrain(document.getElementById("lyrTerrain").checked ? { source: "dem", exaggeration: 1.4 } : null);
 }
-
-const overlay = new deck.MapboxOverlay({ interleaved: false, layers: [], getTooltip: tooltip,
-  getCursor: ({ isHovering }) => isHovering ? "pointer" : "grab" });
-map.addControl(overlay);
-function renderLayers() { overlay.setProps({ layers: layerList() }); }
-map.on("move", () => { state.zoom = map.getZoom(); });
-
-// Animation: flowing pulses and ripples. Paused when the tab is hidden or the user prefers less motion.
-const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-function frame(now) {
-  clock = still ? 300 : (now - t0) * 0.32;
-  renderLayers();
-  if (!still) requestAnimationFrame(frame);
-}
-
-/* ---------------- side panel widgets ---------------- */
-function nisarCards() {
-  document.getElementById("nisarCards").innerHTML = RADAR.map(p => {
-    const img = p.images.find(x => x.includes("_nisar")) || p.images.find(x => x.includes("_ground_motion")) || p.images[0];
-    const short = p.name.replace(/\s*\(.*\)/, "");
-    return `<button class="ncard" data-r="${p.id}" aria-label="Open radar view: ${esc(p.name)}"><img src="${esc(img)}" alt="" loading="lazy">
-      <span class="tag">${p.kind === "site" ? "L-BAND" : "MOTION"}</span><span class="cap">${esc(short)}</span></button>`;
-  }).join("");
-  document.querySelectorAll(".ncard").forEach(b => b.addEventListener("click", () => select("radar", b.dataset.r)));
-}
-function rankList() {
-  const rows = D.sources.map(s => [s, pressure(s)]).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  document.getElementById("rankYear").textContent = `top 6 · ${YEARS[state.y]} · ${state.scn}`;
-  document.getElementById("rank").innerHTML = rows.map(([s, p]) => `<button data-s="${s.id}" title="${esc(s.water_body)}">
-    <span class="nm">${esc(s.water_body)}</span><span class="bar"><i style="width:${Math.round(p * 100)}%;background:${hex(ramp(p))};box-shadow:0 0 8px ${hex(ramp(p))}"></i></span>
-    <span class="v">${p.toFixed(2)}</span></button>`).join("");
-  document.querySelectorAll("#rank button").forEach(b => b.addEventListener("click", () => select("src", b.dataset.s)));
-}
-const tween = {};
-function countTo(id, val) {
-  const el = document.getElementById(id), from = tween[id] ?? 0, start = performance.now();
-  tween[id] = val;
-  const step = now => { const k = Math.min(1, (now - start) / 700), e = 1 - Math.pow(1 - k, 3);
-    el.textContent = fmt(k < 1 ? from + (val - from) * e : val); if (k < 1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
-}
-function ticks() {
-  document.getElementById("ticks").innerHTML = YEARS.map((y, k) => {
-    const x = k / (YEARS.length - 1) * 100;
-    return `<span style="left:${x}%" class="${k <= state.y ? "on" : ""}"></span><b style="left:${x}%" class="${k === state.y ? "on" : ""}">${y}</b>`;
-  }).join("");
-  document.getElementById("railFill").style.width = (state.y / (YEARS.length - 1) * 100) + "%";
-}
-
-function render() {
-  const i = state.y, c = state.scn;
-  const P = D.sites.filter(s => s.projected);
-  document.getElementById("yearOut").textContent = YEARS[i];
-  document.getElementById("year").value = i;
-  countTo("totAcres", P.reduce((a, s) => a + s.acres[c][i], 0));
-  countTo("totWater", P.reduce((a, s) => a + s.water_ml[c][i], 0));
-  document.getElementById("totNote").textContent = `${P.length} of ${D.sites.length} campuses have enough data to project.`;
-  ticks(); rankList(); renderLayers();
-  if (state.selected) showDetail();
-}
+Object.keys(LAYERS).concat("lyrTerrain").forEach(id => document.getElementById(id).addEventListener("change", applyLayers));
 
 /* ---------------- controls ---------------- */
-const LAYER_IDS = { lyrSites: "sites", lyrWater: "water", lyrRadar: "radar", lyrExposure: "exposure" };
-for (const [id, k] of Object.entries(LAYER_IDS)) {
-  const b = document.getElementById(id);
-  b.addEventListener("click", () => { state.layers[k] = !state.layers[k]; b.setAttribute("aria-pressed", state.layers[k]); renderLayers(); });
+function render() {
+  document.querySelectorAll("#years button").forEach((b, k) => b.setAttribute("aria-pressed", k === state.y));
+  if (map.getSource("sites")) { map.getSource("sites").setData(sitesFC()); map.getSource("sources").setData(sourcesFC()); }
+  showDetail();
 }
-document.getElementById("year").addEventListener("input", e => { state.y = +e.target.value; stopPlay(); render(); });
+document.getElementById("years").innerHTML = YEARS.map((y, k) => `<button type="button" aria-pressed="${k === 0}">${y}</button>`).join("");
+document.querySelectorAll("#years button").forEach((b, k) => b.addEventListener("click", () => { stopPlay(); state.y = k; render(); }));
 document.querySelectorAll("#scn button").forEach(b => b.addEventListener("click", () => {
-  state.scn = b.dataset.scn;
-  document.querySelectorAll("#scn button").forEach(x => x.setAttribute("aria-pressed", x === b));
-  render();
-}));
+  state.scn = b.dataset.scn; document.querySelectorAll("#scn button").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); }));
 ["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => {
   state.w[k] = +e.target.value; document.getElementById(id + "o").textContent = e.target.value; render(); }));
-document.querySelectorAll("[data-base]").forEach(b => b.addEventListener("click", () => {
-  if (state.base === b.dataset.base) return;
-  state.base = b.dataset.base;
-  document.querySelectorAll("[data-base]").forEach(x => x.setAttribute("aria-pressed", x === b));
-  map.setStyle(BASES[state.base]);
-}));
-document.getElementById("home").addEventListener("click", () => home(2200));
-document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
-document.addEventListener("keydown", e => { if (e.key === "Escape" && state.selected) closeDrawer(); });
-document.getElementById("mobileToggle").addEventListener("click", () => document.getElementById("side").classList.toggle("collapsed"));
-
-// Search
-const searchable = [...placed.map(s => ["site", s.id, s.name]), ...D.sources.map(s => ["src", s.id, s.water_body])];
-document.getElementById("searchList").innerHTML = searchable.map(([, , n]) => `<option value="${esc(n)}">`).join("");
-document.getElementById("search").addEventListener("change", e => {
-  const q = e.target.value.trim().toLowerCase(); if (!q) return;
-  const hit = searchable.find(([, , n]) => n.toLowerCase() === q) || searchable.find(([, , n]) => n.toLowerCase().includes(q));
-  if (hit) { select(hit[0], hit[1]); e.target.blur(); }
-});
-
-// Play through the years
 let playTimer = null;
-const PLAY_ICON = '<path d="M4 2.5v13l11-6.5z"/>', PAUSE_ICON = '<path d="M4 2.5h3.5v13H4zM10.5 2.5H14v13h-3.5z"/>';
-function stopPlay() { clearInterval(playTimer); playTimer = null; document.getElementById("playIcon").innerHTML = PLAY_ICON; }
+const PLAY = '<path d="M4 2v12l10-6z"/>', PAUSE = '<path d="M3.5 2h3v12h-3zM9.5 2h3v12h-3z"/>';
+function stopPlay() { clearInterval(playTimer); playTimer = null; document.getElementById("playIcon").innerHTML = PLAY; }
 document.getElementById("play").addEventListener("click", () => {
   if (playTimer) return stopPlay();
   if (state.y === YEARS.length - 1) { state.y = 0; render(); }
-  document.getElementById("playIcon").innerHTML = PAUSE_ICON;
-  playTimer = setInterval(() => {
-    if (state.y >= YEARS.length - 1) return stopPlay();
-    state.y++; render();
-  }, 1500);
+  document.getElementById("playIcon").innerHTML = PAUSE;
+  playTimer = setInterval(() => { if (state.y >= YEARS.length - 1) return stopPlay(); state.y++; render(); }, 1400);
 });
+const layersCard = document.getElementById("layers"), layersBtn = document.getElementById("layersBtn");
+layersBtn.addEventListener("click", () => { layersCard.classList.add("on"); layersBtn.style.display = "none"; layersBtn.setAttribute("aria-expanded", "true"); });
+document.getElementById("layersClose").addEventListener("click", () => { layersCard.classList.remove("on"); layersBtn.style.display = ""; layersBtn.setAttribute("aria-expanded", "false"); });
+document.getElementById("zin").addEventListener("click", () => map.zoomIn());
+document.getElementById("zout").addEventListener("click", () => map.zoomOut());
+document.getElementById("compass").addEventListener("click", () => map.easeTo({ bearing: 0, duration: 600 }));
+document.getElementById("tilt").addEventListener("click", () => map.easeTo({ pitch: map.getPitch() > 10 ? 0 : 60, duration: 900 }));
+map.on("rotate", () => document.getElementById("needle").style.transform = `rotate(${-map.getBearing()}deg)`);
+map.on("pitch", () => document.getElementById("tilt").textContent = map.getPitch() > 10 ? "2D" : "3D");
+document.getElementById("homeBtn").addEventListener("click", goHome);
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeResults(); if (state.selected) goHome(); } });
 
-if (isNarrow()) document.getElementById("side").classList.add("collapsed");
-nisarCards();
-render();
-map.on("load", () => {
-  document.getElementById("loading").classList.add("done");
-  home(still ? 0 : 3200);
-  try { map.setSky({ "sky-color": "#04070C", "horizon-color": "#0E2036", "fog-color": "#04070C", "sky-horizon-blend": .6, "horizon-fog-blend": .5 }); } catch (e) {}
-  requestAnimationFrame(frame);
+// Search
+const searchable = [...placed.map(s => ({ kind: "site", id: s.id, name: s.name, sub: s.status === "built" ? "Built campus" : "Announced campus", color: "#F5A623" })),
+                    ...D.sources.map(s => ({ kind: "src", id: s.id, name: s.water_body, sub: "Water source · " + title(s.utility), color: "#29B6F6" }))];
+const box = document.getElementById("search"), results = document.getElementById("results");
+let hits = [], hi = 0;
+function closeResults() { results.classList.remove("on"); }
+function drawResults() {
+  results.innerHTML = hits.map((h, k) => `<button role="option" class="${k === hi ? "hi" : ""}" data-k="${k}"><span class="ic" style="background:${h.color}"></span>
+    <span>${esc(h.name)}<small>${h.sub}</small></span></button>`).join("") || `<p class="note" style="padding:6px 16px;margin:0">No match</p>`;
+  results.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { const h = hits[+b.dataset.k]; box.value = ""; select(h.kind, h.id); }));
+  results.classList.add("on");
+}
+box.addEventListener("input", () => { const q = box.value.trim().toLowerCase(); if (!q) return closeResults();
+  hits = searchable.filter(h => h.name.toLowerCase().includes(q) || h.sub.toLowerCase().includes(q)).slice(0, 8); hi = 0; drawResults(); });
+box.addEventListener("keydown", e => {
+  if (!results.classList.contains("on")) return;
+  if (e.key === "ArrowDown") { hi = Math.min(hits.length - 1, hi + 1); drawResults(); e.preventDefault(); }
+  if (e.key === "ArrowUp") { hi = Math.max(0, hi - 1); drawResults(); e.preventDefault(); }
+  if (e.key === "Enter" && hits[hi]) { const h = hits[hi]; box.value = ""; select(h.kind, h.id); box.blur(); }
 });
-setTimeout(() => document.getElementById("loading").classList.add("done"), 6000);
+document.addEventListener("click", e => { if (!results.contains(e.target) && e.target !== box) closeResults(); });
+
+showHome();
 window.__map = map; window.__select = select;
 </script>
 </body>
