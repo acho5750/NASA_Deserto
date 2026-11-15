@@ -1,0 +1,9 @@
+site_id,name,status,lat,lon,mw,capex_busd,construction_start,operation_date,a_max_acres,build_months,withdrawal_ml_per_yr,source_id
+DEMO-A,Demo campus A,built,36.10,-95.95,300,11,2022-03-01,2024-02-01,240,20,950,SRC-1
+DEMO-B,Demo campus B,built,33.45,-111.80,500,19,2022-09-01,2024-11-01,410,24,,SRC-2
+DEMO-C,Demo campus C,built,41.20,-95.90,200,7,2021-06-01,2023-01-01,150,17,700,SRC-3
+DEMO-D,Demo campus D,built,33.60,-112.20,800,30,2023-01-01,2025-03-01,620,26,,SRC-2
+DEMO-E,Demo announced E,announced,36.30,-96.10,,25,2026-04-01,,,,,SRC-1
+DEMO-F,Demo announced F,announced,33.30,-111.60,1000,,2026-09-01,,,,,SRC-2
+DEMO-G,Demo announced G,announced,41.40,-96.10,,15,2027-01-01,,,,,SRC-3
+DEMO-H,Demo announced H,announced,33.80,-112.40,,40,2027-06-01,,,,,SRC-2

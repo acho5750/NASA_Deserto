@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pytest *)",
+      "Bash(earthengine *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(unzip *)",
+      "Bash(ls *)",
+      "Bash(head *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "WebFetch(domain:soto.podaac.earthdatacloud.nasa.gov)",
+      "WebFetch(domain:podaac.jpl.nasa.gov)",
+      "WebFetch(domain:podaac.github.io)",
+      "WebFetch(domain:nisar-docs.asf.alaska.edu)",
+      "WebFetch(domain:docs.asf.alaska.edu)",
+      "WebFetch(domain:www.earthdata.nasa.gov)",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:echo.epa.gov)",
+      "WebFetch(domain:www.epa.gov)",
+      "WebFetch(domain:epoch.ai)",
+      "WebFetch(domain:im3.pnnl.gov)",
+      "WebFetch(domain:www.osti.gov)",
+      "WebFetch(domain:waterdata.usgs.gov)",
+      "WebFetch(domain:www.wri.org)",
+      "WebFetch(domain:sustainability.google)"
+    ],
+    "ask": [
+      "Bash(pip install *)",
+      "Bash(conda install *)",
+      "Bash(rm *)",
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Read(~/.netrc)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Edit(./.claude/settings.json)"
+    ]
+  }
+}

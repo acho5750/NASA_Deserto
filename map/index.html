@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Data center growth and water sources (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --paper: #F3F5F2; --ink: #1C2B27; --muted: #5B6B66; --rule: #C9D2CE;
+    --water: #2C6E8E; --footprint: #B07D1A; --low: #7FA391; --high: #8C2F4B; --focus: #2C6E8E;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #121A18; --ink: #E4ECE8; --muted: #9AABA5; --rule: #2B3835; --focus: #7FB8D4; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink);
+         background: var(--paper); display: grid; grid-template-columns: 360px 1fr; }
+  aside { padding: 24px 22px; overflow-y: auto; border-right: 1px solid var(--rule); }
+  #map { height: 100%; background: var(--paper); }
+  h1 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; margin: 0 0 6px; }
+  .lede { color: var(--muted); font-size: .92rem; line-height: 1.5; margin: 0 0 20px; }
+  .demo { border: 1px solid var(--high); color: var(--high); padding: 8px 10px; border-radius: 6px;
+          font-size: .85rem; line-height: 1.4; margin-bottom: 18px; }
+  .year { font-size: 4.2rem; font-weight: 700; line-height: 1; letter-spacing: -.02em;
+          font-variant-numeric: tabular-nums; margin: 0; }
+  label, .label { display: block; font-size: .85rem; color: var(--muted); margin: 14px 0 6px; }
+  input[type=range] { width: 100%; accent-color: var(--water); }
+  .seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .seg button { flex: 1; font: inherit; font-size: .88rem; padding: 7px 0; border: 0; background: transparent;
+                color: var(--ink); cursor: pointer; }
+  .seg button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0 6px; }
+  .totals div { border-top: 2px solid var(--ink); padding-top: 6px; }
+  .totals b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .totals span { font-size: .8rem; color: var(--muted); }
+  .weights { border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 4px; }
+  .wrow { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 10px; }
+  .wrow label { margin: 10px 0; }
+  .key { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); margin-top: 10px; }
+  .ramp { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--low), var(--high)); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--footprint); display: inline-block; }
+  .ring { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--footprint); display: inline-block; }
+  #detail { border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 12px; font-size: .9rem; line-height: 1.5; }
+  #detail h2 { font-size: 1rem; margin: 0 0 4px; }
+  #detail p { margin: 0 0 4px; }
+  .muted { color: var(--muted); }
+  @media (max-width: 760px) {
+    body { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
+    #map { grid-row: 1; } aside { grid-row: 2; border-right: 0; border-top: 1px solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+<aside>
+  <div id="demo" class="demo" hidden>Demo data. Every site, source, and number here is invented to test the pipeline. Replace the CSVs in /data with real inputs.</div>
+  <h1>Data center growth and the water it depends on</h1>
+  <p class="lede">Each campus links to the reservoir or aquifer its utility draws from. Move the year to see announced projects come online.</p>
+
+  <p class="year" id="yearOut">2026</p>
+  <label for="year">Year (as of December 31)</label>
+  <input id="year" type="range" min="0" max="4" step="1" value="0">
+
+  <span class="label" id="scnLabel">Scenario</span>
+  <div class="seg" role="group" aria-labelledby="scnLabel">
+    <button type="button" data-scn="low" aria-pressed="false">Low</button>
+    <button type="button" data-scn="median" aria-pressed="true">Median</button>
+    <button type="button" data-scn="high" aria-pressed="false">High</button>
+  </div>
+
+  <div class="totals">
+    <div><b id="totAcres">0</b><span>acres converted</span></div>
+    <div><b id="totWater">0</b><span>megaliters drawn per year</span></div>
+  </div>
+
+  <div class="weights">
+    <span class="label">Water pressure index weights</span>
+    <div class="wrow"><label for="w1">Share of supply</label><input id="w1" type="range" min="0" max="3" step="0.5" value="1"></div>
+    <div class="wrow"><label for="w2">Source decline</label><input id="w2" type="range" min="0" max="3" step="0.5" value="1"></div>
+    <div class="wrow"><label for="w3">Water stress</label><input id="w3" type="range" min="0" max="3" step="0.5" value="1"></div>
+    <div class="key">Lower pressure <span class="ramp" aria-hidden="true"></span> Higher pressure</div>
+    <div class="key"><span class="dot" aria-hidden="true"></span> Built campus <span class="ring" aria-hidden="true"></span> Announced campus</div>
+  </div>
+
+  <div id="detail"><p class="muted">Select a campus or water source on the map to see its numbers.</p></div>
+</aside>
+<div id="map" role="region" aria-label="Map of data centers and water sources"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<script>
+const D = window.PROTO_DATA;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const state = { y: 0, scn: "median", w: [1, 1, 1], selected: null };
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const pct = n => (n * 100).toFixed(1) + "%";
+
+if (D.demo) document.getElementById("demo").hidden = false;
+
+const map = L.map("map", { zoomControl: true }).setView([38.5, -97], 4);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+const layer = L.layerGroup().addTo(map);
+
+function mix(a, b, t) {
+  const h = s => s.replace("#", "").match(/../g).map(x => parseInt(x, 16));
+  const [A, B] = [h(a), h(b)];
+  return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("");
+}
+
+function pressure(src) {
+  const shares = D.sources.map(s => s.share[state.scn][state.y]);
+  const maxShare = Math.max(...shares, 1e-9);
+  const parts = [src.share[state.scn][state.y] / maxShare, src.decline_score, src.stress_norm];
+  const wsum = state.w.reduce((a, b) => a + b, 0);
+  return wsum ? parts.reduce((acc, v, i) => acc + v * state.w[i], 0) / wsum : 0;
+}
+
+function showSite(s, src) {
+  const i = state.y, c = state.scn;
+  document.getElementById("detail").innerHTML =
+    `<h2>${s.name}</h2><p class="muted">${s.status === "built" ? "Built" : "Announced"} · ${fmt(s.mw[c])} MW</p>
+     <p>${fmt(s.acres[c][i])} acres converted by ${D.years[i]}</p>
+     <p>${fmt(s.water_ml[c][i])} megaliters per year drawn</p>
+     <p>Water source: ${src ? src.name : "not matched"}</p>`;
+}
+function showSource(src) {
+  const i = state.y, c = state.scn;
+  const n = D.sites.filter(s => s.source_id === src.id).length;
+  document.getElementById("detail").innerHTML =
+    `<h2>${src.name}</h2><p class="muted">${src.type === "reservoir" ? "Reservoir" : "Aquifer"} · utility ${src.pwsid}</p>
+     <p>Data centers would draw ${pct(src.share[c][i])} of estimated supply in ${D.years[i]}</p>
+     <p>Trend: ${src.trend_value} ${src.trend_unit}</p>
+     <p>${n} linked campus${n === 1 ? "" : "es"} · pressure index ${pressure(src).toFixed(2)}</p>`;
+}
+
+function render() {
+  layer.clearLayers();
+  const i = state.y, c = state.scn;
+  const srcById = Object.fromEntries(D.sources.map(s => [s.id, s]));
+  const low = css("--low"), high = css("--high"), fp = css("--footprint"), ink = css("--ink");
+
+  for (const s of D.sites) {
+    const src = srcById[s.source_id];
+    if (!src) continue;
+    const announced = s.status !== "built";
+    const color = mix(low, high, pressure(src));
+    L.polyline([[s.lat, s.lon], [src.lat, src.lon]], {
+      color, weight: 2, opacity: s.acres[c][i] > 0 ? 0.9 : 0.25, dashArray: announced ? "4 6" : null
+    }).addTo(layer);
+  }
+  for (const src of D.sources) {
+    L.circleMarker([src.lat, src.lon], {
+      radius: 11, color: ink, weight: 1.5, fillColor: mix(low, high, pressure(src)), fillOpacity: 0.95
+    }).bindTooltip(src.name).on("click", () => { state.selected = ["src", src.id]; showSource(src); }).addTo(layer);
+  }
+  for (const s of D.sites) {
+    const acres = s.acres[c][i], announced = s.status !== "built";
+    L.circleMarker([s.lat, s.lon], {
+      radius: 3 + Math.sqrt(acres) * 0.9, color: fp, weight: 2,
+      fillColor: fp, fillOpacity: announced ? 0.15 : 0.75
+    }).bindTooltip(s.name).on("click", () => { state.selected = ["site", s.id]; showSite(s, srcById[s.source_id]); }).addTo(layer);
+  }
+
+  document.getElementById("yearOut").textContent = D.years[i];
+  document.getElementById("totAcres").textContent = fmt(D.sites.reduce((a, s) => a + s.acres[c][i], 0));
+  document.getElementById("totWater").textContent = fmt(D.sites.reduce((a, s) => a + s.water_ml[c][i], 0));
+
+  if (state.selected) {
+    const [kind, id] = state.selected;
+    if (kind === "site") { const s = D.sites.find(x => x.id === id); showSite(s, srcById[s.source_id]); }
+    else showSource(srcById[id]);
+  }
+}
+
+document.getElementById("year").addEventListener("input", e => { state.y = +e.target.value; render(); });
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  state.scn = b.dataset.scn;
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+}));
+["w1", "w2", "w3"].forEach((id, k) => document.getElementById(id).addEventListener("input", e => {
+  state.w[k] = +e.target.value; render();
+}));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
