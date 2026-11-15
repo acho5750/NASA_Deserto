@@ -83,6 +83,10 @@
   .bigl { font-size: 14px; color: var(--ink2); margin: 0 0 4px; }
   .range { font: 500 11.5px var(--mono); color: var(--muted); }
   .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  details.how { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+  details.how summary { cursor: pointer; font: 500 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); list-style: none; }
+  details.how summary::before { content: "ⓘ "; } details.how[open] summary { color: var(--ink2); }
+  details.how p { margin: 6px 0 0; line-height: 1.45; }
   .srcline { font-size: 11px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
   .srcline a { color: var(--muted); }
   code { font: 11px var(--mono); background: var(--linen); padding: 1px 4px; }
@@ -303,6 +307,8 @@ const LCC = { cropland: "#D9A93A", pasture_hay: "#E3D08A", shrub_grass: "#9DB07A
 const lcKey = s => { const lc = s.landcover; if (!lc) return null; let best = null; for (const [k] of LC) if (best == null || (lc.acres[k] || 0) > (lc.acres[best] || 0)) best = k; return best; };
 
 /* ---------------- shared bits ---------------- */
+/* Methods, caveats and data links sit behind one small toggle, so the panel shows only the main message. */
+const how = (src, ...notes) => `<details class="how"><summary>How we measured</summary>${notes.map(n => `<p>${n}</p>`).join("")}${src}</details>`;
 const CHIP = { s1: "Sentinel-1 radar", nisar: "NISAR radar", swot: "SWOT", opera: "OPERA DISP-S1", proj: "Projection" };
 const chip = (k, txt) => `<span class="chip ${k}">${esc(txt || CHIP[k])}</span>`;
 const datachip = txt => `<span class="chip data">${esc(txt)}</span>`;
@@ -326,14 +332,13 @@ function chLand() {
   return `<div class="ch">
     <div class="kicker"><span class="n">1</span>${chip("s1")}</div>
     <h1>Farms, ranchland and forest became data center campuses</h1>
-    <p class="lede">From 2017 to 2026, the European Sentinel-1 radar satellite saw the ground change at every campus in this study, month by month. Press Play to watch it add up.</p>
+    <p class="lede">The Sentinel-1 radar satellite saw the ground change at every campus, month by month since 2017. Press Play.</p>
     <div class="big">${fmt(L.total_acres)}<small>acres changed</small></div>
     <p class="bigl">at ${L.n_sites} built campuses. <b>${fmt(natural)} acres</b> of it was not built on before: farmland, pasture, shrubland, forest and wetland.</p>
     <h3>What the land was before · 1 square = ${per} acres</h3>
     <div class="ugrid" role="img" aria-label="${LC.map(([k, n]) => `${n} ${fmt(L.acres[k])} acres`).join(", ")}">${sq.map(k => `<i style="--c:${LCC[k]}"></i>`).join("")}</div>
     <div class="ulegend">${LC.filter(([k]) => L.acres[k] >= 1).map(([k, n]) => `<span style="--c:${LCC[k]}">${n}</span><b>${fmt(L.acres[k])} ac</b>`).join("")}</div>
-    ${srcline([L.file, "data/footprint/masks/"], [L.source, "https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc"])}
-    <p class="note" style="margin-top:8px">Land cover is the US government's NLCD map from before construction (${L.nlcd_years[0]}-${L.nlcd_years[1]}), read under the pixels the radar marked as changed.</p>
+    ${how(srcline([L.file, "data/footprint/masks/"], [L.source, "https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc"]), `Land cover is the US government's NLCD map from before construction (${L.nlcd_years[0]}-${L.nlcd_years[1]}), read under the pixels the radar marked as changed.`)}
     <h3>See it on the ground</h3>
     <div class="card"><h4>${esc(ab.name)}<span></span></h4>
       <p style="margin:2px 0 8px">Shrubland near Abilene, Texas became a ${fmt(ab.footprint.final_acres)}-acre campus in about two years. Drag the divider to compare aerial photos from before and after.</p>
@@ -411,12 +416,9 @@ function chNisar() {
     <div class="kicker"><span class="n" style="background:var(--nisar)">2</span>${chip("nisar", "NASA-ISRO NISAR")}</div>
     <h1>NISAR checks whether the announced money is turning into buildings, every 12 days</h1>
     <div class="big" style="color:var(--nisar)">${fmt(tot)}<small>acres got much brighter</small></div>
-    <p class="bigl">in NISAR radar in just ${months} months, at 3 Stargate-scale campuses under construction. A big jump in brightness is the radar signature of new buildings, steel and equipment.</p>
-    <div class="card nis" style="margin-top:14px"><p style="margin:0"><b>So what?</b> Aerial photos can't keep up with this pace. The newest one of Project Jupiter, from ${jph ? jph[2] : "2025"}, still shows bare desert.
-      NISAR sees through clouds, day and night, and passed each site every 12 days. That makes it a way to check, almost live, that announced projects are really being built
-      and how fast. That is the check our 2035 projection needs.</p></div>
-    <p class="note" style="margin-top:10px">NISAR launched in July 2025, after these campuses broke ground, so Sentinel-1 provides the "before". Each NISAR comparison averages the first 3 and the last 3 images of one track to calm radar speckle.</p>
-    ${srcline([sv.file, "data/radar/nisar_change.csv"], ["https://search.asf.alaska.edu"])}
+    <p class="bigl">in ${months} months at 3 Stargate campuses under construction. In radar, brighter = new buildings and steel.</p>
+    <div class="card nis" style="margin-top:14px"><p style="margin:0"><b>So what?</b> The newest aerial photo of Project Jupiter (${jph ? jph[2] : "2025"}) still shows bare desert. NISAR sees through clouds every 12 days, so it can check, almost live, that announced projects are really being built: the check our 2035 projection needs.</p></div>
+    ${how(srcline([sv.file, "data/radar/nisar_change.csv"], ["https://search.asf.alaska.edu"]), `NISAR launched in July 2025, after these campuses broke ground, so Sentinel-1 provides the "before". Each NISAR comparison averages the first 3 and the last 3 images of one track to calm radar speckle; "much brighter" = more than 3 dB.`)}
     <h3>What NISAR saw, first image vs. latest</h3>
     ${cards}
     ${nextBtn("nisar")}</div>`;
@@ -447,31 +449,30 @@ function chWater() {
   return `<div class="ch">
     <div class="kicker"><span class="n">3</span>${chip("swot")}${chip("opera")}${chip("nisar")}</div>
     <h1>Some campuses depend on small towns' water</h1>
-    <p class="lede">We followed each campus to the public water utility whose service area it sits in, then to the river, lake or aquifer that utility draws from (EPA records). Then we compared the campuses' estimated water use with what the utility supplies to its own customers.</p>
+    <p class="lede">We linked each campus to its town's water utility and the river, lake or aquifer it draws from, then compared the campus's water need with the town's supply.</p>
     <div class="big" style="color:var(--crimson)">${over.length}<small>water utilities</small></div>
-    <p class="bigl">would need to supply <b>more water to linked campuses by 2035 than they supply to all their customers today</b>, if the announced campuses are built (middle estimate).</p>
+    <p class="bigl">would need to supply <b>more water to linked campuses by 2035 than to all their customers today</b>, if the announced campuses are built.</p>
     <h3>Campus water need vs. the utility's supply, 2035</h3>
     <p class="note" style="margin-top:-2px">Black tick = 100%, the utility's whole supply today.</p>
     ${top.map(s => { const x = s.share.median[LAST], lo = s.share.low[LAST], hi = s.share.high[LAST];
       return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small>${title(s.utility)} · ${fmt(s.population_served)} people</small></span>
         <span class="v" style="color:${SHARE_C(x)}">${times(x)}<small>range ${times(lo)}-${times(hi)}</small></span>
         <span class="barw"><i style="--c:${SHARE_C(x)};width:${Math.min(100, x / maxS * 100)}%"></i><u style="left:${Math.min(100, 1 / maxS * 100)}%"></u></span></button>`; }).join("")}
-    ${srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"])}
-    <p class="note" style="margin-top:6px">F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.</p>
+    ${how(srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"]), "Utility and source come from EPA drinking-water records for the service area each campus sits in.", "F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). Middle estimate shown. A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.", "Linked to is not caused by: a campus being linked to a source does not mean it caused any change in it.")}
     <h3>Rivers and lakes: is the water level changing?</h3>
-    <p class="note" style="margin-top:-2px">${chip("swot")} measures river and lake water levels from space.</p>
     ${swot.map(s => { const w = trendWords(s);
-      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${esc(w.txt)}</small><small>${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)}</small></span>
+      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${chip("swot")} ${esc(w.txt)}</small></span>
         <span>${sparkline(s.series, "#12808F")}</span></button>`; }).join("")}
-    ${srcline(["data/sources.csv", "data/water/swot/"], ["https://podaac.github.io/hydrocron/intro.html"])}
+    ${how(srcline(["data/sources.csv", "data/water/swot/"], ["https://podaac.github.io/hydrocron/intro.html"]), "SWOT measures river and lake water levels from space. The trend is a straight-line fit to the passes since SWOT began (2023), so it covers only a few years. A trend describes the water body; it does not show what caused the change.")}
     <h3>Aquifers: is the ground above them sinking?</h3>
-    <p class="note" style="margin-top:-2px">Pumping a lot of water out of an aquifer (underground water) can make the ground above it sink. ${chip("opera")} has measured this from Sentinel-1 since 2016. ${chip("nisar")} started measuring it in 2026, with its own L-band radar.</p>
+    <p class="note" style="margin-top:-2px">Pumping too much groundwater can make the ground sink. Sentinel-1 (OPERA) has measured it since 2016, NISAR since 2026.</p>
     ${aq.map(s => { const w = trendWords(s), g = GW[s.id];
-      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">OPERA ${s.trend_start.slice(0, 4)}-${s.trend_end.slice(0, 4)}: ${esc(w.txt)}</small>${g ? `<small style="color:var(--nisar)">NISAR 2026: ${g.verdict === "no_clear" ? "no clear movement yet" : GW_TXT[g.verdict].toLowerCase() + " " + (Math.abs(g.change_mm) / 10).toFixed(1) + " cm"} (${(g.change_mm / 10).toFixed(1)} cm, noise ±${(2 * g.noise_mm / 10).toFixed(1)} cm)</small>` : ""}</span>
+      return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${chip("opera")} ${s.trend_value < 0 ? "sinking" : "rising"} ${Math.abs(s.trend_value).toFixed(1)} mm a year</small>${g ? `<small style="color:var(--nisar)">${chip("nisar")} ${g.verdict === "no_clear" ? "no clear change yet" : GW_TXT[g.verdict].toLowerCase() + " " + (Math.abs(g.change_mm) / 10).toFixed(1) + " cm"}</small>` : ""}</span>
         <span>${sparkline(s.series, "#6F8FB0")}${g ? gwChart(g) : ""}</span></button>`; }).join("")}
-    ${srcline(["data/sources.csv", "data/water/disp/", "data/water/gunw/gunw_summary.csv"], ["https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1", "https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}
-    <p class="note" style="margin-top:6px">Both measure a window over the aquifer against its surroundings, along the radar's line of sight. NISAR adds up back-to-back 12-day image pairs (GUNW product); noise = 2 x the pair-to-pair spread x the square root of the number of pairs. NISAR is shown where its 2026 record was clear enough to read (${Object.keys(GW).length} of ${aq.length} aquifers).</p>
-    <p class="note" style="margin-top:6px">A trend describes the water body. It does not show what caused the change, and a campus being linked to a source does not mean it caused any change in it.</p>
+    ${how(srcline(["data/sources.csv", "data/water/disp/", "data/water/gunw/gunw_summary.csv"], ["https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1", "https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"]),
+      `Both measure a 6 km window over the aquifer against its surroundings, along the radar's line of sight. "Sinking" = moving away from the satellite, which is usually, but not always, the ground going down. OPERA DISP-S1 is a straight-line rate over ${aq.length ? aq[0].trend_start.slice(0, 4) : "2016"}-2026.`,
+      `NISAR adds up back-to-back 12-day image pairs (GUNW product), June-October 2026. "No clear change" = smaller than its noise (2 x the pair-to-pair spread x the square root of the number of pairs). NISAR is shown where its record was clear enough to read (${Object.keys(GW).length} of ${aq.length} aquifers).`,
+      "A trend describes the water body. It does not show what caused the change, and a campus being linked to a source does not mean it caused any change in it.")}
     ${nextBtn("water")}</div>`;
 }
 
@@ -513,7 +514,7 @@ function chFuture() {
   return `<div class="ch">
     <div class="kicker"><span class="n">4</span>${chip("proj", "Projection to 2035")}</div>
     <h1>What the announced money builds by ${YEARS[y]}</h1>
-    <p class="lede">Companies have announced how many megawatts or billions of dollars they will build, and where. We turned those announcements into land and water, using what the built campuses taught us. Press Play to run the years.</p>
+    <p class="lede">We turned announced megawatts and dollars into land and water, using what the built campuses taught us. Press Play.</p>
     <div class="big stack" id="fBig">${short(people(m.w))}<small>people's worth of water</small></div>
     <p class="bigl">a year in <b>${YEARS[y]}</b> for the ${projSites.length} campuses in this study, built and announced. <span class="range">Range ${short(people(F.low.w))} to ${short(people(F.high.w))}.</span></p>
     <p class="bigl" style="color:#8A621B">If new projects keep being announced at the pace of the last two years (${fmt(pace.rate_mw_per_yr.median)} MW a year), add <b>${short(people(m.pw))}</b> more.</p>
@@ -522,12 +523,10 @@ function chFuture() {
     <p class="note"><span style="color:#12808F;font-weight:600">Solid</span>: built and announced campuses. <span style="color:#8A621B;font-weight:600">Dashed</span>: if the announcement pace continues (F9).</p>
     <h3>Water, ${YEARS[0]}-${YEARS[LAST]}, in people</h3>
     ${futureChart(y)}
-    <p class="note">Band: low to high estimate for the announced campuses. Each campus ramps up on the curve the built campuses followed (F8), so water keeps rising for about two years after the buildings are done.</p>
     <h3>Land</h3>
     <p><b>${fmt(m.a)} acres</b> (about ${sqmi(m.a)} square miles) of campus land by ${YEARS[y]} <span class="range">(range ${fmt(F.low.a)}-${fmt(F.high.a)})</span>,
       plus <b style="color:#8A621B">${fmt(m.pa)} acres</b> if the pace continues. Today the radar measures ${fmt(ST.land.total_acres)} acres at the built campuses.</p>
-    ${srcline(["data/announced_sites.csv", "data/precedent_sites.csv", "data/calibration/"], [USGS, "https://epoch.ai/data/data-centers"])}
-    <p class="note" style="margin-top:8px">People's worth = water / (${fmt(PER_CAPITA)} liters per person per day, the US public-supply average, USGS 2015). The pace line is a "what if", not a forecast: it repeats, every year to 2035, the megawatts announced in the last two years by the projects in this study (${pace.n_sites} campuses), so it leaves out smaller projects.</p>
+    ${how(srcline(["data/announced_sites.csv", "data/precedent_sites.csv", "data/calibration/"], [USGS, "https://epoch.ai/data/data-centers"]), `People's worth = water / (${fmt(PER_CAPITA)} liters per person per day, the US public-supply average, USGS 2015).`, "Band: low to high estimate for the announced campuses. Each campus ramps up on the curve the built campuses followed (F8), so water keeps rising for about two years after the buildings are done.", `The pace line is a "what if", not a forecast: it repeats, every year to 2035, the megawatts announced in the last two years by the projects in this study (${pace.n_sites} campuses), so it leaves out smaller projects.`)}
     <h3>Where the pressure lands</h3>
     ${D.sources.filter(s => s.share.median[y] >= 1).sort((a, b) => b.share.median[y] - a.share.median[y]).map(s =>
       `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small>${title(s.utility)}</small></span><span class="v" style="color:#8E1F1F">${times(s.share.median[y])}<small>of supply, ${YEARS[y]}</small></span></button>`).join("") || `<p class="note">No utility above 100% in ${YEARS[y]}.</p>`}
@@ -718,6 +717,7 @@ const LANES = [
 ];
 let laneGeom = null;
 function renderLanes() {
+  if (!lanesEl.clientWidth) return;
   const W = Math.max(300, lanesEl.clientWidth - 26), LW = isNarrow() ? 0 : 196, H = 132, rowH = 19, top = 8;
   const X = t => LW + (t - T0) / (TEND + 1 - T0) * (W - LW);
   laneGeom = { X, LW, W };
@@ -953,6 +953,7 @@ function barGate() {
   barHidden = hide;
   if (hide && state.playing && !state.detail) stopPlay();
   document.getElementById("center").classList.toggle("nobar", hide);
+  if (!hide) renderLanes();   // drawn while hidden it had zero width
   map.resize(); if (mapB) mapB.resize(); if (photoSite) setSwipe(swipeX);
 }
 map.on("zoomend", barGate);
