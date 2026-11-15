@@ -9,14 +9,17 @@ Python port of gee/footprint_engine.js. Same logic, different data source:
   * Monthly composites = per-pixel median of each calendar-offset month; empty months dropped.
   * Flag = |VV - baseline VV| > theta OR |VH - baseline VH| > theta.
   * Persistence = flagged this composite AND the previous composite.
-  * Cumulative footprint = a pixel stays converted once it has been converted; area summed
-    over the AOI (campus outline buffered by 1 km, as in the GEE script).
+  * Cumulative footprint = a pixel stays converted once it has been converted. Area is summed
+    over the AOI (campus outline buffered by 1 km, as in the GEE script) -> `acres_aoi`, and over
+    the campus outline itself -> `acres_campus`. The threshold rule and the logistic fit use
+    `acres_campus`, because the 1 km ring is not part of the site (see DECISIONS.md).
 
 Decision rules from CLAUDE.md that this script applies itself:
   * Orbit: most frequent descending relative orbit; fall back to ascending if that orbit has
     fewer than 12 images in the baseline year.
   * Threshold: start at 3 dB. If pre-construction converted acres exceed 5% of the final
     footprint, raise by 0.5 dB and rerun. Stop at 5 dB and flag the site.
+  * F1 "fit logistic": A(t) = A_max / (1 + exp(-k (t - t0))); build_months = 10% -> 90% time.
 
 Outputs (small, committed):
   data/footprint/<site_id>_area_curve.csv   one row per monthly composite
@@ -64,6 +67,14 @@ def load_campus(path: str):
     return shape(gj)
 
 
+def reproject(geom, src, dst):
+    from pyproj import Transformer
+    from shapely import transform
+
+    tf = Transformer.from_crs(src, dst, always_xy=True)
+    return transform(geom, lambda xy: np.column_stack(tf.transform(xy[:, 0], xy[:, 1])))
+
+
 def month_add(ts: pd.Timestamp, months: int) -> pd.Timestamp:
     """ee.Date.advance(n, 'month'): same day of month, n months later."""
     return ts + pd.DateOffset(months=months)
@@ -78,7 +89,7 @@ def search_items(aoi_ll, start, end):
     search = cat.search(
         collections=[COLLECTION],
         intersects=aoi_ll.__geo_interface__,
-        datetime=f"{start:%Y-%m-%d}/{(end - pd.Timedelta(seconds=1)):%Y-%m-%dT%H:%M:%SZ}",
+        datetime=f"{start:%Y-%m-%d}T00:00:00Z/{end:%Y-%m-%d}T00:00:00Z",  # composites drop t >= end
     )
     items = []
     for it in search.items():
@@ -123,12 +134,9 @@ def choose_orbit(items, base_start, base_end):
 def load_stack_db(items, aoi_ll):
     """Per-acquisition VV/VH in dB on a 10 m UTM grid covering the AOI: (time, band, y, x)."""
     import stackstac
-    from pyproj import Transformer
-    from shapely.ops import transform
 
     epsg = int(items[0].properties["proj:code"].split(":")[1])
-    to_utm = Transformer.from_crs(4326, epsg, always_xy=True).transform
-    aoi_utm = transform(to_utm, aoi_ll)
+    aoi_utm = reproject(aoi_ll, 4326, epsg)
     da = stackstac.stack(
         items, assets=["vv", "vh"], epsg=epsg, resolution=10, bounds=aoi_utm.bounds,
         dtype="float32", fill_value=np.float32(np.nan), rescale=False,
@@ -215,9 +223,6 @@ def write_quicklook(path, baseline, converted, inside):
 
 
 def run(args):
-    from pyproj import Transformer
-    from shapely.ops import transform
-
     campus = load_campus(args.campus)
     cs = pd.Timestamp(args.construction_start)
     start, end = month_add(cs, -args.months_before), month_add(cs, args.months_after)
@@ -226,9 +231,7 @@ def run(args):
     # Buffer in metres in the local UTM zone, then back to lon/lat for the search.
     c = campus.centroid
     epsg_guess = (32600 if c.y >= 0 else 32700) + int((c.x + 180) // 6) + 1
-    fwd = Transformer.from_crs(4326, epsg_guess, always_xy=True).transform
-    inv = Transformer.from_crs(epsg_guess, 4326, always_xy=True).transform
-    aoi_ll = transform(inv, transform(fwd, campus).buffer(BUFFER_M))
+    aoi_ll = reproject(reproject(campus, 4326, epsg_guess).buffer(BUFFER_M), epsg_guess, 4326)
 
     items = search_items(aoi_ll, start, end)
     print(f"{len(items)} {COLLECTION} IW VV+VH frames intersect the AOI {start:%Y-%m-%d}..{end:%Y-%m-%d}")
@@ -237,7 +240,7 @@ def run(args):
 
     db, aoi_utm, epsg = load_stack_db(items, aoi_ll)
     inside, pixel_m2 = aoi_mask(db, aoi_utm)
-    campus_utm = transform(Transformer.from_crs(4326, epsg, always_xy=True).transform, campus)
+    campus_utm = reproject(campus, 4326, epsg)
     inside_campus, _ = aoi_mask(db, campus_utm)
     times = pd.DatetimeIndex(db.time.values)
     print(f"Images used {len(times)}, {state} relative orbit {orbit}, grid {db.sizes['y']}x{db.sizes['x']} @10 m EPSG:{epsg}")
@@ -248,15 +251,16 @@ def run(args):
     comps, dates, counts = monthly_composites(db, start, args.months_before + args.months_after)
 
     pre = np.array([d < cs for d in dates[1:]])
-    thresh, flag, log = args.thresh_db, "", []
+    thresh, flag = args.thresh_db, ""
     while True:
         cumulative = cumulative_converted(comps, baseline, thresh)
         acres = acres_in(cumulative, inside, pixel_m2)
-        final = float(acres[-1])
-        pre_acres = float(acres[pre][-1]) if pre.any() else 0.0
+        campus_acres = acres_in(cumulative, inside_campus, pixel_m2)
+        final = float(campus_acres[-1])
+        pre_acres = float(campus_acres[pre][-1]) if pre.any() else 0.0
         ratio = pre_acres / final if final > 0 else np.inf
-        log.append(f"theta={thresh:.1f} dB: pre-construction {pre_acres:.1f} ac, final {final:.1f} ac, ratio {ratio:.1%}")
-        print("  " + log[-1])
+        print(f"  theta={thresh:.1f} dB: campus pre-construction {pre_acres:.1f} ac, final {final:.1f} ac, "
+              f"ratio {ratio:.1%} (AOI: {acres[pre][-1] if pre.any() else 0:.1f} / {acres[-1]:.1f} ac)")
         if ratio <= NOISE_FRACTION:
             break
         if thresh + THRESH_STEP_DB > THRESH_MAX_DB + 1e-9:
@@ -264,15 +268,13 @@ def run(args):
             break
         thresh += THRESH_STEP_DB
 
-    campus_acres = acres_in(cumulative, inside_campus, pixel_m2)
-
     t_months = [(d.year - cs.year) * 12 + (d.month - cs.month) for d in dates[1:]]
     curve = pd.DataFrame({
         "site_id": args.site_id,
         "date": [f"{d:%Y-%m-%d}" for d in dates[1:]],
         "months_from_start": t_months,
         "n_images": counts[1:],
-        "acres": np.round(acres, 2),
+        "acres_aoi": np.round(acres, 2),
         "acres_campus": np.round(campus_acres, 2),
         "thresh_db": thresh,
         "source": COLLECTION_LINK,
@@ -281,13 +283,13 @@ def run(args):
     curve_path = OUT_DIR / f"{args.site_id}_area_curve.csv"
     curve.to_csv(curve_path, index=False)
 
-    amax, t0, k, build_months = fit_logistic(t_months, acres)
+    amax, t0, k, build_months = fit_logistic(t_months, campus_acres)
     summary = pd.DataFrame([{
         "site_id": args.site_id, "name": args.name, "construction_start": f"{cs:%Y-%m-%d}",
         "orbit_state": state, "relative_orbit": orbit, "n_images": len(times),
         "baseline_images": int(base_sel.sum()), "thresh_db": thresh,
-        "pre_construction_acres": round(pre_acres, 2), "final_acres": round(final, 2),
-        "final_acres_campus": round(float(campus_acres[-1]), 2),
+        "pre_construction_acres_campus": round(pre_acres, 2), "final_acres_campus": round(final, 2),
+        "final_acres_aoi": round(float(acres[-1]), 2),
         "a_max_acres": round(amax, 1), "logistic_t0_months": round(t0, 1),
         "build_months": round(build_months, 1), "flag": flag,
         "source": f"{COLLECTION_LINK} ; {args.source}" if args.source else COLLECTION_LINK,
@@ -302,8 +304,8 @@ def run(args):
         write_quicklook(args.quicklook, baseline, cumulative[-1] & inside, inside)
 
     print(f"\nWrote {curve_path} and {sum_path}")
-    print(curve[["date", "months_from_start", "n_images", "acres", "acres_campus"]].to_string(index=False))
-    print(f"\nthreshold {thresh} dB | final {final:.1f} ac (AOI) / {campus_acres[-1]:.1f} ac (campus) | "
+    print(curve[["date", "months_from_start", "n_images", "acres_aoi", "acres_campus"]].to_string(index=False))
+    print(f"\nthreshold {thresh} dB | final {final:.1f} ac (campus) / {acres[-1]:.1f} ac (AOI) | "
           f"logistic A_max {amax:.1f} ac, t0 {t0:+.1f} mo, build 10->90% {build_months:.1f} mo"
           + (f" | FLAG {flag}" if flag else ""))
     return curve, summary

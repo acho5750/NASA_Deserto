@@ -7,7 +7,8 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 |---|---|
 | `pipeline/projection.py` (F2–F8) | Tested on the demo CSVs; writes `map/data.js` |
 | `map/index.html` | Render logic tested; needs internet for Leaflet and map tiles |
-| `gee/footprint_engine.js` (F1) | Syntax-checked; run it in the Earth Engine Code Editor on a real site |
+| `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; tested on Stargate Abilene (`data/footprint/`) |
+| `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
 | `pipeline/water_chain.py` steps 1–3a | Written against documented file layouts and the Hydrocron API, not yet run against live data |
 | `pipeline/water_chain.py` step 3b (DISP-S1) | Placeholder: inspect one real file first |
 
@@ -23,8 +24,9 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 
 ## First real test (one site, end to end)
 1. Pick one built site from Epoch (https://epoch.ai/data/data-centers). Note MW, capex, construction start.
-2. Run `gee/footprint_engine.js` with its outline and start date. Export the area curve; record
-   final acres (`a_max_acres`) and the 10%→90% build time (`build_months`).
+2. Save its outline as GeoJSON in `data/footprint/` and run
+   `python pipeline/footprint.py --site-id <ID> --campus data/footprint/<ID>_campus.geojson --construction-start YYYY-MM-DD`.
+   It writes the area curve and `footprint_summary.csv` with `a_max_acres` and `build_months` (10%→90%).
 3. Download EPA service areas into `data/raw/epa_service_areas.*` and run
    `python pipeline/water_chain.py match --registry data/site_registry.csv`.
 4. Download the ECHO SDWA zip, unzip into `data/raw/`, run `... lookup --pwsid <PWSID>`.
@@ -35,6 +37,7 @@ python -m http.server 8000        # then open http://localhost:8000/map/
 ## Data links
 - Epoch AI data centers: https://epoch.ai/data/data-centers
 - PNNL data center atlas: https://im3.pnnl.gov/datacenter-atlas
+- Sentinel-1 RTC (Planetary Computer): https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc
 - Sentinel-1 in Earth Engine: https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S1_GRD
 - NISAR (ASF Vertex): https://search.asf.alaska.edu · guide: https://nisar-docs.asf.alaska.edu/availability-overview/
 - EPA water system service areas: https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
