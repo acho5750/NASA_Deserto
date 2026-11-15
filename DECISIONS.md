@@ -577,3 +577,13 @@ it has no mask and is listed as `no_footprint_mask`.
     Office land. The Laramie outline touches a Wyoming state land parcel.
   - For sources, the median distance to a marsh/swamp wetland is 731 m.
 
+
+**Shackelford location upgraded (found while merging the Phase 5 branch).** The Phase 5 thread
+hand-drew the Vantage Frontier campus from Sentinel-2 (2026-10-08, 1,440 ac,
+`data/footprint/FRONTIER-SHACKELFORD_campus.geojson`). The TX-351 / FM 604 road point used for
+`ANN-STARGATE-SHACKELFORD` sits on its north-west edge, inside Hamby WSC's service area. A point inside
+the drawn campus falls in no EPA service area, so the site is now `self_supplied_check`
+(`location_precision = image_outline`). Hamby WSC drops out of `data/sources.csv`, and its 39.8x share
+is gone. The largest 2030 median local shares are now Bell Milam Falls 10.3x (Milam), Camino Real 8.9x
+(Dona Ana), Hawley 6.0x (Stargate Abilene), Montgomery Co PWSD 1 2.8x and Boling 2.2x.
+`proximity.py --only` now updates just those rows.

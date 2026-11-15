@@ -31,7 +31,7 @@ META-GALLATIN,precedent,matched,TN0000097,SRC-TN0000097,,,include
 GOOGLE-STOREY-COUNTY,precedent,self_supplied_check,,,,,exclude
 ANN-META-HYPERION,announced,self_supplied_check,,,,,exclude
 ANN-STARGATE-SALINE,announced,self_supplied_check,,,,,exclude
-ANN-STARGATE-SHACKELFORD,announced,matched_approx_location,TX2210006,SRC-TX2210006,,,include
+ANN-STARGATE-SHACKELFORD,announced,self_supplied_check,,,,"TX2210006 (HAMBY WSC, Residential Area)",exclude
 ANN-STARGATE-MILAM,announced,matched,TX0140007,SRC-TX0140007,,,include
 ANN-META-LEBANON,announced,self_supplied_check,,,,,exclude
 ANN-META-ELPASO,announced,matched,TX0710002,SRC-TX0710002,,,include

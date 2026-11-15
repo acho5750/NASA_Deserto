@@ -150,6 +150,17 @@ def site_geoms():
     return rows
 
 
+def _write(rows, path, key, upsert):
+    """Write rows; with --only, replace just those rows in the existing file."""
+    if not rows:
+        return
+    new = pd.DataFrame(rows)
+    if upsert and path.exists():
+        old = pd.read_csv(path)
+        new = pd.concat([old[~old[key].isin(new[key])], new], ignore_index=True)
+    new.to_csv(path, index=False)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--only", default="", help="comma-separated site_id / source_id")
@@ -170,8 +181,7 @@ def main():
         r["source"] = f"{NWI_LINK} ; {PADUS_LINK}"
         print(sid, {k: r.get(k) for k in ("wetland_any_m", "wetland_vegetated_m", "protected_m", "protected_name")})
         rows.append(r)
-    if rows:
-        pd.DataFrame(rows).to_csv(OUT / "site_proximity.csv", index=False)
+    _write(rows, OUT / "site_proximity.csv", "site_id", bool(only))
 
     rows = []
     for _, s in pd.read_csv("data/sources.csv").iterrows():
@@ -182,8 +192,7 @@ def main():
         r["source"] = f"{NWI_LINK} ; {PADUS_LINK}"
         print(s.source_id, {k: r.get(k) for k in ("wetland_any_m", "wetland_vegetated_m", "protected_m", "protected_name")})
         rows.append(r)
-    if rows:
-        pd.DataFrame(rows).to_csv(OUT / "source_proximity.csv", index=False)
+    _write(rows, OUT / "source_proximity.csv", "source_id", bool(only))
 
 
 if __name__ == "__main__":
