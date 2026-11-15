@@ -696,3 +696,23 @@ skipped twice: the re-run's final mask differs from the committed one by 254 of 
 Planetary Computer reprocessed some scenes since F1 ran. Rather than guess months for it, Abilene shows its measured area
 curve and outline but no animated pixels; its committed F1 numbers are unchanged.
 
+## 2026-11-15: Map, fourth pass (focus, real photos over time, 3D)
+
+**Why.** The person found the third version cluttered ("no idea where I am supposed to focus") and wanted Play to show the
+ground itself changing, or 3D buildings rising, not only dots and red spots.
+
+**Focus.** The left column (KPIs, activity log, legend, layers, weights) is gone. The map carries one headline card: the
+date, one number (acres changed nationally, or at the open campus) and one line about the latest event. The right panel
+opens on three numbered "Start here" steps. Layer toggles and pressure weights moved into a closed "Map settings" box.
+
+**Real photos over time.** New `pipeline/map_wayback.py` lists, for every campus, the Esri World Imagery Wayback releases
+whose zoom-16 tile at the campus centre changed, and reads each one's capture date from Esri's own imagery metadata layer
+(`SRC_DATE`). With a campus open, the map shows the latest photo captured on or before the timeline date. Photos are
+published imagery, not edited; capture dates are Esri's. Only the centre tile is checked, so a photo change at the edge
+of a large campus can be missed.
+
+**3D.** Radar-changed pixels rise as blocks when they change and stay raised for two years, then become a light tint so
+the photo shows what was built. Campuses without per-pixel months (announced sites, and Abilene) show their outline as a
+block whose height follows the share of land changed (radar curve) and then the projected acres. Block heights are for
+display only, are not building heights, and the legend and About box say so.
+
