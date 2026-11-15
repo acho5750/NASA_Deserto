@@ -26,7 +26,8 @@ Steps
      is_urgent, diagnostic_flag, has_input_exception  from science/LSAR/identification
 3. usable = freq A has HH and HV, valid_frac_HH and valid_frac_HV >= 0.9, anomaly_px == 0,
    diagnostic flag 0. usable_reason says why not. Duplicate products of one acquisition
-   (partial-frame copy, 20 MHz copy, reprocessed _002) are kept and marked in duplicate_of.
+   (a 40 MHz partial frame plus a 20 MHz full frame, or a reprocessed _002) are kept and the
+   secondary copy names the primary in duplicate_of (see mark_duplicates).
 
 A 401/403 from ASF stops the run (the token may have expired). Nothing is invented: blank cells
 mean the value was not available.
@@ -195,17 +196,18 @@ def judge(r):
 
 
 def mark_duplicates(rows):
-    """Same site + track + frame + start within 60 s = one acquisition. Primary: full frame,
-    then the stack's usual bandwidth, then the highest counter (_002 over _001)."""
+    """Same site + track + frame + start minute = one acquisition. Primary: usable, then the
+    track's usual range bandwidth (keeps a stack at one pixel spacing), then full frame, then the
+    highest counter (_002 over _001)."""
     from collections import Counter, defaultdict
     groups = defaultdict(list)
     for r in rows:
         groups[(r["site_id"], r["track"], r["frame"], r["acq_start_utc"][:15])].append(r)
     bw_mode = Counter((r["site_id"], r["track"], r["range_bandwidth_mhz"]) for r in rows)
     for g in groups.values():
-        g.sort(key=lambda r: (r["full_frame"] != "TRUE", r.get("usable") is not True,
+        g.sort(key=lambda r: (r.get("usable") is not True,
                               -bw_mode[(r["site_id"], r["track"], r["range_bandwidth_mhz"])],
-                              -int(r["granule_ur"][-3:])))
+                              r["full_frame"] != "TRUE", -int(r["granule_ur"][-3:])))
         for r in g[1:]:
             r["duplicate_of"] = g[0]["granule_ur"]
     for r in rows:
