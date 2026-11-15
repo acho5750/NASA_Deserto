@@ -624,3 +624,23 @@ Sentinel-2 image outline. Label fixed in code and in `data/proximity/site_proxim
 distance changed).
 
 **Hosting.** `.github/workflows/pages.yml` publishes `map/` to GitHub Pages on every push to main.
+
+## 2026-11-15: Map redesign (look and feel only)
+
+**Why.** The person asked for a more advanced, polished map. Data, formulas, sites and wording rules are unchanged:
+`map/data.js` and `map/radar_panels.js` are untouched, and every panel text about water sources keeps its earlier wording.
+
+**Rendering.** Leaflet replaced by MapLibre GL 4.7.1 with a deck.gl 9.0.38 overlay (both from unpkg, still a static
+page on GitHub Pages). Basemaps: CARTO Dark Matter (no key) and Esri World Imagery with Esri reference labels (no key).
+CARTO's raster label tiles were tried and rejected: they now show "API key required".
+
+**Display-only choices (no number shown to a reader depends on them).**
+- Campus column height = 6,000 m + 5,000 m x sqrt(acres converted in the selected year and scenario), scaled with zoom so
+  columns stay readable, then fading out past zoom ~9 where the extruded campus outlines take over. Square root so
+  small campuses stay visible next to the largest.
+- Water links are drawn as raised curves from the water source to the campus with moving pulses; pulses run only on
+  links whose campus has converted land in the selected year (or is built). The curve height is cosmetic.
+- Source color = F7 pressure index on a cyan-violet-rose ramp; the KPI counters animate between values but always
+  settle on the exact totals.
+- Added per-campus charts of the existing low/median/high water and acres series (2026-2030) and a top-6 list by
+  pressure index; both read the same `data.js` values the tables show.

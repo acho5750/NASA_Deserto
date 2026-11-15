@@ -214,7 +214,9 @@
     #mobileToggle { display: grid; position: absolute; top: 12px; right: 12px; z-index: 3; }
     #tools { left: 8px; right: 8px !important; top: 8px; flex-wrap: wrap; }
     #search { flex: 1; width: auto; min-width: 120px; }
-    #timeline { left: 8px; right: 8px !important; bottom: calc(44vh + 8px); padding: 10px 12px; gap: 10px; }
+    #timeline { left: 8px; right: 8px !important; bottom: calc(44vh + 8px); padding: 10px 12px; gap: 6px 10px; flex-wrap: wrap; }
+    #timeline .track { flex-basis: calc(100% - 130px); margin: 0 12px 18px 4px; }
+    .tl-side { width: 100%; align-items: stretch; } .tl-side .seg { display: flex; } .tl-side .seg button { flex: 1; }
     #side.collapsed ~ #timeline { bottom: 72px; }
     .yearbox .y { font-size: 28px; } .yearbox { min-width: 64px; } .yearbox .l, .tl-side .l { display: none; }
     #play { width: 38px; height: 38px; }
@@ -615,7 +617,7 @@ function select(kind, id, fly = true) {
     const close = kind !== "src";
     map.flyTo({ center: [o.lon, o.lat], zoom: close ? 13.2 : 9.6, pitch: close ? 62 : 50, bearing: close ? -28 : -12,
                 duration: 2600, curve: 1.6, essential: true,
-                padding: matchMedia("(max-width: 900px)").matches ? {} : { left: 380, right: 430, top: 40, bottom: 110 } });
+                padding: isNarrow() ? {} : { left: 380, right: 430, top: 40, bottom: 110 } });
   }
   showDetail();
   renderLayers();
@@ -647,7 +649,13 @@ const BASES = {
     ]
   }
 };
-const HOME = { center: [-96.5, 37.2], zoom: 3.75, pitch: 48, bearing: -10 };
+const US = [[-124.8, 24.5], [-66.9, 49.4]];
+const isNarrow = () => matchMedia("(max-width: 900px)").matches;
+function home(duration) {
+  const pad = isNarrow() ? { top: 110, bottom: 230, left: 6, right: 6 }
+                         : { top: 70, bottom: 120, left: 400, right: 30 };
+  map.fitBounds(US, { padding: pad, pitch: isNarrow() ? 35 : 48, bearing: -10, duration, essential: true });
+}
 const map = new maplibregl.Map({
   container: "map", style: BASES.night, center: [-97, 33], zoom: 2.6, pitch: 20, bearing: 0,
   maxPitch: 80, attributionControl: { compact: true }, antialias: true
@@ -904,7 +912,7 @@ document.querySelectorAll("[data-base]").forEach(b => b.addEventListener("click"
   document.querySelectorAll("[data-base]").forEach(x => x.setAttribute("aria-pressed", x === b));
   map.setStyle(BASES[state.base]);
 }));
-document.getElementById("home").addEventListener("click", () => map.flyTo({ ...HOME, duration: 2200, essential: true }));
+document.getElementById("home").addEventListener("click", () => home(2200));
 document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && state.selected) closeDrawer(); });
 document.getElementById("mobileToggle").addEventListener("click", () => document.getElementById("side").classList.toggle("collapsed"));
@@ -932,11 +940,12 @@ document.getElementById("play").addEventListener("click", () => {
   }, 1500);
 });
 
+if (isNarrow()) document.getElementById("side").classList.add("collapsed");
 nisarCards();
 render();
 map.on("load", () => {
   document.getElementById("loading").classList.add("done");
-  map.flyTo({ ...HOME, duration: still ? 0 : 3200, essential: true });
+  home(still ? 0 : 3200);
   try { map.setSky({ "sky-color": "#04070C", "horizon-color": "#0E2036", "fog-color": "#04070C", "sky-horizon-blend": .6, "horizon-fog-blend": .5 }); } catch (e) {}
   requestAnimationFrame(frame);
 });

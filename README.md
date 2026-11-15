@@ -7,7 +7,7 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 |---|---|
 | `pipeline/projection.py` (F2–F8) | Calibrated on real data (Phase 4); the demo CSVs still work for a quick test but are not shipped |
 | `pipeline/build_map.py` (Phase 7) | Builds `map/data.js` from the real CSVs: all 54 campuses, 25 water sources, projection, radar, trends, land cover, exposure |
-| `map/index.html` | Real-data map, tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
+| `map/index.html` | Real-data 3D map (MapLibre GL + deck.gl, night and satellite basemaps), tested in Chromium; deployed from `map/` to GitHub Pages by `.github/workflows/pages.yml` |
 | `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
 | `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
