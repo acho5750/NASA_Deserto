@@ -479,3 +479,23 @@ Fort Griffin is gone, but shares above 1x remain where a campus really does sit 
 water co-op. F5 divides by the co-op's own retail supply, although Hamby and Bell Milam Falls buy
 their water wholesale from much larger systems (Abilene serves about 130,000 people). Whether the
 share should use the wholesale seller's supply is a formula question for the person; nothing changed.
+
+## 2026-11-15 F5: wholesale-system share shown next to the local share (person's decision)
+
+The person chose "Show both numbers" for utilities that buy their water. Nothing about the local share
+changed. Added:
+- `wholesale_sellers` in `data/water/source_assignments.csv`, filled by hand only where the
+  assignment's basis names the seller(s): 8 utilities (Prince William West, Hawley, Eagle Mountain,
+  Castalian Springs, Falls Twp, Hamby, Bell Milam Falls, Lordstown). SAWS is SWP in SDWA, but its
+  assigned source is its own Edwards wells, so it gets no seller.
+- `water_chain.wholesale_population`: the sellers' own retail population plus every active system SDWA
+  lists as buying from them (active CC facility with that SELLER_PWSID), each PWSID once, buyers of
+  buyers not followed. It writes `wholesale_population` and `wholesale_systems` to `data/sources.csv`.
+- `projection.py`: `share_wholesale` = water of every site linked to any utility in that wholesale
+  system / (wholesale_population x the utility's state per-capita x 365). It is `null` where there is
+  no seller. The map popup shows it on a second line.
+
+2030 median, local share -> wholesale share: Hamby 39.8x -> 0.69x and Hawley 6.0x -> 0.68x (both on the
+Abilene system, so both count Shackelford + Stargate Abilene); Bell Milam Falls 10.3x -> 1.16x (Central
+Texas WSC + East Bell WSC system, about 61,000 people); Castalian Springs 0.28x -> 0.04x; PWCSA West
+0.12x -> 0.009x.
