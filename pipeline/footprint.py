@@ -199,26 +199,46 @@ def acres_in(cumulative, mask, pixel_m2):
     return (cumulative & mask[None]).sum(axis=(1, 2)) * pixel_m2 / M2_PER_ACRE
 
 
+K_GRID = np.geomspace(0.01, 3.0, 400)   # per month; build_months = ln(81)/k spans ~1.5 to 440 months
+
+
 def fit_logistic(t_months, acres):
     """A(t) = A_max / (1 + exp(-k (t - t0))) by grid search on (k, t0) with A_max solved in closed form.
-    Returns A_max, t0 (months from construction start), k, build_months (10% -> 90% = ln(81)/k)."""
+    k on a log grid (fine steps at slow builds), t0 on a 0.25-month grid that may run 12 months past
+    either end of the data. Returns A_max, t0 (months from construction start), k,
+    build_months (10% -> 90% = ln(81)/k), and a note when the best fit sits on a grid edge."""
     t = np.asarray(t_months, float)
     a = np.asarray(acres, float)
+    t0s = np.arange(t.min() - 12, t.max() + 12.001, 0.25)
     best = (np.inf, None)
-    for k in np.linspace(0.05, 3.0, 120):
-        for t0 in np.linspace(t.min(), t.max(), 241):
-            s = 1.0 / (1.0 + np.exp(-k * (t - t0)))
-            amax = float(s @ a / (s @ s))
-            sse = float(((a - amax * s) ** 2).sum())
-            if sse < best[0]:
-                best = (sse, (amax, t0, k))
+    for k in K_GRID:
+        s = 1.0 / (1.0 + np.exp(-k * (t[None, :] - t0s[:, None])))      # (t0, time)
+        amax = (s @ a) / (s * s).sum(axis=1)
+        sse = (((a[None, :] - amax[:, None] * s) ** 2)).sum(axis=1)
+        i = int(np.argmin(sse))
+        if sse[i] < best[0]:
+            best = (float(sse[i]), (float(amax[i]), float(t0s[i]), float(k)))
     amax, t0, k = best[1]
-    return amax, t0, k, float(np.log(81.0) / k)
+    edge = ""
+    if k <= K_GRID[0] * 1.0001 or k >= K_GRID[-1] * 0.9999 or t0 <= t0s[0] + 1e-9 or t0 >= t0s[-1] - 1e-9:
+        edge = "logistic_fit_at_grid_edge"
+    return amax, t0, k, float(np.log(81.0) / k), edge
+
+
+def fit_flags(flag, edge, t0, k, t_months):
+    extra = [edge] if edge else []
+    if t0 + np.log(9.0) / k > max(t_months):   # 90% point after the last composite
+        extra.append("curve_not_saturated")
+    return ";".join(x for x in [flag] + extra if x)
 
 
 def write_radar_png(path, before_vv, after_vv, site_edge, labels):
     """Side-by-side before | after Sentinel-1 VV backscatter (dB, -25..+5 stretch), site outline in cyan."""
     from PIL import Image, ImageDraw
+
+    e = site_edge.copy()          # thicken the 1-pixel outline to 2 pixels so it shows when scaled
+    e[1:, :] |= site_edge[:-1, :]; e[:, 1:] |= site_edge[:, :-1]
+    site_edge = e
 
     def grey(vv):
         g = np.clip((np.nan_to_num(vv, nan=-25.0) + 25) / 30 * 255, 0, 255).astype("uint8")
@@ -319,9 +339,8 @@ def run(args):
     curve_path = OUT_DIR / f"{args.site_id}_area_curve.csv"
     curve.to_csv(curve_path, index=False)
 
-    amax, t0, k, build_months = fit_logistic(t_months, site_acres)
-    if t0 + np.log(9.0) / k > max(t_months):   # 90% point after the last composite
-        flag = ";".join(x for x in (flag, "curve_not_saturated") if x)
+    amax, t0, k, build_months, edge = fit_logistic(t_months, site_acres)
+    flag = fit_flags(flag, edge, t0, k, t_months)
 
     site_area = site_utm.area / M2_PER_ACRE
     after_sel = times >= month_add(end, -AFTER_MONTHS)

@@ -7,7 +7,8 @@ A starter repo for Option 2: footprint from radar, water supply chain, projectio
 |---|---|
 | `pipeline/projection.py` (F2–F8) | Tested on the demo CSVs; writes `map/data.js` |
 | `map/index.html` | Render logic tested; needs internet for Leaflet and map tiles |
-| `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; tested on Stargate Abilene (`data/footprint/`) |
+| `pipeline/footprint.py` (F1) | Port of the GEE script on Planetary Computer `sentinel-1-rtc`; run on 29 built sites by `pipeline/footprint_batch.py` (`data/footprint/`, radar images in `map/img/`) |
+| `pipeline/campus_outline.py` | Campus outlines from OpenStreetMap (main API + Nominatim; ids in `data/footprint/campus_outlines.csv`) |
 | `gee/footprint_engine.js` (F1) | Logic reference only (Earth Engine is not available to this project) |
 | `pipeline/water_chain.py` steps 1–3a | Written against documented file layouts and the Hydrocron API, not yet run against live data |
 | `pipeline/water_chain.py` step 3b (DISP-S1) | Placeholder: inspect one real file first |
