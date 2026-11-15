@@ -41,20 +41,20 @@ Retries up to 4 times with backoff on HTTP errors and on ArcGIS `{"error": ...}`
 back with HTTP 200), then raises.
 
 **Matching rules (unchanged from the file-based version).**
-- No polygon contains the site: one row with empty `pwsid`, `match_status = no_utility_check_self_supply`.
+- No polygon contains the site: one row with empty `pwsid`, `match_status = self_supplied_check`.
 - Several polygons contain the site: one row per PWSID, all `matched`, reviewed by hand.
 - New: if the service returns several features with the same PWSID, that PWSID is written once.
   Duplicate PWSIDs exist in this layer (the v2.01 note mentions them) and add no information.
 - Output columns unchanged: every registry column, plus `pwsid` and `match_status`, in
   `data/site_utility_matches.csv` (new optional `--out` flag for test runs).
 
-**Open item.** `CLAUDE.md` calls the no-match status `self_supplied_check`; the code has always
-written `no_utility_check_self_supply`. Kept the code's string because the task said to handle
-no-match the same way as before. Pick one name before the projection reads this column.
+**Resolved 2026-11-15.** The no-match label was `no_utility_check_self_supply` in the code and
+`self_supplied_check` in `CLAUDE.md`. Bubba chose `self_supplied_check` everywhere; the code now
+writes that. No other file (projection, map, docs) read the old label.
 
 **Test results (2026-11-15).**
 - Demo registry: DEMO-A OK1020418 (TULSA), DEMO-B and DEMO-F AZ0407095 (MESA CITY OF),
-  DEMO-D AZ0407093 (GLENDALE CITY OF); DEMO-C, E, G, H no match.
+  DEMO-D AZ0407093 (GLENDALE CITY OF); DEMO-C, E, G, H no match (`self_supplied_check`).
 - Real addresses: Phoenix City Hall (33.4484, -112.0740) -> AZ0407025 PHOENIX CITY OF;
   Tulsa City Hall (36.1540, -95.9928) -> OK1020418 TULSA; Omaha City Hall (41.2587, -95.9378) ->
   NE3105507 METROPOLITAN UTILITIES DISTRICT.

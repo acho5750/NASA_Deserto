@@ -49,7 +49,7 @@ HYDROCRON = "https://soto.podaac.earthdatacloud.nasa.gov/hydrocron/v1/timeseries
 # the dataset version and why we use the service instead of a downloaded file).
 EPA_SERVICE_AREAS = ("https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/"
                      "Water_System_Boundaries/FeatureServer/0/query")
-NO_MATCH = "no_utility_check_self_supply"
+NO_MATCH = "self_supplied_check"  # label set in CLAUDE.md decision rules
 
 
 def _query_service_areas(lat: float, lon: float, retries: int = 4) -> list:
