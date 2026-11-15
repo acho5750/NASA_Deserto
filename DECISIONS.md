@@ -644,3 +644,23 @@ CARTO's raster label tiles were tried and rejected: they now show "API key requi
   settle on the exact totals.
 - Added per-campus charts of the existing low/median/high water and acres series (2026-2030) and a top-6 list by
   pressure index; both read the same `data.js` values the tables show.
+
+## 2026-11-15: Map redesign, second version (replaces the 3D-column design above)
+
+**Why.** The person rejected the dark 3D-column look ("looks like SimCity") and asked for a Google Earth feel:
+data drawn on real imagery, not shapes on a line map. Data, formulas, sites and water wording are unchanged.
+
+**Base.** MapLibre GL 5.6.0 globe projection with Esri World Imagery as the only basemap, Esri reference labels and
+roads (toggle), and 3D terrain from the public Mapzen/AWS Terrain Tiles (terrarium, 1.4x exaggeration). deck.gl and the
+dark CARTO basemap are removed. All data layers are native MapLibre layers, so they drape on the terrain.
+
+**Radar change on the photo.** New `pipeline/map_overlays.py` reprojects each `data/footprint/masks/<id>_converted.tif`
+(29 built campuses) to Web Mercator with nearest-neighbour resampling, so no pixel changes class, and writes a transparent
+PNG: converted pixels in light red, with a brighter edge around solid patches (the mask opened by one pixel; display only).
+Check: pixel counts x 100 m^2 match `final_acres` (e.g. Osmium 12,159 px = 300.5 acres vs 300.46; Abilene 1,094.0 vs 1,094.01).
+The three announced Stargate sites have no F1 mask, so they show only their outline.
+
+**Display choices.** Campus markers are circles sized by sqrt(acres in the selected year and scenario); they fade out
+past zoom ~12 where the outline and radar pixels take over. Campus-to-source lines appear only for the selected campus or
+source, to keep the imagery clear. Source color = F7 pressure index (blue-yellow-red). Imagery dates vary by place, and the
+About box says so.
