@@ -3,14 +3,14 @@ const { applyTheme } = require(process.env.APPLY_THEME || './apply_theme.js');
 const THEME = { name: 'Deserto', headFontFace: 'Calibri', bodyFontFace: 'Calibri',
   colors: { dk1:'1F1D1A', lt1:'FFFFFF', dk2:'5E584E', lt2:'F6F2E9', accent1:'7B2FBE', accent2:'8E2A1F', accent3:'2F6F8F', accent4:'B07A2A', accent5:'EAE3D4', accent6:'4F7A4A', hlink:'7B2FBE', folHlink:'5E2A8E' } };
 const pres = new pptxgen(); pres.layout = 'LAYOUT_WIDE'; pres.theme = { headFontFace:'Calibri', bodyFontFace:'Calibri' };
-pres.title = 'Data Centers & Water'; pres.author = 'NASA Space Apps 2026 team';
+pres.title = 'Deserto'; pres.author = 'NASA Space Apps 2026 team';
 const C = pres.SchemeColor;
 const W = 13.333, H = 7.5, M = 0.6;
 const LINK = 'acho5750.github.io/NASA_Deserto';
 pres.defineSlideMaster({ title:'Title', background:{ color: THEME.colors.lt2 }, objects:[] });
 pres.defineSlideMaster({ title:'Content', background:{ color: THEME.colors.lt2 },
   objects:[ { placeholder:{ options:{ name:'title', type:'title', x:M, y:0.45, w:W-2*M, h:0.85, fontSize:34, bold:true, color:C.text1, valign:'top', align:'left', margin:0 }, text:'' } },
-            { text:{ text:'Data Centers & Water  ·  NASA Space Apps 2026  ·  '+LINK, options:{ x:M, y:H-0.45, w:9, h:0.3, fontSize:10, color:C.text2, margin:0 } } } ],
+            { text:{ text:'Deserto  ·  NASA Space Apps 2026  ·  '+LINK, options:{ x:M, y:H-0.45, w:9, h:0.3, fontSize:10, color:C.text2, margin:0 } } } ],
   slideNumber:{ x:W-M-0.5, y:H-0.45, w:0.5, h:0.3, fontSize:10, color:C.text2, align:'right' } });
 const tb = (s, text, o) => s.addText(text, Object.assign({ isTextBox:true, margin:0, fontSize:16, color:C.text1, valign:'top' }, o));
 const card = (s, x, y, w, h, fill) => s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, rectRadius:0.12, fill:{ color: fill || C.background1 }, line:{ color:'E2DACA', width:0.75 } });
@@ -22,14 +22,14 @@ pres.addSection({ title:'Title' });
 let s = pres.addSlide({ masterName:'Title', sectionTitle:'Title' });
 s.addImage({ path:'title_map.jpg', x:6.35, y:0, w:6.983, h:7.5, sizing:{ type:'cover', w:6.983, h:7.5 }, altText:'Map of US data center campuses in 2035, from the project' });
 tb(s, '2026 NASA SPACE APPS CHALLENGE  ·  DANCING WITH THE SARs', { x:M, y:0.75, w:5.5, h:0.3, fontSize:12, bold:true, color:PURPLE, charSpacing:1 });
-tb(s, 'Data Centers & Water', { x:M, y:1.2, w:5.5, h:1.6, fontSize:44, bold:true });
-tb(s, 'What the radar sees, and what the money will build', { x:M, y:2.9, w:5.4, h:0.9, fontSize:22, color:C.text2 });
-tb(s, 'Radar satellites show the land AI data centers have taken, and which towns’ water each campus will depend on.', { x:M, y:3.95, w:5.3, h:0.8, fontSize:16 });
-card(s, M, 5.0, 5.3, 1.35);
+tb(s, 'Deserto', { x:M, y:1.2, w:5.5, h:1.0, fontSize:54, bold:true });
+tb(s, 'Radar-tracking data centers and the water they depend on', { x:M, y:2.35, w:5.4, h:0.9, fontSize:22, color:C.text2 });
+tb(s, 'Radar satellites show the land AI data centers have taken, and which towns’ water each campus will depend on.', { x:M, y:3.55, w:5.3, h:0.8, fontSize:16 });
+card(s, M, 4.6, 5.3, 1.35);
 tb(s, [ {text:'Team  ', options:{bold:true,color:C.text2}}, {text:'[Team name]', options:{breakLine:true}},
         {text:'Members  ', options:{bold:true,color:C.text2}}, {text:'[Full names of team members]', options:{breakLine:true}},
         {text:'Live map  ', options:{bold:true,color:C.text2}}, {text:LINK, options:{hyperlink:{url:'https://'+LINK}, color:PURPLE}} ],
-   { x:M+0.25, y:5.15, w:4.9, h:1.1, fontSize:15, paraSpaceAfter:4 });
+   { x:M+0.25, y:4.75, w:4.9, h:1.1, fontSize:15, paraSpaceAfter:4 });
 s.addNotes('Title. Fill in team name and member names before submitting.');
 
 // 2 Problem
@@ -55,9 +55,9 @@ s.addText([
   {text:'Images the same ground every 12 days', options:{bullet:true}} ], { x:M, y:1.95, w:5.6, h:1.6, fontSize:16, color:C.text1, paraSpaceAfter:6, margin:0, isTextBox:true, valign:'top' });
 pill(s, M, 3.75, 2.3, 'WHAT IT ADDED', PURPLE);
 tb(s, '602', { x:M, y:4.2, w:1.9, h:0.85, fontSize:48, bold:true, color:PURPLE });
-tb(s, 'acres got much brighter (new buildings and steel) in 5 months at 3 Stargate campuses under construction, from all 33 NISAR images', { x:M+2.0, y:4.28, w:3.65, h:1.1, fontSize:14 });
+tb(s, 'acres got much brighter in NISAR radar, the signature of new buildings and steel, in 5 months at 3 Stargate campuses (all 33 images read)', { x:M+2.0, y:4.28, w:3.65, h:1.1, fontSize:14 });
 s.addText([
-  {text:'The newest aerial photo of Project Jupiter (Sept 2025) still shows bare desert; NISAR shows the buildings', options:{bullet:true,breakLine:true}},
+  {text:'The newest aerial photo of Project Jupiter (Sept 2025) still shows bare desert; NISAR already shows the change', options:{bullet:true,breakLine:true}},
   {text:'Ground motion (GUNW) over 8 aquifers: no clear change yet, a first baseline to watch', options:{bullet:true}} ], { x:M, y:5.5, w:5.6, h:1.3, fontSize:14, color:C.text1, paraSpaceAfter:6, margin:0, isTextBox:true, valign:'top' });
 card(s, 6.55, 1.45, 6.18, 5.25, C.background1);
 s.addImage({ path:'nisar_pair.jpg', x:6.75, y:1.65, w:5.78, h:2.886, altText:'NISAR radar of Vantage Frontier, June vs October 2026, purple marks much brighter ground' });
@@ -129,7 +129,7 @@ pres.addSection({ title:'Impact' });
 s = pres.addSlide({ masterName:'Content', sectionTitle:'Impact' });
 s.addText('Why it matters, and what comes next', { placeholder:'title' });
 const cols = [['Who it helps', C.text1, ['Town councils and water utilities weighing a new campus','Residents and reporters asking where the water will come from','Planners comparing announced plans with what radar shows is built']],
-              ['What NISAR makes possible', PURPLE, ['Check every 12 days whether announced money is becoming buildings','Watch the ground over the aquifers towns depend on','Free, open data anyone can re-run']],
+              ['What NISAR makes possible', PURPLE, ['Check every 12 days for new construction at announced campuses','Watch the ground over the aquifers towns depend on','Free, open data anyone can re-run']],
               ['Next steps', C.text1, ['Follow every campus as NISAR coverage grows','Grow the aquifer baseline into trends','Add utilities’ own water reports for each source']]];
 const cw2 = (W-2*M-2*0.3)/3;
 cols.forEach((c,i)=>{ const x=M+i*(cw2+0.3), y=1.5;
