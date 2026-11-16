@@ -827,3 +827,24 @@ GCOV files but would repeat the "something was built" message, so it was left fo
 
 - **Step 2 now has the same neutral styling as the other steps** (QA review). This covers the nav tab, the step number, the headline number and the cards. Purple is kept only for NISAR data: the NISAR chip, rings on the map, purple change areas, the NISAR chart lines and NISAR numbers.
 - **Step 2 opens with a "we did X" lede** like steps 3 and 4: "We read every NISAR radar image of the 3 campuses it covers, one every 12 days since June 2026, and mapped where the ground got much brighter. Aerial photos can't keep up: ..." This replaces the "So what?" box, which said the same thing.
+
+## 2026-11-16: Fresh-eyes QA fixes
+
+A separate reviewer used the live site, at desktop and phone sizes, as a first-time judge would. These are the fixes that came out of it. No formula, site or data file changed.
+
+- **One land number.** Step 1 says 8,462 acres at the 29 finished campuses. The map counter adds the 3 Stargate campuses still being built and ends at 9,973. Both places now say this, and step 4 compares its projection with 9,973, the same set of campuses.
+- **SWOT trends need at least 10 good passes.** Below that, the points are shown in grey with no fit line, and the text says "only N good SWOT passes so far, too few to call a trend". This affects only the Delaware River (6 passes; it was -44.8 cm/yr). The F-formula rule (fewer than 4 passes = `insufficient_swot`) is unchanged, so this is a display rule. Rows that show a trend also show their pass count.
+- **Purchased-water utilities show the wholesale share next to the town share.** This applies in the step 3 ranking, the step 4 "Where the pressure lands" list and the source panel. Example: Lake Belton is 11x of the town's supply but 1.2x of the wholesale system. The F5 share and the ranking are unchanged.
+- **Ranges use one unit.** A low-high range is all "x" when the middle value is 1x or more, and all "%" otherwise. Before, mixed ranges like "58%-5.5x" appeared.
+- **Collapsed ranges for built campuses.** Where low = high, the projected acres say "built: the level where the radar curve flattens out" instead of showing a range like "1,211-1,211".
+- **Pre-construction change is called out.** Built campuses whose curve shows more than 5% of final acres before the build start now get a note in the panel. Example: Meta Rosemount, about 54 of 255 acres. These sites are already at the 5 dB maximum and flagged under the threshold rule.
+- **NISAR counts.** The map uses 33 images (one track per campus, 10-12 each). About now says that these come from 105 usable images checked on all tracks, and that the Oct 2025 test images are not used. The NISAR chapter opens on Nov 2026, and Play steps month by month from May 2026 at 0.9 s a step.
+- **Step 4 opens at 2035** instead of 2026, where it showed "+0" pace lines. The pace line now shows its own low-high range.
+- **Step 3 Play is disabled.** Step 3 is a snapshot, and Play used to jump to step 4. The map card's tag now reads "EPA + projection", not SWOT.
+- **Legends match the map.** The land legend lists all classes. The NISAR legend says other campuses are colored by land before. The step 4 legend includes all water-drop colors.
+- **Readability.** Campus squares have a minimum size at the national view, and taps pick the nearest marker. In before/after view the legend no longer covers the BEFORE tag, and the tag says "loading" until the photo arrives. On phones, the chapter title shows above the map with a compact two-column legend. Utility acronyms (WSC, PWSD, MWD, PWS) stay in capitals, duplicate source links are numbered, and the land caption lists every class it counts. "Each figure = the water 25,000 people use" replaces "daily water". Pipeline wording in visible copy is now plain.
+- **Accessibility.** The page has a `<main>` landmark, and the time slider and photo divider have aria value attributes.
+- **Not changed.**
+  - Rerunning F1 at Rosemount: it is already at the 5 dB cap.
+  - The pace line's size: it is F9 as documented.
+  - The 35 acres in Jan 2017, which is the measured baseline month.
