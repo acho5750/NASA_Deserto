@@ -1,7 +1,7 @@
 const pptxgen = require('pptxgenjs');
 const { applyTheme } = require(process.env.APPLY_THEME || './apply_theme.js');
 const THEME = { name: 'Deserto', headFontFace: 'Calibri', bodyFontFace: 'Calibri',
-  colors: { dk1:'1F1D1A', lt1:'FFFFFF', dk2:'5E584E', lt2:'F6F2E9', accent1:'1F6F78', accent2:'8E2A1F', accent3:'5B6B7A', accent4:'B07A2A', accent5:'EAE3D4', accent6:'4F7A4A', hlink:'1F6F78', folHlink:'17555C' } };
+  colors: { dk1:'1F1D1A', lt1:'FFFFFF', dk2:'5E584E', lt2:'F6F2E9', accent1:'1F6F78', accent2:'8E2A1F', accent3:'2B7BBA', accent4:'B07A2A', accent5:'EAE3D4', accent6:'4F7A4A', hlink:'1F6F78', folHlink:'17555C' } };
 const pres = new pptxgen(); pres.layout = 'LAYOUT_WIDE'; pres.theme = { headFontFace:'Calibri', bodyFontFace:'Calibri' };
 pres.title = 'Deserto'; pres.author = 'NASA Space Apps 2026 team';
 const C = pres.SchemeColor;
