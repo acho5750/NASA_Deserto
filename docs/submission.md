@@ -5,8 +5,8 @@ them. Copy the text under each heading into that field. Every number comes from 
 (https://acho5750.github.io/NASA_Deserto/) and the CSVs in `data/` named next to it; nothing here
 is estimated beyond what the map shows.
 
-Fill in before submitting (marked `[FILL IN]`): team name, team member names, the demo link
-(the 7-slide deck), and your Local Event.
+Fill in before submitting (marked `[FILL IN]`): team name, team member names, and the
+[CONFIRM] on the SI paragraph.
 
 ---
 
@@ -42,7 +42,7 @@ from space, whether they are being built.
 
 ## Link to Project Demo
 
-[FILL IN: public link to the 7-slide deck]
+7-slide deck (PDF): https://github.com/acho5750/NASA_Deserto/blob/main/docs/deck/Data_Centers_and_Water_deck.pdf
 
 ## Link to Final Project
 
