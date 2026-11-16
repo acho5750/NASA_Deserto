@@ -2,6 +2,13 @@
 
 A starter repo for Option 2: footprint from radar, water supply chain, projection to 2035, map.
 
+## Use of AI
+Code, data processing scripts and written text in this repository were produced with the help of
+Claude (Anthropic) through Claude Code, an AI coding assistant. Every
+judgment call is logged with its date and reason in `DECISIONS.md`. The data come from the
+satellite and public sources listed under "Data links"; no data, images or map pictures are
+AI-generated. Every picture on the map is satellite radar or aerial photography.
+
 ## What runs today
 | Piece | Status |
 |---|---|
