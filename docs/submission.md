@@ -94,7 +94,8 @@ or modify NASA branding. This is also disclosed in the "Use of AI" section of th
 ## NASA Data
 
 One row per resource on the form: copy the Link Text box, then the Link Url box. Every URL was
-checked and opens without a login.
+checked and opens without a login, and every resource listed is used by a script, data file or the
+map in this repository.
 
 1. Link Text:
 
@@ -207,18 +208,6 @@ checked and opens without a login.
 10. Link Text:
 
    ```
-   ASF Data Search Vertex (NASA Alaska Satellite Facility DAAC)
-   ```
-
-   Link Url:
-
-   ```
-   https://search.asf.alaska.edu/
-   ```
-
-11. Link Text:
-
-   ```
    NASA Earthdata Common Metadata Repository (CMR) search
    ```
 
@@ -228,16 +217,16 @@ checked and opens without a login.
    https://cmr.earthdata.nasa.gov/search/
    ```
 
-12. Link Text:
+11. Link Text:
 
    ```
-   NASA Earthdata
+   NASA Earthdata Login (data access)
    ```
 
    Link Url:
 
    ```
-   https://www.earthdata.nasa.gov/
+   https://urs.earthdata.nasa.gov/
    ```
 
 ## Space Agency Partner & Other Data
@@ -271,18 +260,6 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
 3. Link Text:
 
    ```
-   ISRO (NISAR partner agency)
-   ```
-
-   Link Url:
-
-   ```
-   https://www.isro.gov.in/
-   ```
-
-4. Link Text:
-
-   ```
    Epoch AI Frontier Data Centers database
    ```
 
@@ -292,19 +269,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://epoch.ai/data/data-centers
    ```
 
-5. Link Text:
-
-   ```
-   PNNL IM3 Data Center Atlas
-   ```
-
-   Link Url:
-
-   ```
-   https://im3.pnnl.gov/datacenter-atlas
-   ```
-
-6. Link Text:
+4. Link Text:
 
    ```
    US EPA Public Water System Service Areas
@@ -316,7 +281,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
    ```
 
-7. Link Text:
+5. Link Text:
 
    ```
    US EPA ECHO Safe Drinking Water Act data downloads
@@ -328,7 +293,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://echo.epa.gov/tools/data-downloads
    ```
 
-8. Link Text:
+6. Link Text:
 
    ```
    USGS Estimated Use of Water in the United States, 2015 (county data)
@@ -340,7 +305,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://doi.org/10.5066/F7TB15V5
    ```
 
-9. Link Text:
+7. Link Text:
 
    ```
    Google 2026 Environmental Report (data center water use)
@@ -352,19 +317,19 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://sustainability.google/reports/google-2026-environmental-report/
    ```
 
-10. Link Text:
+8. Link Text:
 
    ```
-   WRI Aqueduct water risk atlas
+   WRI Aqueduct 4.0 baseline water stress
    ```
 
    Link Url:
 
    ```
-   https://www.wri.org/aqueduct
+   https://www.wri.org/data/aqueduct-global-maps-40-data
    ```
 
-11. Link Text:
+9. Link Text:
 
    ```
    USGS MRLC National Land Cover Database (NLCD)
@@ -376,7 +341,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.mrlc.gov/data
    ```
 
-12. Link Text:
+10. Link Text:
 
    ```
    USFWS National Wetlands Inventory
@@ -388,7 +353,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.fws.gov/program/national-wetlands-inventory
    ```
 
-13. Link Text:
+11. Link Text:
 
    ```
    USGS PAD-US 4.1 protected areas (map service)
@@ -400,7 +365,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://edits.nationalmap.gov/arcgis/rest/services/PAD-US/PAD_US_4_1/MapServer
    ```
 
-14. Link Text:
+12. Link Text:
 
    ```
    OpenStreetMap (campus outlines)
@@ -412,7 +377,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.openstreetmap.org/copyright
    ```
 
-15. Link Text:
+13. Link Text:
 
    ```
    Esri World Imagery basemap
@@ -424,7 +389,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
    ```
 
-16. Link Text:
+14. Link Text:
 
    ```
    Esri World Imagery Wayback (dated aerial photos)
@@ -436,7 +401,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://livingatlas.arcgis.com/wayback/
    ```
 
-17. Link Text:
+15. Link Text:
 
    ```
    MapLibre GL JS (map library)
@@ -448,7 +413,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://maplibre.org/maplibre-gl-js/docs/
    ```
 
-18. Link Text:
+16. Link Text:
 
    ```
    Python
@@ -460,7 +425,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.python.org/
    ```
 
-19. Link Text:
+17. Link Text:
 
    ```
    pandas
@@ -472,19 +437,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://pandas.pydata.org/
    ```
 
-20. Link Text:
-
-   ```
-   xarray
-   ```
-
-   Link Url:
-
-   ```
-   https://xarray.dev/
-   ```
-
-21. Link Text:
+18. Link Text:
 
    ```
    rasterio
@@ -496,7 +449,31 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://rasterio.readthedocs.io/
    ```
 
-22. Link Text:
+19. Link Text:
+
+   ```
+   stackstac
+   ```
+
+   Link Url:
+
+   ```
+   https://stackstac.readthedocs.io/
+   ```
+
+20. Link Text:
+
+   ```
+   h5py
+   ```
+
+   Link Url:
+
+   ```
+   https://www.h5py.org/
+   ```
+
+21. Link Text:
 
    ```
    GeoPandas
@@ -508,31 +485,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://geopandas.org/
    ```
 
-23. Link Text:
-
-   ```
-   earthaccess (NASA Earthdata Python client)
-   ```
-
-   Link Url:
-
-   ```
-   https://earthaccess.readthedocs.io/
-   ```
-
-24. Link Text:
-
-   ```
-   asf_search (ASF Python client)
-   ```
-
-   Link Url:
-
-   ```
-   https://docs.asf.alaska.edu/asf_search/basics/
-   ```
-
-25. Link Text:
+22. Link Text:
 
    ```
    Claude Code (AI coding assistant, Anthropic)
@@ -544,7 +497,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://claude.com/product/claude-code
    ```
 
-26. Link Text:
+23. Link Text:
 
    ```
    Render (website hosting)
@@ -556,7 +509,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://render.com/
    ```
 
-27. Link Text:
+24. Link Text:
 
    ```
    Deserto source code and data (GitHub)
