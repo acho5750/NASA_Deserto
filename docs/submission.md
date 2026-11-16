@@ -93,49 +93,480 @@ or modify NASA branding. This is also disclosed in the "Use of AI" section of th
 
 ## NASA Data
 
-- **NISAR L2 GCOV (provisional), NASA-ISRO, via ASF DAAC:** HH radar backscatter every 12 days
-  over the 3 Stargate campuses under construction (June-November 2026), used to map where the ground got much brighter (new buildings and steel).
-  https://search.asf.alaska.edu · https://nisar-docs.asf.alaska.edu/availability-overview/
-- **NISAR L2 GUNW (interferograms), via ASF DAAC:** chained 12-day pairs over 8 aquifer water
-  sources, to check for ground sinking (`data/water/gunw/gunw_summary.csv`).
-  https://cmr.earthdata.nasa.gov/search/concepts/C3622247503-ASF.html
-- **OPERA L3 DISP-S1 (JPL OPERA, from Sentinel-1), via ASF DAAC:** 2016-2026 ground motion over
-  aquifer sources. https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1
-- **SWOT L2 HR river and lake products, via PO.DAAC Hydrocron:** water level trends for the
-  rivers and lakes campuses are linked to. https://podaac.github.io/hydrocron/intro.html ·
-  https://podaac.jpl.nasa.gov/dataset/SWOT_L2_HR_LakeSP_D
-- **NASA Earthdata (CMR search, Earthdata Login)** to find and access all of the above.
+One row per resource on the form: copy the Link Text box, then the Link Url box. Every URL was
+checked and opens without a login.
 
-## Space Agency Partner Data and Other References
+1. Link Text:
 
-Space Agency Partner data:
-- **ESA / Copernicus Sentinel-1** radar (RTC product hosted by Microsoft Planetary Computer):
-  the 2017-2026 land-change measurement at every campus, and the "before" for the NISAR campuses.
-  https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc
-- **ISRO**, as NASA's partner on NISAR (S-band and L-band mission; we used the L-band products).
+   ```
+   NASA-ISRO NISAR mission (NASA)
+   ```
 
-Other data:
-- Epoch AI Frontier Data Centers database (sites, MW, capex, dates): https://epoch.ai/data/data-centers
-- PNNL IM3 data center atlas: https://im3.pnnl.gov/datacenter-atlas
-- Company and government announcements for each announced campus (links per row in
-  `data/announced_sites.csv` and `data/precedent_capex.csv`)
-- US EPA Public Water System Service Areas:
-  https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
-- US EPA ECHO Safe Drinking Water Act data: https://echo.epa.gov/tools/data-downloads#dwdownloads
-- Utility water quality reports (CCRs) naming each source (links in `data/water/source_assignments.csv`)
-- USGS 2015 water use estimates (per-person public supply): https://www.usgs.gov/mission-areas/water-resources/science/water-use-united-states
-- Google 2026 Environmental Report (per-site data center water use):
-  https://sustainability.google/reports/google-2026-environmental-report/
-- WRI Aqueduct water stress: https://www.wri.org/aqueduct
-- USGS/MRLC NLCD land cover: https://www.mrlc.gov/data
-- USFWS National Wetlands Inventory: https://www.fws.gov/program/national-wetlands-inventory
-- USGS PAD-US 4.1 protected areas: https://www.usgs.gov/programs/gap-analysis-project/science/pad-us-data-overview
-- OpenStreetMap campus outlines (© OpenStreetMap contributors, ODbL)
-- Esri World Imagery and World Imagery Wayback (dated aerial photos, map background)
+   Link Url:
 
-Tools and code: MapLibre GL JS (BSD-3), Python open-source libraries listed above, GitHub Pages.
-All of our own code is in https://github.com/acho5750/NASA_Deserto. No copyrighted material is
-used beyond the attributed basemap imagery under its terms of use.
+   ```
+   https://science.nasa.gov/mission/nisar/
+   ```
+
+2. Link Text:
+
+   ```
+   NISAR L2 GCOV Provisional V1 radar images (ASF DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://cmr.earthdata.nasa.gov/search/concepts/C2854338529-ASF.html
+   ```
+
+3. Link Text:
+
+   ```
+   NISAR L2 GUNW Provisional V1 interferograms (ASF DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html
+   ```
+
+4. Link Text:
+
+   ```
+   NISAR L2 GUNW V1 interferograms (ASF DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://cmr.earthdata.nasa.gov/search/concepts/C3622247503-ASF.html
+   ```
+
+5. Link Text:
+
+   ```
+   NISAR data user guide and availability (ASF)
+   ```
+
+   Link Url:
+
+   ```
+   https://nisar-docs.asf.alaska.edu/availability-overview/
+   ```
+
+6. Link Text:
+
+   ```
+   OPERA L3 DISP-S1 V1 ground displacement (JPL OPERA, ASF DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1
+   ```
+
+7. Link Text:
+
+   ```
+   SWOT L2 HR River Single-Pass product (PO.DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://cmr.earthdata.nasa.gov/search/concepts/C2799438299-POCLOUD.html
+   ```
+
+8. Link Text:
+
+   ```
+   SWOT L2 HR Lake Single-Pass product (PO.DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://podaac.jpl.nasa.gov/dataset/SWOT_L2_HR_LakeSP_D
+   ```
+
+9. Link Text:
+
+   ```
+   PO.DAAC Hydrocron SWOT time series API
+   ```
+
+   Link Url:
+
+   ```
+   https://podaac.github.io/hydrocron/intro.html
+   ```
+
+10. Link Text:
+
+   ```
+   ASF Data Search Vertex (NASA Alaska Satellite Facility DAAC)
+   ```
+
+   Link Url:
+
+   ```
+   https://search.asf.alaska.edu/
+   ```
+
+11. Link Text:
+
+   ```
+   NASA Earthdata Common Metadata Repository (CMR) search
+   ```
+
+   Link Url:
+
+   ```
+   https://cmr.earthdata.nasa.gov/search/
+   ```
+
+12. Link Text:
+
+   ```
+   NASA Earthdata
+   ```
+
+   Link Url:
+
+   ```
+   https://www.earthdata.nasa.gov/
+   ```
+
+## Space Agency Partner & Other Data
+
+Includes partner agency data, other data, code, tools, and the AI tool used.
+
+1. Link Text:
+
+   ```
+   ESA Copernicus Sentinel-1 mission
+   ```
+
+   Link Url:
+
+   ```
+   https://sentinels.copernicus.eu/copernicus/sentinel-1
+   ```
+
+2. Link Text:
+
+   ```
+   Sentinel-1 RTC on Microsoft Planetary Computer
+   ```
+
+   Link Url:
+
+   ```
+   https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc
+   ```
+
+3. Link Text:
+
+   ```
+   ISRO (NISAR partner agency)
+   ```
+
+   Link Url:
+
+   ```
+   https://www.isro.gov.in/
+   ```
+
+4. Link Text:
+
+   ```
+   Epoch AI Frontier Data Centers database
+   ```
+
+   Link Url:
+
+   ```
+   https://epoch.ai/data/data-centers
+   ```
+
+5. Link Text:
+
+   ```
+   PNNL IM3 Data Center Atlas
+   ```
+
+   Link Url:
+
+   ```
+   https://im3.pnnl.gov/datacenter-atlas
+   ```
+
+6. Link Text:
+
+   ```
+   US EPA Public Water System Service Areas
+   ```
+
+   Link Url:
+
+   ```
+   https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
+   ```
+
+7. Link Text:
+
+   ```
+   US EPA ECHO Safe Drinking Water Act data downloads
+   ```
+
+   Link Url:
+
+   ```
+   https://echo.epa.gov/tools/data-downloads
+   ```
+
+8. Link Text:
+
+   ```
+   USGS Estimated Use of Water in the United States, 2015 (county data)
+   ```
+
+   Link Url:
+
+   ```
+   https://doi.org/10.5066/F7TB15V5
+   ```
+
+9. Link Text:
+
+   ```
+   Google 2026 Environmental Report (data center water use)
+   ```
+
+   Link Url:
+
+   ```
+   https://sustainability.google/reports/google-2026-environmental-report/
+   ```
+
+10. Link Text:
+
+   ```
+   WRI Aqueduct water risk atlas
+   ```
+
+   Link Url:
+
+   ```
+   https://www.wri.org/aqueduct
+   ```
+
+11. Link Text:
+
+   ```
+   USGS MRLC National Land Cover Database (NLCD)
+   ```
+
+   Link Url:
+
+   ```
+   https://www.mrlc.gov/data
+   ```
+
+12. Link Text:
+
+   ```
+   USFWS National Wetlands Inventory
+   ```
+
+   Link Url:
+
+   ```
+   https://www.fws.gov/program/national-wetlands-inventory
+   ```
+
+13. Link Text:
+
+   ```
+   USGS PAD-US 4.1 protected areas (map service)
+   ```
+
+   Link Url:
+
+   ```
+   https://edits.nationalmap.gov/arcgis/rest/services/PAD-US/PAD_US_4_1/MapServer
+   ```
+
+14. Link Text:
+
+   ```
+   OpenStreetMap (campus outlines)
+   ```
+
+   Link Url:
+
+   ```
+   https://www.openstreetmap.org/copyright
+   ```
+
+15. Link Text:
+
+   ```
+   Esri World Imagery basemap
+   ```
+
+   Link Url:
+
+   ```
+   https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
+   ```
+
+16. Link Text:
+
+   ```
+   Esri World Imagery Wayback (dated aerial photos)
+   ```
+
+   Link Url:
+
+   ```
+   https://livingatlas.arcgis.com/wayback/
+   ```
+
+17. Link Text:
+
+   ```
+   MapLibre GL JS (map library)
+   ```
+
+   Link Url:
+
+   ```
+   https://maplibre.org/maplibre-gl-js/docs/
+   ```
+
+18. Link Text:
+
+   ```
+   Python
+   ```
+
+   Link Url:
+
+   ```
+   https://www.python.org/
+   ```
+
+19. Link Text:
+
+   ```
+   pandas
+   ```
+
+   Link Url:
+
+   ```
+   https://pandas.pydata.org/
+   ```
+
+20. Link Text:
+
+   ```
+   xarray
+   ```
+
+   Link Url:
+
+   ```
+   https://xarray.dev/
+   ```
+
+21. Link Text:
+
+   ```
+   rasterio
+   ```
+
+   Link Url:
+
+   ```
+   https://rasterio.readthedocs.io/
+   ```
+
+22. Link Text:
+
+   ```
+   GeoPandas
+   ```
+
+   Link Url:
+
+   ```
+   https://geopandas.org/
+   ```
+
+23. Link Text:
+
+   ```
+   earthaccess (NASA Earthdata Python client)
+   ```
+
+   Link Url:
+
+   ```
+   https://earthaccess.readthedocs.io/
+   ```
+
+24. Link Text:
+
+   ```
+   asf_search (ASF Python client)
+   ```
+
+   Link Url:
+
+   ```
+   https://docs.asf.alaska.edu/asf_search/basics/
+   ```
+
+25. Link Text:
+
+   ```
+   Claude Code (AI coding assistant, Anthropic)
+   ```
+
+   Link Url:
+
+   ```
+   https://claude.com/product/claude-code
+   ```
+
+26. Link Text:
+
+   ```
+   Render (website hosting)
+   ```
+
+   Link Url:
+
+   ```
+   https://render.com/
+   ```
+
+27. Link Text:
+
+   ```
+   Deserto source code and data (GitHub)
+   ```
+
+   Link Url:
+
+   ```
+   https://github.com/acho5750/NASA_Deserto
+   ```
 
 ---
 
