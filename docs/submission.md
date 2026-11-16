@@ -5,8 +5,8 @@ them. Copy the text under each heading into that field. Every number comes from 
 (https://acho5750.github.io/NASA_Deserto/) and the CSVs in `data/` named next to it; nothing here
 is estimated beyond what the map shows.
 
-Fill in before submitting (marked `[FILL IN]`): team name, team member names, and the
-[CONFIRM] on the SI paragraph.
+Team: Deserto (Andrew Cho, Nicholas Middelberg, Nathnael Haile). If the map moves to Render, replace
+the live map link under "Link to Final Project" (see `docs/deploy_render.md`).
 
 ---
 
@@ -17,8 +17,8 @@ Deserto: radar-tracking data centers and the water they depend on
 ## Team / challenge (for the slide deck and your records; the form fills these from your team page)
 
 - Challenge: Dancing with the SARs
-- Team name: [FILL IN]
-- Team members: [FILL IN]
+- Team name: Deserto
+- Team members: Andrew Cho, Nicholas Middelberg, Nathnael Haile
 
 ---
 
@@ -162,8 +162,6 @@ GitHub Pages and GitHub Actions for hosting. No special hardware.
 ## Use of Super Intelligence (SI)
 
 (Not shown to judges; for data collection.)
-
-[CONFIRM: check that this paragraph describes how your team worked before pasting it.]
 
 Yes. We used Claude (Anthropic), through Claude Code, as a coding and writing assistant. The team
 chose the question, the method and the formulas (F1-F9 in the README) and made every judgment call
