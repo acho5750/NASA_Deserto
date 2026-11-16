@@ -113,13 +113,13 @@ def save_grey(db, path, lo=-25, hi=5, max_px=520):
 
 
 def save_change(d, path, max_px=900):
-    """Violet where the ground got brighter by more than the threshold; stronger = more opaque."""
+    """Teal where the ground got brighter by more than the threshold; stronger = more opaque."""
     from PIL import Image
     a = np.clip((np.nan_to_num(d, nan=0) - THRESH_DB) / 6.0, 0, 1)
     on = np.nan_to_num(d, nan=0) > THRESH_DB
     alpha = np.where(on, 150 + 105 * a, 0).astype("uint8")
     rgb = np.zeros(d.shape + (3,), "uint8")
-    rgb[...] = (176, 92, 255)
+    rgb[...] = (63, 184, 176)
     im = Image.fromarray(np.dstack([rgb, alpha]), "RGBA")
     if max(im.size) > max_px:
         f = max_px / max(im.size)
