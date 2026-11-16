@@ -12,7 +12,7 @@ Fill in before submitting (marked `[FILL IN]`): team name, team member names, th
 
 ## Project Name
 
-Data Centers & Water: what the radar sees, and what the money will build
+Deserto: radar-tracking data centers and the water they depend on
 
 ## Team / challenge (for the slide deck and your records; the form fills these from your team page)
 
@@ -24,20 +24,21 @@ Data Centers & Water: what the radar sees, and what the money will build
 
 ## High-Level Project Summary
 
-We built an interactive map that uses satellite radar to see where data centers have already
-turned land into campuses, which town water systems and rivers, lakes or aquifers those campuses
-depend on, and how much water the campuses already announced could need by 2035. Sentinel-1 radar
-measured 8,462 acres changed at 29 finished campuses since 2017, 6,888 of them not built on before
-(farmland, shrubland, forest, wetland). NASA-ISRO NISAR, every 12 days since June 2026, shows
-602 acres turning into buildings at 3 Stargate campuses still under construction, months ahead of
-the newest aerial photos. We then linked each campus to its EPA water utility and source and
-checked those sources with SWOT (river and lake levels), OPERA DISP-S1 and NISAR (ground sinking
-over aquifers). Finally, we turned announced megawatts and dollars into land and water using what
-the built campuses taught us: by 2035 the 46 campuses in the study would use the water of about
-1.0 million people a year (range 193,000 to 1.8 million), and 5 small utilities would need to
-supply more water to linked campuses than to all their customers today. It matters because these
-decisions are announced years before the water is needed, and radar lets anyone check, from space,
-whether the money is turning into buildings.
+NISAR, the new NASA-ISRO L-band radar satellite, sees through cloud, day and night, every 12 days.
+We use it to check whether money announced for AI data centers is turning into buildings: since
+June 2026, 602 acres got much brighter in NISAR radar, the signature of new buildings and steel,
+at 3 Stargate campuses still under construction, months ahead of the newest aerial photos. Our
+interactive map puts that next to the longer record and the water: Sentinel-1 radar measured
+8,462 acres changed at 29 finished campuses since 2017, 6,888 of them not built on before
+(farmland, shrubland, forest, wetland). We linked each campus to its EPA water utility and its
+river, lake or aquifer, and checked those sources with SWOT (river and lake levels) and with
+OPERA DISP-S1 and NISAR (ground sinking over aquifers). Then we turned announced megawatts and
+dollars into land and water using what the built campuses taught us: by 2035 the 46 campuses in
+the study would use as much water as about 1.0 million people use in a year (range 193,000 to
+1.8 million), and, if the announced campuses are built as announced, 5 small utilities would need
+to supply more water to linked campuses than to all their customers today. It matters because
+these commitments are announced years before the water is needed, and radar lets anyone check,
+from space, whether they are being built.
 
 ## Link to Project Demo
 
@@ -76,10 +77,11 @@ announcements) and the 25 water sources they are linked to, told in four chapter
 2. **NISAR now (2026).** NISAR launched in July 2025, after these campuses broke ground, so
    Sentinel-1 provides the "before" and NISAR the "now". We read every NISAR image of the 3
    campuses it covers (10 to 12 images each, one every 12 days) and mapped where the ground got
-   more than 3 dB brighter: 315 acres at Vantage Frontier (Shackelford County, Texas), 286 acres
+   more than 3 dB brighter, the radar signature of new buildings and steel: 315 acres at Vantage Frontier (Shackelford County, Texas), 286 acres
    at Project Jupiter (Doña Ana County, New Mexico) and 1 acre at Stargate Lordstown (Ohio), where
    the data center is going inside an existing factory and radar sees only its roof. The newest
-   aerial photo of Project Jupiter (2025-09-21) still shows bare desert; NISAR shows the buildings.
+   aerial photo of Project Jupiter (2025-09-21) still shows bare desert; NISAR already shows the
+   ground lighting up as buildings go up.
 3. **Water (EPA, SWOT, OPERA DISP-S1, NISAR).** Each campus is linked to the drinking-water
    utility whose EPA service area it sits in, followed to the seller when the utility buys its
    water, and then to the named river, lake or aquifer. We compare each campus's estimated water
@@ -96,7 +98,8 @@ announcements) and the 25 water sources they are linked to, told in four chapter
 4. **2035.** Announced megawatts (or dollars, converted to megawatts) become land and water using
    rates measured at the built campuses, each in a low, middle and high scenario. By 2035 the 46
    campuses in the study would cover 28,598 acres (range 19,309 to 38,894), about 45 square
-   miles, and use the water of about 1.0 million people a year (range 193,000 to 1.8 million). A
+   miles, and use as much water as about 1.0 million people use in a year (range 193,000 to
+   1.8 million). A
    separate dashed "what if the pace continues" line repeats the last two years' announcements
    (7,410 MW a year) and would add the water of 2.4 million more people; it is never added into
    the site values.
@@ -160,20 +163,22 @@ GitHub Pages and GitHub Actions for hosting. No special hardware.
 
 (Not shown to judges; for data collection.)
 
+[CONFIRM: check that this paragraph describes how your team worked before pasting it.]
+
 Yes. We used Claude (Anthropic), through Claude Code, as a coding and writing assistant. The team
 chose the question, the method and the formulas (F1-F9 in the README) and made every judgment call
 logged in `DECISIONS.md`; Claude helped write and debug the Python pipeline and the map code, run
 the data downloads, check numbers against the CSVs, and draft text, including this write-up and
 the slide deck, which the team reviewed and edited. No SI-generated images, video or audio are
 used: every picture on the map is satellite data or aerial photography. No SI was used to create
-or modify NASA branding. This is also disclosed in the repository README.
+or modify NASA branding. This is also disclosed in the "Use of AI" section of the repository README.
 
 ---
 
 ## NASA Data
 
 - **NISAR L2 GCOV (provisional), NASA-ISRO, via ASF DAAC:** HH radar backscatter every 12 days
-  over the 3 Stargate campuses under construction (June-November 2026), used to map new buildings.
+  over the 3 Stargate campuses under construction (June-November 2026), used to map where the ground got much brighter (new buildings and steel).
   https://search.asf.alaska.edu · https://nisar-docs.asf.alaska.edu/availability-overview/
 - **NISAR L2 GUNW (interferograms), via ASF DAAC:** chained 12-day pairs over 8 aquifer water
   sources, to check for ground sinking (`data/water/gunw/gunw_summary.csv`).
