@@ -6,7 +6,7 @@ const pres = new pptxgen(); pres.layout = 'LAYOUT_WIDE'; pres.theme = { headFont
 pres.title = 'Deserto'; pres.author = 'NASA Space Apps 2026 team';
 const C = pres.SchemeColor;
 const W = 13.333, H = 7.5, M = 0.6;
-const LINK = 'acho5750.github.io/NASA_Deserto';
+const LINK = 'deserto-map.onrender.com';
 pres.defineSlideMaster({ title:'Title', background:{ color: THEME.colors.lt2 }, objects:[] });
 pres.defineSlideMaster({ title:'Content', background:{ color: THEME.colors.lt2 },
   objects:[ { placeholder:{ options:{ name:'title', type:'title', x:M, y:0.45, w:W-2*M, h:0.85, fontSize:34, bold:true, color:C.text1, valign:'top', align:'left', margin:0 }, text:'' } },
@@ -20,7 +20,10 @@ const PURPLE = C.accent1, RED = C.accent2;
 // 1 Title
 pres.addSection({ title:'Title' });
 let s = pres.addSlide({ masterName:'Title', sectionTitle:'Title' });
-s.addImage({ path:'title_map2.jpg', x:6.35, y:0, w:6.983, h:7.5, altText:'Map of US data center campuses in 2035, from the project' });
+s.addImage({ path:'title_ba.jpg', x:6.35, y:0, w:6.983, h:7.5, altText:'Before and after aerial photos of Stargate Abilene from the live map' });
+[[6.6,'Before  ·  Dec 2022'],[10.0,'After  ·  Nov 2025']].forEach(([x,t])=>{ s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x,y:0.35,w:2.2,h:0.42,rectRadius:0.08,fill:{color:C.text1,transparency:15},line:{color:C.text1,transparency:15}}); tb(s,t,{x,y:0.35,w:2.2,h:0.42,fontSize:14,bold:true,color:C.background1,align:'center',valign:'middle'}); });
+s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:6.6,y:6.62,w:4.1,h:0.5,rectRadius:0.08,fill:{color:C.background1,transparency:10},line:{color:C.background1,transparency:10}});
+tb(s,'Stargate Abilene, Texas: shrubland to a 1,094-acre campus',{x:6.7,y:6.62,w:3.95,h:0.5,fontSize:12,color:C.text1,valign:'middle'});
 tb(s, '2026 NASA Space Apps Challenge  ·  Dancing with the SARs', { x:M, y:0.75, w:5.5, h:0.3, fontSize:14, bold:true, color:PURPLE });
 tb(s, 'Deserto', { x:M, y:1.2, w:5.5, h:1.0, fontSize:54, bold:true });
 tb(s, 'Radar-tracking data centers and the water they depend on', { x:M, y:2.35, w:5.4, h:0.9, fontSize:22, color:C.text2 });
@@ -28,7 +31,7 @@ tb(s, 'Radar satellites show the land AI data centers have converted, and which 
 card(s, M, 4.8, 5.3, 1.35);
 tb(s, [ {text:'Team  ', options:{bold:true,color:C.text2}}, {text:'Deserto', options:{breakLine:true}},
         {text:'Members  ', options:{bold:true,color:C.text2}}, {text:'Andrew Cho, Nicholas Middelberg, Nathnael Haile', options:{breakLine:true}},
-        {text:'Live map  ', options:{bold:true,color:C.text2}}, {text:LINK, options:{hyperlink:{url:'https://'+LINK}, color:PURPLE}} ],
+        {text:'Live map  ', options:{bold:true,color:C.text2}}, {text:LINK, options:{hyperlink:{url:'https://deserto-map.onrender.com/#land'}, color:PURPLE}} ],
    { x:M+0.2, y:4.95, w:5.0, h:1.1, fontSize:14, paraSpaceAfter:4 });
 s.addNotes('Title. Fill in team name and member names before submitting.');
 
@@ -101,7 +104,7 @@ ux.forEach((u,i)=>{ const y=1.5+i*1.18, x=9.25;
   tb(s, u[0], {x:x+0.6,y,w:2.9,h:0.4,fontSize:17,bold:true});
   tb(s, u[1], {x:x+0.6,y:y+0.42,w:2.9,h:0.7,fontSize:14,color:C.text2});
 });
-tb(s, [{text:'Try it: ', options:{bold:true}},{text:LINK, options:{hyperlink:{url:'https://'+LINK}, color:PURPLE}}], { x:9.25, y:6.27, w:3.5, h:0.4, fontSize:13 });
+tb(s, [{text:'Try it: ', options:{bold:true}},{text:LINK, options:{hyperlink:{url:'https://deserto-map.onrender.com/#land'}, color:PURPLE}}], { x:9.25, y:6.27, w:3.5, h:0.4, fontSize:13 });
 s.addNotes('Product. A four-chapter story map built with MapLibre GL. Works on phones too.');
 
 // 6 Findings
@@ -136,7 +139,7 @@ cols.forEach((c,i)=>{ const x=M+i*(cw2+0.3), y=1.5;
   tb(s, c[0], {x:x+0.3,y:y+0.3,w:cw2-0.6,h:0.5,fontSize:20,bold:true,color:c[1]});
   s.addText(c[2].map((t,j)=>({text:t,options:{bullet:{indent:18},breakLine:j<c[2].length-1}})), {x:x+0.3,y:y+0.95,w:cw2-0.6,h:2.9,fontSize:15,color:C.text1,paraSpaceAfter:10,margin:0,isTextBox:true,valign:'top'});
 });
-tb(s, [{text:'See the land and water stakes of a data center before they are locked in.  ', options:{bold:true}},{text:'Explore: '},{text:LINK, options:{hyperlink:{url:'https://'+LINK}, color:PURPLE}}], { x:M, y:5.5, w:W-2*M, h:0.45, fontSize:18 });
+tb(s, [{text:'See the land and water stakes of a data center before they are locked in.  ', options:{bold:true}},{text:'Explore: '},{text:LINK, options:{hyperlink:{url:'https://deserto-map.onrender.com/#land'}, color:PURPLE}}], { x:M, y:5.5, w:W-2*M, h:0.45, fontSize:18 });
 tb(s, 'AI use: code, data processing and these slides were made with help from Claude (an AI assistant). Map screenshots are of our own product. All numbers trace to public data in the repository.', { x:M, y:6.15, w:W-2*M, h:0.45, fontSize:11, color:C.text2 });
 s.addNotes('Impact and next steps. Map copy says linked to or depends on, never causes.');
 
