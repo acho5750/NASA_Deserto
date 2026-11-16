@@ -1,7 +1,7 @@
 const pptxgen = require('pptxgenjs');
 const { applyTheme } = require(process.env.APPLY_THEME || './apply_theme.js');
 const THEME = { name: 'Deserto', headFontFace: 'Calibri', bodyFontFace: 'Calibri',
-  colors: { dk1:'1F1D1A', lt1:'FFFFFF', dk2:'5E584E', lt2:'F6F2E9', accent1:'7B2FBE', accent2:'8E2A1F', accent3:'2F6F8F', accent4:'B07A2A', accent5:'EAE3D4', accent6:'4F7A4A', hlink:'7B2FBE', folHlink:'5E2A8E' } };
+  colors: { dk1:'1F1D1A', lt1:'FFFFFF', dk2:'5E584E', lt2:'F6F2E9', accent1:'1F6F78', accent2:'8E2A1F', accent3:'5B6B7A', accent4:'B07A2A', accent5:'EAE3D4', accent6:'4F7A4A', hlink:'1F6F78', folHlink:'17555C' } };
 const pres = new pptxgen(); pres.layout = 'LAYOUT_WIDE'; pres.theme = { headFontFace:'Calibri', bodyFontFace:'Calibri' };
 pres.title = 'Deserto'; pres.author = 'NASA Space Apps 2026 team';
 const C = pres.SchemeColor;
@@ -62,9 +62,9 @@ s.addText([
   {text:'The newest aerial photo of Project Jupiter (Sept 2025) still shows bare desert; NISAR already shows the change', options:{bullet:{indent:18},breakLine:true}},
   {text:'Ground motion (GUNW) over 8 aquifers: no clear change yet, a first baseline to watch', options:{bullet:{indent:18}}} ], { x:M, y:5.5, w:5.6, h:1.3, fontSize:14, color:C.text1, paraSpaceAfter:6, margin:0, isTextBox:true, valign:'top' });
 card(s, 6.55, 1.45, 6.18, 5.25, C.background1);
-s.addImage({ path:'nisar_pair.jpg', x:6.75, y:1.65, w:5.78, h:2.886, altText:'NISAR radar of Vantage Frontier, June vs October 2026, purple marks much brighter ground' });
+s.addImage({ path:'t_nisar_pair.jpg', x:6.75, y:1.65, w:5.78, h:2.886, altText:'NISAR radar of Vantage Frontier, June vs October 2026, teal marks much brighter ground' });
 tb(s, 'Vantage Frontier, Texas', { x:6.8, y:4.7, w:5.7, h:0.4, fontSize:18, bold:true });
-tb(s, [{text:'315 acres', options:{bold:true,color:PURPLE}},{text:' got much brighter (over 3 dB) inside the 1,438-acre outline between the first NISAR image (2026-06-25) and the latest (2026-10-23). Purple = much brighter.'}], { x:6.8, y:5.15, w:5.7, h:1.0, fontSize:14 });
+tb(s, [{text:'315 acres', options:{bold:true,color:PURPLE}},{text:' got much brighter (over 3 dB) inside the 1,438-acre outline between the first NISAR image (2026-06-25) and the latest (2026-10-23). Teal = much brighter.'}], { x:6.8, y:5.15, w:5.7, h:1.0, fontSize:14 });
 tb(s, 'Project Jupiter, NM: 286 acres  ·  Stargate Lordstown, OH: 1 acre (work is inside an existing building)', { x:6.8, y:6.15, w:5.7, h:0.45, fontSize:11, color:C.text2 });
 s.addNotes('NISAR. It is the first NASA-ISRO joint radar mission. We read every NISAR GCOV image over the three campuses it covers and mapped ground that got more than 3 dB brighter. We also ran NISAR GUNW interferograms over 8 aquifer water sources; none shows a clear change yet beyond noise, which gives a starting baseline.');
 
@@ -95,7 +95,7 @@ pres.addSection({ title:'Product' });
 s = pres.addSlide({ masterName:'Content', sectionTitle:'Product' });
 s.addText('The product: a story map anyone can explore', { placeholder:'title' });
 s.addShape(pres.shapes.RECTANGLE,{x:M,y:1.5,w:8.3,h:4.669,fill:{color:C.background1},line:{color:'D8CFBD',width:1},shadow:{type:'outer',color:'000000',opacity:0.15,blur:8,offset:2,angle:90}});
-s.addImage({ path:'product_water.jpg', x:M, y:1.5, w:8.3, h:4.669, altText:'Screenshot of the Water chapter of the live map' });
+s.addImage({ path:'t_product_water.jpg', x:M, y:1.5, w:8.3, h:4.669, altText:'Screenshot of the Water chapter of the live map' });
 tb(s, 'Water chapter: each drop is a water source, sized by how much of the town’s supply linked campuses would need by 2035.', { x:M, y:6.27, w:8.3, h:0.5, fontSize:12, color:C.text2 });
 const ux = [['Pick a chapter','Land, NISAR now, Water, 2035'],['Press Play','Watch campuses grow month by month, then into the future'],['Click a campus or source','Its own numbers, radar images and source links'],['Compare','Drag the divider between before and after photos']];
 ux.forEach((u,i)=>{ const y=1.5+i*1.18, x=9.25;
@@ -135,7 +135,7 @@ const cols = [['Who it helps', C.text1, ['Town councils and water utilities weig
               ['Next steps', C.text1, ['Follow every campus as NISAR coverage grows','Grow the aquifer baseline into trends','Add utilities’ own water reports for each source']]];
 const cw2 = (W-2*M-2*0.3)/3;
 cols.forEach((c,i)=>{ const x=M+i*(cw2+0.3), y=1.5;
-  card(s, x, y, cw2, 3.6, i==1?'F1EAF8':C.background1);
+  card(s, x, y, cw2, 3.6, i==1?'E4EFEF':C.background1);
   tb(s, c[0], {x:x+0.3,y:y+0.3,w:cw2-0.6,h:0.5,fontSize:20,bold:true,color:c[1]});
   s.addText(c[2].map((t,j)=>({text:t,options:{bullet:{indent:18},breakLine:j<c[2].length-1}})), {x:x+0.3,y:y+0.95,w:cw2-0.6,h:2.9,fontSize:15,color:C.text1,paraSpaceAfter:10,margin:0,isTextBox:true,valign:'top'});
 });
