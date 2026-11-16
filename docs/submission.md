@@ -93,14 +93,14 @@ or modify NASA branding. This is also disclosed in the "Use of AI" section of th
 
 ## NASA Data
 
-One row per resource on the form: copy the Link Text box, then the Link Url box. Every URL was
-checked and opens without a login, and every resource listed is used by a script, data file or the
-map in this repository.
+One row per resource on the form: copy the Link Text box, then the Link Url box. Each row is the
+parent page for something we used (for example, the NISAR row covers both NISAR products). Every
+URL was checked and opens without a login.
 
 1. Link Text:
 
    ```
-   NASA-ISRO NISAR mission (NASA)
+   NASA-ISRO NISAR mission
    ```
 
    Link Url:
@@ -112,55 +112,19 @@ map in this repository.
 2. Link Text:
 
    ```
-   NISAR L2 GCOV Provisional V1 radar images (ASF DAAC)
+   NISAR data at NASA's Alaska Satellite Facility DAAC
    ```
 
    Link Url:
 
    ```
-   https://cmr.earthdata.nasa.gov/search/concepts/C2854338529-ASF.html
+   https://nisar-docs.asf.alaska.edu/
    ```
 
 3. Link Text:
 
    ```
-   NISAR L2 GUNW Provisional V1 interferograms (ASF DAAC)
-   ```
-
-   Link Url:
-
-   ```
-   https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html
-   ```
-
-4. Link Text:
-
-   ```
-   NISAR L2 GUNW V1 interferograms (ASF DAAC)
-   ```
-
-   Link Url:
-
-   ```
-   https://cmr.earthdata.nasa.gov/search/concepts/C3622247503-ASF.html
-   ```
-
-5. Link Text:
-
-   ```
-   NISAR data user guide and availability (ASF)
-   ```
-
-   Link Url:
-
-   ```
-   https://nisar-docs.asf.alaska.edu/availability-overview/
-   ```
-
-6. Link Text:
-
-   ```
-   OPERA L3 DISP-S1 V1 ground displacement (JPL OPERA, ASF DAAC)
+   OPERA DISP-S1 ground displacement (NASA JPL OPERA)
    ```
 
    Link Url:
@@ -169,64 +133,28 @@ map in this repository.
    https://www.earthdata.nasa.gov/data/catalog/asf-opera-l3-disp-s1-v1-1
    ```
 
-7. Link Text:
+4. Link Text:
 
    ```
-   SWOT L2 HR River Single-Pass product (PO.DAAC)
-   ```
-
-   Link Url:
-
-   ```
-   https://cmr.earthdata.nasa.gov/search/concepts/C2799438299-POCLOUD.html
-   ```
-
-8. Link Text:
-
-   ```
-   SWOT L2 HR Lake Single-Pass product (PO.DAAC)
+   SWOT water levels at NASA PO.DAAC
    ```
 
    Link Url:
 
    ```
-   https://podaac.jpl.nasa.gov/dataset/SWOT_L2_HR_LakeSP_D
+   https://podaac.jpl.nasa.gov/SWOT
    ```
 
-9. Link Text:
+5. Link Text:
 
    ```
-   PO.DAAC Hydrocron SWOT time series API
-   ```
-
-   Link Url:
-
-   ```
-   https://podaac.github.io/hydrocron/intro.html
-   ```
-
-10. Link Text:
-
-   ```
-   NASA Earthdata Common Metadata Repository (CMR) search
+   NASA Earthdata
    ```
 
    Link Url:
 
    ```
-   https://cmr.earthdata.nasa.gov/search/
-   ```
-
-11. Link Text:
-
-   ```
-   NASA Earthdata Login (data access)
-   ```
-
-   Link Url:
-
-   ```
-   https://urs.earthdata.nasa.gov/
+   https://www.earthdata.nasa.gov/
    ```
 
 ## Space Agency Partner & Other Data
@@ -236,7 +164,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
 1. Link Text:
 
    ```
-   ESA Copernicus Sentinel-1 mission
+   ESA Copernicus Sentinel-1
    ```
 
    Link Url:
@@ -272,31 +200,19 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
 4. Link Text:
 
    ```
-   US EPA Public Water System Service Areas
+   US EPA drinking water data (water system service areas, SDWA records)
    ```
 
    Link Url:
 
    ```
-   https://www.epa.gov/ground-water-and-drinking-water/public-water-system-service-areas
+   https://www.epa.gov/ground-water-and-drinking-water
    ```
 
 5. Link Text:
 
    ```
-   US EPA ECHO Safe Drinking Water Act data downloads
-   ```
-
-   Link Url:
-
-   ```
-   https://echo.epa.gov/tools/data-downloads
-   ```
-
-6. Link Text:
-
-   ```
-   USGS Estimated Use of Water in the United States, 2015 (county data)
+   USGS Estimated Use of Water in the United States, 2015
    ```
 
    Link Url:
@@ -305,34 +221,10 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://doi.org/10.5066/F7TB15V5
    ```
 
-7. Link Text:
+6. Link Text:
 
    ```
-   Google 2026 Environmental Report (data center water use)
-   ```
-
-   Link Url:
-
-   ```
-   https://sustainability.google/reports/google-2026-environmental-report/
-   ```
-
-8. Link Text:
-
-   ```
-   WRI Aqueduct 4.0 baseline water stress
-   ```
-
-   Link Url:
-
-   ```
-   https://www.wri.org/data/aqueduct-global-maps-40-data
-   ```
-
-9. Link Text:
-
-   ```
-   USGS MRLC National Land Cover Database (NLCD)
+   USGS National Land Cover Database (NLCD)
    ```
 
    Link Url:
@@ -341,7 +233,19 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.mrlc.gov/data
    ```
 
-10. Link Text:
+7. Link Text:
+
+   ```
+   USGS PAD-US 4.1 protected areas
+   ```
+
+   Link Url:
+
+   ```
+   https://edits.nationalmap.gov/arcgis/rest/services/PAD-US/PAD_US_4_1/MapServer
+   ```
+
+8. Link Text:
 
    ```
    USFWS National Wetlands Inventory
@@ -353,19 +257,31 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.fws.gov/program/national-wetlands-inventory
    ```
 
-11. Link Text:
+9. Link Text:
 
    ```
-   USGS PAD-US 4.1 protected areas (map service)
+   WRI Aqueduct 4.0 water stress
    ```
 
    Link Url:
 
    ```
-   https://edits.nationalmap.gov/arcgis/rest/services/PAD-US/PAD_US_4_1/MapServer
+   https://www.wri.org/data/aqueduct-global-maps-40-data
    ```
 
-12. Link Text:
+10. Link Text:
+
+   ```
+   Google 2026 Environmental Report (data center water use)
+   ```
+
+   Link Url:
+
+   ```
+   https://sustainability.google/reports/google-2026-environmental-report/
+   ```
+
+11. Link Text:
 
    ```
    OpenStreetMap (campus outlines)
@@ -377,22 +293,10 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://www.openstreetmap.org/copyright
    ```
 
-13. Link Text:
+12. Link Text:
 
    ```
-   Esri World Imagery basemap
-   ```
-
-   Link Url:
-
-   ```
-   https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
-   ```
-
-14. Link Text:
-
-   ```
-   Esri World Imagery Wayback (dated aerial photos)
+   Esri World Imagery and Wayback aerial photos
    ```
 
    Link Url:
@@ -401,91 +305,31 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://livingatlas.arcgis.com/wayback/
    ```
 
+13. Link Text:
+
+   ```
+   MapLibre GL JS
+   ```
+
+   Link Url:
+
+   ```
+   https://maplibre.org/
+   ```
+
+14. Link Text:
+
+   ```
+   Python open-source libraries (list in requirements.txt)
+   ```
+
+   Link Url:
+
+   ```
+   https://github.com/acho5750/NASA_Deserto/blob/main/requirements.txt
+   ```
+
 15. Link Text:
-
-   ```
-   MapLibre GL JS (map library)
-   ```
-
-   Link Url:
-
-   ```
-   https://maplibre.org/maplibre-gl-js/docs/
-   ```
-
-16. Link Text:
-
-   ```
-   Python
-   ```
-
-   Link Url:
-
-   ```
-   https://www.python.org/
-   ```
-
-17. Link Text:
-
-   ```
-   pandas
-   ```
-
-   Link Url:
-
-   ```
-   https://pandas.pydata.org/
-   ```
-
-18. Link Text:
-
-   ```
-   rasterio
-   ```
-
-   Link Url:
-
-   ```
-   https://rasterio.readthedocs.io/
-   ```
-
-19. Link Text:
-
-   ```
-   stackstac
-   ```
-
-   Link Url:
-
-   ```
-   https://stackstac.readthedocs.io/
-   ```
-
-20. Link Text:
-
-   ```
-   h5py
-   ```
-
-   Link Url:
-
-   ```
-   https://www.h5py.org/
-   ```
-
-21. Link Text:
-
-   ```
-   GeoPandas
-   ```
-
-   Link Url:
-
-   ```
-   https://geopandas.org/
-   ```
-
-22. Link Text:
 
    ```
    Claude Code (AI coding assistant, Anthropic)
@@ -497,7 +341,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://claude.com/product/claude-code
    ```
 
-23. Link Text:
+16. Link Text:
 
    ```
    Render (website hosting)
@@ -509,7 +353,7 @@ Includes partner agency data, other data, code, tools, and the AI tool used.
    https://render.com/
    ```
 
-24. Link Text:
+17. Link Text:
 
    ```
    Deserto source code and data (GitHub)
