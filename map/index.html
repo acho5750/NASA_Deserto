@@ -273,8 +273,9 @@
   <div class="pg" style="--c:var(--ink)">
     <span class="cap">Why this map</span>
     <h2 id="introH0">AI data centers need land and water</h2>
-    <p>Companies are pouring money into new data center campuses. Each one paves over land and depends on a local water supply.</p>
-    <p>This map uses satellite radar to show how much land past campuses took, which water sources they depend on, and what announced projects could add by 2035.</p>
+    <p>Companies are pouring money into new data center campuses. Each one converts land and depends on a local water supply.</p>
+    <p class="take" style="--c:var(--s1)"><b id="introHook"></b></p>
+    <p>This map shows how much land past campuses took, which water sources they depend on, and what announced projects could add by 2035, so residents and water planners can see it before campuses are built.</p>
   </div>
   <div class="pg" style="--c:var(--nisar)" hidden>
     <span class="chip nisar">NISAR radar</span>
@@ -1187,6 +1188,7 @@ document.getElementById("aboutBtn").onclick = () => {
 /* ---------------- intro ---------------- */
 const intro = document.getElementById("intro"), pages = [...intro.querySelectorAll(".pg")], dots = [...intro.querySelectorAll(".dots i")];
 let ipg = 0;
+document.getElementById("introHook").textContent = `Radar shows ${fmt(ST.land.total_acres)} acres changed at ${ST.land.n_sites} finished campuses since 2017.`;
 function introShow(i) {
   ipg = i; pages.forEach((p, k) => p.hidden = k !== i); dots.forEach((d, k) => d.classList.toggle("on", k === i));
   intro.style.setProperty("--c", i === 1 ? "var(--nisar)" : "var(--ink)");
