@@ -1,0 +1,15 @@
+# Render Blueprint: serves the map/ folder as a free Static Site.
+# No build step: map/ is plain HTML + JS (data.js is already generated and committed).
+# Render redeploys automatically on every push to main.
+services:
+  - type: web
+    name: deserto-map
+    runtime: static
+    branch: main
+    buildCommand: echo "No build step; publishing map/"
+    staticPublishPath: ./map
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=300
