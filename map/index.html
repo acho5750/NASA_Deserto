@@ -13,9 +13,9 @@
   :root {
     --linen: #EFEAE0; --ivory: #FAF8F3; --paper: #F5F1E8; --rule: #DCD4C5; --rule2: #CFC6B4;
     --ink: #1D1C1A; --ink2: #3A3731; --muted: #6F675A; --faint: #A39A8B;
-    --rust: #C2461B; --ember: #FF5A1F; --ochre: #B9832A; --crimson: #8E1F1F; --teal: #2C6A66;
+    --rust: #C2461B; --ember: #FF5A1F; --ochre: #B9832A; --crimson: #8E1F1F; --teal: #3A5A78;
     /* one color per satellite, used everywhere: chips, lanes, charts, map */
-    --s1: #3E6A96; --nisar: #8A2BE2; --swot: #12808F; --opera: #6F8FB0; --proj: #B9832A;
+    --s1: #3E6A96; --nisar: #1F6F78; --swot: #2B7BBA; --opera: #6F8FB0; --proj: #B9832A;
     --lc-developed: #8F8A80; --lc-cropland: #D9A93A; --lc-pasture_hay: #E3D08A; --lc-forest: #3F6E45;
     --lc-shrub_grass: #9DB07A; --lc-barren: #C9B79A; --lc-wetlands: #4E9A9C; --lc-water: #3D74AE;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -99,8 +99,8 @@
   .btn:hover { background: var(--ink); color: var(--ivory); }
   .btn.solid { background: var(--ink); color: var(--ivory); }
   .btn.solid:hover { background: #000; }
-  .btn.violet { border-color: var(--nisar); background: var(--nisar); color: #fff; }
-  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--teal); cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: rgba(44, 106, 102, .35); }
+  .btn.nisarbtn { border-color: var(--nisar); background: var(--nisar); color: #fff; }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--teal); cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: rgba(58, 90, 120, .35); }
   .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0; margin-bottom: 14px; cursor: pointer; font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   .back:hover { color: var(--ink); }
 
@@ -281,7 +281,7 @@
     <span class="chip nisar">NISAR radar</span>
     <h2>What NASA's NISAR adds</h2>
     <p>NISAR is a NASA-ISRO radar satellite. It sees through clouds, day or night, and passes over every 12 days.</p>
-    <p>Its long L-band waves show new buildings rising and tiny ground motion over the aquifers campuses depend on. Anything purple on the map is NISAR.</p>
+    <p>Its long L-band waves show new buildings rising and tiny ground motion over the aquifers campuses depend on. Anything deep teal on the map is NISAR.</p>
   </div>
   <div class="pg" style="--c:var(--ink)" hidden>
     <span class="cap">How to use it</span>
@@ -429,10 +429,10 @@ function radarChart(n, s) {
     ${xt}
     <text x="${L0}" y="6" font-size="9.5" fill="#3E6A96" font-family="IBM Plex Mono" font-weight="600">SENTINEL-1 · VV dB</text>
     <path d="${path(n.s1.t, n.s1.v, Y1)}" fill="none" stroke="#3E6A96" stroke-width="1.6"/>
-    <text x="${L0}" y="${top2 - 4}" font-size="9.5" fill="#8A2BE2" font-family="IBM Plex Mono" font-weight="600">NISAR · HH dB</text>
-    <rect x="${X(n.nisar.t[0]) - 4}" y="${top2}" width="${W - R0 - X(n.nisar.t[0]) + 4}" height="${h2}" fill="#8A2BE2" opacity=".07"/>
-    <path d="${path(n.nisar.t, n.nisar.v, Y2)}" fill="none" stroke="#8A2BE2" stroke-width="1.8"/>
-    ${n.nisar.t.map((d, i) => `<circle cx="${X(d)}" cy="${Y2(n.nisar.v[i])}" r="2.6" fill="#8A2BE2"/>`).join("")}
+    <text x="${L0}" y="${top2 - 4}" font-size="9.5" fill="#1F6F78" font-family="IBM Plex Mono" font-weight="600">NISAR · HH dB</text>
+    <rect x="${X(n.nisar.t[0]) - 4}" y="${top2}" width="${W - R0 - X(n.nisar.t[0]) + 4}" height="${h2}" fill="#1F6F78" opacity=".07"/>
+    <path d="${path(n.nisar.t, n.nisar.v, Y2)}" fill="none" stroke="#1F6F78" stroke-width="1.8"/>
+    ${n.nisar.t.map((d, i) => `<circle cx="${X(d)}" cy="${Y2(n.nisar.v[i])}" r="2.6" fill="#1F6F78"/>`).join("")}
     ${cs ? `<line x1="${X(cs)}" x2="${X(cs)}" y1="8" y2="${H - 12}" stroke="#1D1C1A" stroke-dasharray="3 2"/><text x="${X(cs) - 3}" y="18" font-size="9" text-anchor="end" fill="#1D1C1A" font-family="IBM Plex Mono">BUILD STARTS</text>` : ""}
   </svg>`;
 }
@@ -444,7 +444,7 @@ function nisarPair(sid) {
       <figcaption class="note" style="margin-top:3px">NISAR · ${f0.date}</figcaption></figure>
     <figure style="margin:0;position:relative"><div style="position:relative"><img loading="lazy" src="${esc(f1.png)}" alt="NISAR radar, ${f1.date}" style="width:100%;display:block;background:#222;aspect-ratio:1;object-fit:cover">
       <img loading="lazy" src="${esc(n.change_png)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated"></div>
-      <figcaption class="note" style="margin-top:3px">NISAR · ${f1.date} · <b style="color:var(--nisar)">purple = much brighter</b></figcaption></figure></div>`;
+      <figcaption class="note" style="margin-top:3px">NISAR · ${f1.date} · <b style="color:var(--nisar)">teal = much brighter</b></figcaption></figure></div>`;
 }
 /* NISAR ground motion (GUNW) over a linked aquifer: cumulative mm, with the +/- 2 sigma noise band growing pair by pair. */
 const GW_TXT = { no_clear: "No clear movement", toward: "Moved toward the satellite", away: "Moved away from the satellite" };
@@ -456,10 +456,10 @@ function gwChart(g, big) {
   const X = x => L0 + (x - t0) / (t1 - t0) * (W - L0 - R0), Y = v => T0 + (m - v) / (2 * m) * (H - T0 - B0);
   const band = t.map((x, k) => `${X(x).toFixed(1)},${Y(env[k]).toFixed(1)}`).join(" ") + " " + t.map((x, k) => `${X(x).toFixed(1)},${Y(-env[k]).toFixed(1)}`).reverse().join(" ");
   const line = g.v.map((v, k) => `${k ? "L" : "M"}${X(t[k]).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const col = "#8A2BE2";
+  const col = "#1F6F78";
   const tx = (x, y, s, a = "end") => `<text x="${x}" y="${y}" font-size="9.5" text-anchor="${a}" fill="#6F675A" font-family="IBM Plex Mono">${s}</text>`;
   return `<svg class="${big ? "chart" : "spark"}" viewBox="0 0 ${W} ${H}" ${big ? 'role="img" aria-label="NISAR ground motion over the aquifer"' : 'aria-hidden="true"'}>
-    <polygon points="${band}" fill="#8A2BE2" opacity=".10"/><line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
+    <polygon points="${band}" fill="#1F6F78" opacity=".10"/><line x1="${L0}" x2="${W - R0}" y1="${Y(0)}" y2="${Y(0)}" stroke="#DCD4C5"/>
     <path d="${line}" fill="none" stroke="${col}" stroke-width="${big ? 2 : 1.5}"/>${big ? g.v.map((v, k) => `<circle cx="${X(t[k])}" cy="${Y(v)}" r="2.2" fill="${col}"/>`).join("") : ""}
     ${big ? tx(L0 - 5, Y(0) + 3, "0") + tx(L0 - 5, Y(m * .9) + 3, "+" + (m * .9 / 10).toFixed(1) + " cm") + tx(L0 - 5, Y(-m * .9) + 3, "-" + (m * .9 / 10).toFixed(1) + " cm")
       + tx(X(t0), H - 4, g.first_date.slice(5), "start") + tx(X(t1), H - 4, g.last_date.slice(5)) : ""}</svg>`;
@@ -535,10 +535,10 @@ function chWater() {
         <span class="barw"><i style="--c:${SHARE_C(x)};width:${Math.min(100, x / maxS * 100)}%"></i><u style="left:${Math.min(100, 1 / maxS * 100)}%"></u></span></button>`; }).join("")}
     ${how(srcline(["data/sources.csv", "data/water/site_sources.csv"], ["https://echo.epa.gov/tools/data-downloads#dwdownloads"]), "Utility and source come from EPA drinking-water records for the service area each campus sits in.", "F5: estimated campus water (F4) divided by the utility's supply (people served x the state's average liters per person per day, USGS 2015). Middle estimate shown. A share above 100% means the estimate is larger than today's supply; it does not say where the water would come from.", "Linked to is not caused by: a campus being linked to a source does not mean it caused any change in it.")}
     </section>
-    <section class="part" style="--c:#12808F"><h2 class="ph"><span class="pn">2</span>Rivers and lakes: is the water level changing?</h2>
+    <section class="part" style="--c:#2B7BBA"><h2 class="ph"><span class="pn">2</span>Rivers and lakes: is the water level changing?</h2>
     ${swot.map(s => { const w = trendWords(s);
       return `<button class="rank" data-src="${s.id}"><span class="nm">${esc(s.water_body.replace(/\s*\(.*?\)/g, ""))}<small style="color:${w.down ? "#C2461B" : "var(--muted)"}">${chip("swot")} ${esc(w.txt)}${w.few ? "" : ` · ${s.trend_n} passes`}</small></span>
-        <span>${sparkline(s.series, w.few ? "#A39A8B" : "#12808F", w.few)}</span></button>`; }).join("")}
+        <span>${sparkline(s.series, w.few ? "#A39A8B" : "#2B7BBA", w.few)}</span></button>`; }).join("")}
     ${how(srcline(["data/sources.csv", "data/water/swot/"], ["https://podaac.github.io/hydrocron/intro.html"]), `SWOT measures river and lake water levels from space. The trend is a straight-line fit to the passes since SWOT began (2023), so it covers only a few years. With fewer than ${SWOT_MIN_N} good passes we show the points but do not call it a trend. A trend describes the water body; it does not show what caused the change.`)}
     </section>
     <section class="part" style="--c:#6F8FB0"><h2 class="ph"><span class="pn">3</span>Aquifers: is the ground above them sinking?</h2>
@@ -575,10 +575,10 @@ function futureChart(y) {
     ${grid.map(v => `<line x1="${L0}" x2="${W - R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E6DFD1"/><text x="${L0 - 5}" y="${Y(v) + 3}" font-size="9.5" text-anchor="end" fill="#6F675A" font-family="IBM Plex Mono">${v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1e3) + "k"}</text>`).join("")}
     <path d="${line(pc)}L${X(n - 1)},${Y(ann[n - 1])}${ann.map((v, i) => `L${X(n - 1 - i)},${Y(ann[n - 1 - i])}`).join("")}Z" fill="#B9832A" opacity=".10"/>
     <path d="${line(pc)}" fill="none" stroke="#B9832A" stroke-width="2" stroke-dasharray="5 4"/>
-    <polygon points="${band}" fill="#12808F" opacity=".14"/>
-    <path d="${line(ann)}" fill="none" stroke="#12808F" stroke-width="2.2"/>
+    <polygon points="${band}" fill="#2B7BBA" opacity=".14"/>
+    <path d="${line(ann)}" fill="none" stroke="#2B7BBA" stroke-width="2.2"/>
     <line x1="${X(y)}" x2="${X(y)}" y1="${T0p}" y2="${H - B0}" stroke="#1D1C1A" stroke-width="1"/>
-    <circle cx="${X(y)}" cy="${Y(ann[y])}" r="4" fill="#12808F" stroke="#fff" stroke-width="1.5"/><circle cx="${X(y)}" cy="${Y(pc[y])}" r="4" fill="#B9832A" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="${X(y)}" cy="${Y(ann[y])}" r="4" fill="#2B7BBA" stroke="#fff" stroke-width="1.5"/><circle cx="${X(y)}" cy="${Y(pc[y])}" r="4" fill="#B9832A" stroke="#fff" stroke-width="1.5"/>
     ${YEARS.map((yy, i) => i % (isNarrow() ? 3 : 1) === 0 || i === n - 1 ? `<text x="${X(i)}" y="${H - 5}" font-size="9.5" text-anchor="middle" fill="${i === y ? "#1D1C1A" : "#6F675A"}" font-family="IBM Plex Mono" font-weight="${i === y ? 600 : 400}">${String(yy).slice(2) === String(yy).slice(2) ? "'" + String(yy).slice(2) : yy}</text>` : "").join("")}
     <text x="${X(n - 1) - 4}" y="${Y(pc[n - 1]) - 8}" font-size="10" text-anchor="end" fill="#8A621B" font-family="IBM Plex Sans" font-weight="600">if the pace continues</text>
     <text x="${X(n - 1) - 4}" y="${Y(ann[n - 1]) + 16}" font-size="10" text-anchor="end" fill="#0E6670" font-family="IBM Plex Sans" font-weight="600">announced campuses</text>
@@ -587,7 +587,7 @@ function futureChart(y) {
 function chFuture() {
   const y = yIdxAt(state.t), F = futureNumbers(y), m = F.median, per = 25000;
   const nA = Math.round(people(m.w) / per), nP = Math.round(people(m.pw) / per);
-  const figs = Array(nA).fill(PERSON("", "#12808F", "")).concat(Array(nP).fill(PERSON("", "none", 'stroke="#B9832A" stroke-width="1" stroke-dasharray="2 1.5"')));
+  const figs = Array(nA).fill(PERSON("", "#2B7BBA", "")).concat(Array(nP).fill(PERSON("", "none", 'stroke="#B9832A" stroke-width="1" stroke-dasharray="2 1.5"')));
   const sqmi = a => (a / 640).toFixed(0);
   return `<div class="ch">
     <div class="kicker"><span class="n">4</span>${chip("proj", "Projection to 2035")}</div>
@@ -599,7 +599,7 @@ function chFuture() {
       : `<p class="bigl" style="color:#8A621B">The "if the pace continues" line starts in ${pace.first_year}.</p>`}
     <h3>Each figure = the water ${per.toLocaleString("en-US")} people use</h3>
     <div class="people" role="img" aria-label="${nA} solid figures for announced campuses and ${nP} dashed figures if the pace continues">${figs.join("")}</div>
-    <p class="note"><span style="color:#12808F;font-weight:600">Solid</span>: built and announced campuses. <span style="color:#8A621B;font-weight:600">Dashed</span>: if the announcement pace continues.</p>
+    <p class="note"><span style="color:#2B7BBA;font-weight:600">Solid</span>: built and announced campuses. <span style="color:#8A621B;font-weight:600">Dashed</span>: if the announcement pace continues.</p>
     <h3>Water, ${YEARS[0]}-${YEARS[LAST]}, in people</h3>
     ${futureChart(y)}
     <h3>Land</h3>
@@ -636,7 +636,7 @@ function replayKind(s) {
 function replayWhy(s) {
   const k = replayKind(s);
   if (k === "pixels") return "Each rust square lights up in the month Sentinel-1 first saw that patch of ground change.";
-  if (k === "nisar") return `Steps through all ${NI[s.id].frames.length} NISAR radar images, one every 12 days. Purple on the last one = ground that got much brighter since June.`;
+  if (k === "nisar") return `Steps through all ${NI[s.id].frames.length} NISAR radar images, one every 12 days. Teal on the last one = ground that got much brighter since June.`;
   if (k === "curve") return "Plays the measured acres month by month. The campus outline fills in as the land changes. We don't draw single radar squares here because our re-check of them did not match exactly, so we show only the checked total.";
   if (s.status === "built") return "No replay: the radar measurement for this campus did not produce a usable result.";
   return "No replay yet: the radar measurement was run on the built campuses and the 3 NISAR sites, not on this announced one.";
@@ -676,7 +676,7 @@ function showSite(s) {
     <p class="note">${s.status === "built" ? "Built campus" : "Announced campus"}${s.construction_start ? " · construction from " + s.construction_start : ""}${s.mw_stated ? " · " + fmt(s.mw_stated) + " MW stated" : ""}</p>
     ${takeaway(s)}`;
   const rk = replayKind(s), cv = curveOf(s);
-  if (P && P.nisar) h += `<p class="note" style="margin-top:10px">&#8596; Drag the divider on the map: aerial photo from ${P.before[2]} (before) vs. <span style="color:var(--nisar)">NISAR radar</span> on the timeline date. Bright = buildings and steel; purple = much brighter since June.</p>
+  if (P && P.nisar) h += `<p class="note" style="margin-top:10px">&#8596; Drag the divider on the map: aerial photo from ${P.before[2]} (before) vs. <span style="color:var(--nisar)">NISAR radar</span> on the timeline date. Bright = buildings and steel; teal = much brighter since June.</p>
       ${how(srcline(["data/wayback_captures.csv", P.nisar.file], [WB.source, "https://cmr.earthdata.nasa.gov/search/concepts/C3622241360-ASF.html"]), `The right side is radar, not a photo, because the newest aerial photo here (${P.after[2]}) was taken ${P.after[0] < P.cs ? "before" : "only weeks after"} work began. "Much brighter" = more than 3 dB, mean of the last 3 passes vs. the first 3.`)}`;
   else if (P && !P.noAfter) h += `<p class="note" style="margin-top:10px">&#8596; Drag the divider on the map: aerial photo from ${P.before[2]} (before) vs. the photo for the timeline date (newest ${P.after[2]})${rk === "pixels" ? `, with the land radar saw change in <span style="color:var(--rust)">rust</span>` : ""}.</p>
       ${how(srcline(["data/wayback_captures.csv"], [WB.source]))}`;
@@ -732,11 +732,11 @@ function showSource(src) {
     <div class="chips" style="margin:0 0 8px">${w ? chip(w.k) : datachip("No satellite trend")}${st === "ok" ? chip("proj") : datachip("No water estimate")}</div>
     <h2>${esc(src.water_body)}</h2><p class="note">${kind} · used by ${title(src.utility)} (EPA ${esc(src.pwsid)})${src.population_served ? `, ${fmt(src.population_served)} people` : ""}</p>
     <h3>How it is changing</h3>
-    ${w ? `<p>${chip(w.k)} ${esc(w.txt[0].toUpperCase() + w.txt.slice(1))}, ${src.trend_start} to ${src.trend_end}${w.k === "swot" && !w.few ? ` (${src.trend_n} passes)` : ""}.${w.k === "opera" && w.down ? " Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why." : ""}</p>${sparkline(src.series, w.few ? "#A39A8B" : w.k === "swot" ? "#12808F" : "#6F8FB0", w.few).replace('class="spark"', 'class="spark" style="width:100%;height:70px"')}`
+    ${w ? `<p>${chip(w.k)} ${esc(w.txt[0].toUpperCase() + w.txt.slice(1))}, ${src.trend_start} to ${src.trend_end}${w.k === "swot" && !w.few ? ` (${src.trend_n} passes)` : ""}.${w.k === "opera" && w.down ? " Moving away often means sinking, which can come from pumping groundwater, but this measurement alone does not say why." : ""}</p>${sparkline(src.series, w.few ? "#A39A8B" : w.k === "swot" ? "#2B7BBA" : "#6F8FB0", w.few).replace('class="spark"', 'class="spark" style="width:100%;height:70px"')}`
       : `<p>No satellite trend: ${esc({ swot_lake_id_unavailable: "we could not get SWOT's lake record for it", insufficient_swot: "too few good SWOT passes", insufficient_disp_s1: "too few usable OPERA dates" }[src.trend_status] || src.trend_status)}.</p>`}
     ${GW[src.id] ? `<h3>${chip("nisar")} Ground over the aquifer, ${GW[src.id].first_date} to ${GW[src.id].last_date}</h3>
       <p>NISAR saw ${esc(gwWords(GW[src.id]))}.${GW[src.id].opera_same_span_mm != null ? ` At the 10-year OPERA rate the ground would move only ${Math.abs(GW[src.id].opera_same_span_mm).toFixed(1)} mm in the same time.` : ""}</p>${gwChart(GW[src.id], true)}
-      <p class="note">Purple shading = NISAR's noise (±2 sigma), growing as 12-day pairs add up. Track ${GW[src.id].track}, frame ${GW[src.id].frame}, ${GW[src.id].n_pairs} pairs.</p>
+      <p class="note">Teal shading = NISAR's noise (±2 sigma), growing as 12-day pairs add up. Track ${GW[src.id].track}, frame ${GW[src.id].frame}, ${GW[src.id].n_pairs} pairs.</p>
       ${srcline([GW[src.id].file, "data/water/gunw/gunw_summary.csv"], ["https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF.html"])}` : ""}
     <h3>Campus water need vs. this utility's supply</h3>
     ${need}
@@ -774,7 +774,7 @@ function renderHeadline() {
   } else if (state.ch === "nisar") {
     const n = ST.nisar, cnt = Object.values(n).reduce((a, x) => a + x.nisar.t.filter(d => tOf(d) <= t).length, 0);
     h = `<div class="when"><span class="cap">${tnice(t)}</span>${chip("nisar")}</div><div class="hbig">${t < NISAR_T0 ? "Not yet" : cnt}<small>${t < NISAR_T0 ? "NISAR has no data here" : `of ${NISAR_N} NISAR images read`}</small></div>
-      <p class="hl">${t < NISAR_T0 ? "Before NISAR, only Sentinel-1 can show these sites." : "One image every 12 days at each of 3 campuses. Purple rings: click one."}</p>`;
+      <p class="hl">${t < NISAR_T0 ? "Before NISAR, only Sentinel-1 can show these sites." : "One image every 12 days at each of 3 campuses. Teal rings: click one."}</p>`;
   } else if (state.ch === "water") {
     h = `<div class="when"><span class="cap">Today · ${YEARS[LAST]} need</span>${datachip("EPA + projection")}</div><div class="hbig" style="color:var(--crimson)">${D.sources.filter(s => s.share.median[LAST] >= 1).length}<small>utilities over 100%</small></div>
       <p class="hl">Drops are water sources. Bigger and darker = campus need is a larger share of the town's supply by ${YEARS[LAST]}. Lines link each campus to its source.</p>`;
@@ -789,8 +789,8 @@ function renderHeadline() {
 function renderLegend() {
   const el = document.getElementById("legend");
   if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
-    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
-  if (state.detail && state.detail[0] === "site" && NI[state.detail[1]]) { el.innerHTML = `<div><span class="sw" style="--c:#8A2BE2"></span>NISAR: ground much brighter since June 2026</div><div><span class="sw" style="--c:#888"></span>NISAR radar image (bright = buildings, steel)</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #2B7BBA;height:2px"></span>Campus linked to this source</div>`; return; }
+  if (state.detail && state.detail[0] === "site" && NI[state.detail[1]]) { el.innerHTML = `<div><span class="sw" style="--c:#1F6F78"></span>NISAR: ground much brighter since June 2026</div><div><span class="sw" style="--c:#888"></span>NISAR radar image (bright = buildings, steel)</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
   if (state.detail && state.detail[0] === "site") { el.innerHTML = `<div><span class="sw" style="--c:#C2461B"></span>Land Sentinel-1 radar saw change</div><div><span class="sw" style="--c:transparent;border:1.5px dashed #FAF8F3;outline:1px solid #3A3731"></span>Campus outline</div>`; return; }
   if (state.ch === "land") el.innerHTML = `<div class="cap" style="margin-bottom:2px">Campus, size = acres changed, color = land before</div>` +
     LC.filter(([k]) => ST.land.acres[k] >= 1).map(([k, n]) => `<div><span class="sw" style="--c:${LCC[k]}"></span>${n}</div>`).join("");
@@ -804,8 +804,8 @@ function renderLegend() {
 const lanesEl = document.getElementById("lanes");
 const LANES = [
   { k: "s1", name: "Sentinel-1 radar · land", from: Math.max(T0, tOf(ST.sensors.sentinel1.from)), to: tOf(ST.sensors.sentinel1.to), c: "#3E6A96" },
-  { k: "nisar", name: "NISAR radar · land + ground", from: NISAR_T0, to: tOf(ST.sensors.nisar.to), c: "#8A2BE2", strong: NISAR_USABLE },
-  { k: "swot", name: "SWOT · water levels", from: tOf(ST.sensors.swot.from), to: tOf(ST.sensors.swot.to), c: "#12808F" },
+  { k: "nisar", name: "NISAR radar · land + ground", from: NISAR_T0, to: tOf(ST.sensors.nisar.to), c: "#1F6F78", strong: NISAR_USABLE },
+  { k: "swot", name: "SWOT · water levels", from: tOf(ST.sensors.swot.from), to: tOf(ST.sensors.swot.to), c: "#2B7BBA" },
   { k: "opera", name: "OPERA DISP-S1 · ground", from: Math.max(T0, tOf(ST.sensors.opera.from)), to: tOf(ST.sensors.opera.to), c: "#6F8FB0" },
   { k: "proj", name: "Projection · announced + pace", from: PROJ0, to: TEND, c: "#B9832A", dash: true },
 ];
@@ -846,7 +846,7 @@ function renderLanes() {
   const sub = document.getElementById("clockSub");
   const act = LANES.filter(active).filter(l => l.k !== "proj").map(l => CHIP[l.k].replace(" radar", ""));
   sub.textContent = state.t > T_MEAS1 ? "Projected" : state.ch === "water" && !state.detail ? "EPA · SWOT · OPERA · NISAR" : act.join(" + ") || "Measured";
-  sub.style.color = state.t > T_MEAS1 ? "#8A621B" : act.some(a => a.startsWith("NISAR")) ? "#8A2BE2" : "#3E6A96";
+  sub.style.color = state.t > T_MEAS1 ? "#8A621B" : act.some(a => a.startsWith("NISAR")) ? "#1F6F78" : "#3E6A96";
 }
 function tFromX(clientX) {
   const r = lanesEl.getBoundingClientRect(), svgW = laneGeom.W, x = (clientX - r.left - 8) / (r.width - 26) * svgW;
@@ -934,7 +934,7 @@ map.on("load", () => {
   map.addLayer({ id: "outline-fill", type: "fill", source: "outlines", minzoom: 9, paint: { "fill-color": "#B9832A", "fill-opacity": 0 } });
   map.addLayer({ id: "outline", type: "line", source: "outlines", minzoom: 9, paint: { "line-color": "#FAF8F3", "line-width": 2, "line-dasharray": [3, 2] } });
   map.addSource("links", { type: "geojson", data: linksFC });
-  map.addLayer({ id: "link", type: "line", source: "links", layout: { visibility: "none" }, paint: { "line-color": "#12808F", "line-width": 1.6, "line-opacity": .8, "line-dasharray": [3, 2] } });
+  map.addLayer({ id: "link", type: "line", source: "links", layout: { visibility: "none" }, paint: { "line-color": "#2B7BBA", "line-width": 1.6, "line-opacity": .8, "line-dasharray": [3, 2] } });
   map.addSource("sources", { type: "geojson", data: sourcesFC() });
   map.addLayer({ id: "src", type: "symbol", source: "sources", layout: { visibility: "none", "icon-image": "drop", "icon-size": ["interpolate", ["linear"], ["zoom"], 2, ["*", ["get", "size"], .5], 4.5, ["get", "size"]], "icon-allow-overlap": true, "icon-anchor": "bottom" },
     paint: { "icon-color": ["get", "color"] } });
@@ -947,10 +947,10 @@ map.on("load", () => {
     paint: { "icon-color": ["get", "color"], "icon-opacity": ["interpolate", ["linear"], ["zoom"], 10.5, ["case", ["get", "started"], .95, .45], 12, 0], "icon-halo-color": "#1D1C1A", "icon-halo-width": 1 } });
   map.addLayer({ id: "site-label", type: "symbol", source: "sites", minzoom: 6, filter: ["get", "show"], layout: { ...TXT, "text-field": ["get", "name"] }, paint: { ...HALO, "text-opacity": fade } });
   map.addSource("nisar", { type: "geojson", data: nisarFC });
-  map.addLayer({ id: "nisar-glow", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 26, "circle-color": "#8A2BE2", "circle-opacity": .14, "circle-blur": .4 } });
-  map.addLayer({ id: "nisar-ring", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 16, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#8A2BE2", "circle-stroke-width": 3 } });
+  map.addLayer({ id: "nisar-glow", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 26, "circle-color": "#1F6F78", "circle-opacity": .14, "circle-blur": .4 } });
+  map.addLayer({ id: "nisar-ring", type: "circle", source: "nisar", layout: { visibility: "none" }, paint: { "circle-radius": 16, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#1F6F78", "circle-stroke-width": 3 } });
   map.addLayer({ id: "nisar-label", type: "symbol", source: "nisar", layout: { visibility: "none", "text-font": ["Open Sans Semibold"], "text-size": 12, "text-anchor": ["case", ["==", ["get", "kind"], "src"], "bottom", "top"], "text-offset": ["case", ["==", ["get", "kind"], "src"], ["literal", [0, -1.9]], ["literal", [0, 1.9]]],
-    "text-field": ["format", "NISAR\n", { "font-scale": .95, "text-color": "#8A2BE2" }, ["get", "name"], {}], "text-allow-overlap": true }, paint: { ...HALO, "text-halo-width": 2.2 } });
+    "text-field": ["format", "NISAR\n", { "font-scale": .95, "text-color": "#1F6F78" }, ["get", "name"], {}], "text-allow-overlap": true }, paint: { ...HALO, "text-halo-width": 2.2 } });
 
   for (const id of ["site", "src", "nisar-ring", "outline-fill"]) {
     map.on("mouseenter", id, () => map.getCanvas().style.cursor = "pointer");
@@ -1070,8 +1070,8 @@ function nisarOn(id, k) {
   } else { if (nisarUrl !== f.png) map.getSource("nisarF").updateImage({ url: f.png, coordinates: n.corners }); if (nisarShown !== id) map.getSource("nisarC").updateImage({ url: n.change_png, coordinates: n.corners }); }
   map.setPaintProperty("nisarC", "raster-opacity", last ? .8 : 0);
   nisarShown = id; nisarUrl = f.png;
-  tagA.innerHTML = `NISAR radar<small>${f.date} · image ${k + 1} of ${n.frames.length}${last ? " · purple = brighter since June" : ""}</small>`;
-  tagA.style.background = "#8A2BE2";
+  tagA.innerHTML = `NISAR radar<small>${f.date} · image ${k + 1} of ${n.frames.length}${last ? " · teal = brighter since June" : ""}</small>`;
+  tagA.style.background = "#1F6F78";
 }
 function nisarOff() { if (map.getLayer("nisarF")) { map.removeLayer("nisarF"); map.removeSource("nisarF"); map.removeLayer("nisarC"); map.removeSource("nisarC"); } nisarShown = null; nisarUrl = null; tagA.style.background = ""; }
 /* The right-hand side follows the timeline: NISAR frame, or the latest photo captured on or before the date. */
@@ -1142,7 +1142,7 @@ function startPlay(t0, t1, step, tick) {
 }
 function playRange() {
   if (state.detail && state.detail[0] === "src") { el.innerHTML = `<div class="cap" style="margin-bottom:2px">Water source: campus need vs. supply, ${YEARS[LAST]}</div>
-    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #12808F;height:2px"></span>Campus linked to this source</div>`; return; }
+    <div><span class="sw r" style="--c:#8E1F1F"></span>More than all of today's supply</div><div><span class="sw r" style="--c:#C2461B"></span>20-100%</div><div><span class="sw r" style="--c:#D9A93A"></span>5-20%</div><div><span class="sw r" style="--c:#9DB07A"></span>Under 5%</div><div><span class="sw r" style="--c:#A39A8B"></span>No estimate (campus has no MW or capex)</div><div><span class="sw" style="--c:transparent;border-top:2px dashed #2B7BBA;height:2px"></span>Campus linked to this source</div>`; return; }
   if (state.detail && state.detail[0] === "site") { const s = siteById[state.detail[1]], cs = s.construction_start ? tOf(s.construction_start) : T0;
     return [Math.max(T0, cs - 6), T_MEAS1, 1, 120]; }
   const c = CH[state.ch]; if (state.ch === "water") return [PROJ0, TEND, 12, 800];
@@ -1155,7 +1155,7 @@ playBtn.addEventListener("click", () => {
 function replaySite() {
   if (state.playing) return stopPlay();
   const s = siteById[state.detail[1]];
-  if (replayKind(s) === "nisar") {   // one NISAR image every 12 days, then hold on the last with the change in purple
+  if (replayKind(s) === "nisar") {   // one NISAR image every 12 days, then hold on the last with the change in teal
     const n = NI[s.id]; let k = 0; stopPlay(); state.playing = true; setPlayUI(true);
     if (map.getZoom() < 10) map.fitBounds(bboxOf(s.outline), { padding: pad(), maxZoom: 15.5, duration: 0 });
     const step = () => { forcedFrame = k; setT(tOf(n.frames[k].date)); if (++k >= n.frames.length) { stopPlay(); forcedFrame = null; } };
@@ -1175,8 +1175,8 @@ document.getElementById("aboutBtn").onclick = () => {
   const missing = D.sites.filter(s => s.location.missing);
   about.innerHTML = `<h2>About the data</h2>
   <div class="sensor" style="--c:#3E6A96"><i></i><div><b>Sentinel-1 (ESA), C-band radar</b><p>Land change at ${Object.keys(TL.curves).length} campuses, monthly, 2017 to ${tnice(T_MEAS1)}. A pixel counts as changed when its brightness moves more than a threshold (3-5 dB) for two months in a row (F1). Read from Microsoft Planetary Computer.</p></div></div>
-  <div class="sensor" style="--c:#8A2BE2"><i></i><div><b>NISAR (NASA-ISRO), L-band radar</b><p>${NISAR_N} images on the map (one radar track per campus, one image every 12 days, ${ST.sensors.nisar.from} to ${ST.sensors.nisar.to}) over Vantage Frontier, Project Jupiter and Stargate Lordstown, out of ${ST.sensors.nisar.n_usable} usable images we checked on all tracks. Plus ground motion over the aquifers in step 3. NISAR's earliest test images here (Oct 2025) are not used; all of them came after construction began, so Sentinel-1 supplies the "before". Files: <code>data/nisar_gcov_coverage.csv</code>, <code>data/radar/nisar_series.csv</code>.</p></div></div>
-  <div class="sensor" style="--c:#12808F"><i></i><div><b>SWOT (NASA-CNES)</b><p>River water levels from Hydrocron, ${ST.sensors.swot.from} to ${ST.sensors.swot.to}, for ${ST.sensors.swot.n_sources} rivers.</p></div></div>
+  <div class="sensor" style="--c:#1F6F78"><i></i><div><b>NISAR (NASA-ISRO), L-band radar</b><p>${NISAR_N} images on the map (one radar track per campus, one image every 12 days, ${ST.sensors.nisar.from} to ${ST.sensors.nisar.to}) over Vantage Frontier, Project Jupiter and Stargate Lordstown, out of ${ST.sensors.nisar.n_usable} usable images we checked on all tracks. Plus ground motion over the aquifers in step 3. NISAR's earliest test images here (Oct 2025) are not used; all of them came after construction began, so Sentinel-1 supplies the "before". Files: <code>data/nisar_gcov_coverage.csv</code>, <code>data/radar/nisar_series.csv</code>.</p></div></div>
+  <div class="sensor" style="--c:#2B7BBA"><i></i><div><b>SWOT (NASA-CNES)</b><p>River water levels from Hydrocron, ${ST.sensors.swot.from} to ${ST.sensors.swot.to}, for ${ST.sensors.swot.n_sources} rivers.</p></div></div>
   <div class="sensor" style="--c:#6F8FB0"><i></i><div><b>OPERA DISP-S1 (NASA JPL, from Sentinel-1)</b><p>Ground motion over ${ST.sensors.opera.n_sources} aquifers, ${ST.sensors.opera.from} to ${ST.sensors.opera.to}.</p></div></div>
   <div class="sensor" style="--c:#B9832A"><i></i><div><b>Projection (F2-F9)</b><p>Built campuses give acres per MW, water per kWh, and how long building takes (low / median / high). Announced MW, or capex divided by $ per MW, gives each announced campus's land and water to ${YEARS[LAST]} (F2-F8). F9 adds a separate "if the pace continues" line: the MW announced in the last two years, repeated every year. People's worth = ${fmt(PER_CAPITA)} liters per person per day (USGS 2015 US public supply).</p></div></div>
   <p class="note" style="margin-top:12px">Every number traces to a CSV in the project's <code>data/</code> folder and its source link. Water text says a campus "depends on" or is "linked to" a source; nothing here says a data center caused a change in a water body.
