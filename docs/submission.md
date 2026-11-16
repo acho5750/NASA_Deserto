@@ -2,11 +2,10 @@
 
 Each section below matches one field on the Space Apps project page, in the order the form asks for
 them. Copy the text under each heading into that field. Every number comes from the live map
-(https://acho5750.github.io/NASA_Deserto/) and the CSVs in `data/` named next to it; nothing here
+(https://deserto-map.onrender.com/) and the CSVs in `data/` named next to it; nothing here
 is estimated beyond what the map shows.
 
-Team: Deserto (Andrew Cho, Nicholas Middelberg, Nathnael Haile). If the map moves to Render, replace
-the live map link under "Link to Final Project" (see `docs/deploy_render.md`).
+Team: Deserto (Andrew Cho, Nicholas Middelberg, Nathnael Haile).
 
 ---
 
@@ -24,21 +23,18 @@ Deserto: radar-tracking data centers and the water they depend on
 
 ## High-Level Project Summary
 
-NISAR, the new NASA-ISRO L-band radar satellite, sees through cloud, day and night, every 12 days.
-We use it to check whether money announced for AI data centers is turning into buildings: since
-June 2026, 602 acres got much brighter in NISAR radar, the signature of new buildings and steel,
-at 3 Stargate campuses still under construction, months ahead of the newest aerial photos. Our
-interactive map puts that next to the longer record and the water: Sentinel-1 radar measured
-8,462 acres changed at 29 finished campuses since 2017, 6,888 of them not built on before
-(farmland, shrubland, forest, wetland). We linked each campus to its EPA water utility and its
-river, lake or aquifer, and checked those sources with SWOT (river and lake levels) and with
-OPERA DISP-S1 and NISAR (ground sinking over aquifers). Then we turned announced megawatts and
-dollars into land and water using what the built campuses taught us: by 2035 the 46 campuses in
-the study would use as much water as about 1.0 million people use in a year (range 193,000 to
-1.8 million), and, if the announced campuses are built as announced, 5 small utilities would need
-to supply more water to linked campuses than to all their customers today. It matters because
-these commitments are announced years before the water is needed, and radar lets anyone check,
-from space, whether they are being built.
+AI data centers are announced as single numbers, a gigawatt or ten billion dollars, years before
+they are built and before anyone sees what they will mean for the land and the small town water
+systems they depend on. We built an interactive map that uses satellite radar to close that gap.
+Sentinel-1 radar measured 8,462 acres changed at 29 finished campuses since 2017, 6,888 of them
+not built on before. NASA-ISRO's new NISAR radar, which sees through cloud every 12 days, shows
+602 acres getting much brighter, the signature of new buildings and steel, at 3 Stargate campuses
+still under construction, months ahead of the newest aerial photos. We linked each campus to its
+water utility and river, lake or aquifer, checked those sources with SWOT, OPERA DISP-S1 and NISAR,
+and turned announced investments into land and water: by 2035 the 46 campuses studied would use as
+much water as about 1.0 million people use in a year (range 193,000 to 1.8 million), and, if built
+as announced, 5 small utilities would need to supply more water to linked campuses than to all
+their customers today.
 
 ## Link to Project Demo
 
@@ -46,116 +42,38 @@ from space, whether they are being built.
 
 ## Link to Final Project
 
-- Live map: https://acho5750.github.io/NASA_Deserto/
-- Code and data: https://github.com/acho5750/NASA_Deserto
+https://deserto-map.onrender.com/#land
+
+(Code and data: https://github.com/acho5750/NASA_Deserto)
 
 ---
 
 ## Detailed Project Description
 
-### The problem
+(One text box on the form: paste the whole block below.)
 
-AI data centers are being announced faster than ever, often as single numbers: a gigawatt, ten
-billion dollars. Those numbers are announced years before the buildings are finished and before
-the water is needed, and the land and water they depend on are rarely in the same picture. Local
-residents and planners usually learn what a campus means for their town's water only after it is
-built. The challenge asked how SAR can show the downstream effects of infrastructure; we asked a
-concrete version: how much land have data centers already converted, which water sources are they
-linked to, and what does the money already announced turn into by 2035?
+Deserto is a four-chapter story map of 54 US data center campuses and the 25 water sources they are
+linked to. 1) Land: for 29 finished campuses, Sentinel-1 radar (ESA) shows the month each patch of
+ground changed since 2017; press Play to watch campuses grow as dated aerial photos swap in. Of the
+8,462 acres that changed, the pre-construction NLCD land-cover map shows 2,578 acres of farmland,
+2,648 of shrubland and grassland and 828 of forest. 2) NISAR now: we read every NISAR image of the
+3 campuses it covers since June 2026 and mapped ground more than 3 dB brighter: 315 acres at Vantage
+Frontier (Texas), 286 at Project Jupiter (New Mexico) and 1 at Lordstown (Ohio), which is going
+inside an existing factory. 3) Water: each campus is linked through EPA records to its utility and
+named source. SWOT tracks river and lake levels; OPERA DISP-S1 (2016-2026) and NISAR interferograms
+(2026) track ground sinking over 8 aquifers. 4) 2035: announced megawatts and dollars become land and
+water, in low, middle and high scenarios, using rates measured at the built campuses: 28,598 acres
+and as much water as about 1.0 million people use in a year.
 
-### What it does
+How it works: radar change detection against a 12-month baseline (F1), then per-MW rates for land,
+cost and water (F2-F4), the campus's share of its utility's supply (F5), and a build ramp to 2035
+(F8). Every number traces to a CSV with a source link, and every judgment call is logged in
+DECISIONS.md. The map says "linked to", never "caused by".
 
-The map covers 54 data center campuses (built and announced, from Epoch AI and company
-announcements) and the 25 water sources they are linked to, told in four chapters.
-
-1. **Land (Sentinel-1, 2017-2026).** For each of 29 finished campuses, radar shows the month each
-   patch of ground first changed. Press Play and the campuses grow pixel by pixel while dated
-   aerial photos swap in underneath. In total, 8,462 acres changed. Under those pixels, the
-   pre-construction national land-cover map (NLCD) shows 2,578 acres of farmland, 2,648 of
-   shrubland and grassland, 828 of forest, 576 of pasture, 79 of wetland and 1,574 already
-   developed. Example: shrubland near Abilene, Texas became a 1,094-acre campus in about two years.
-2. **NISAR now (2026).** NISAR launched in July 2025, after these campuses broke ground, so
-   Sentinel-1 provides the "before" and NISAR the "now". We read every NISAR image of the 3
-   campuses it covers (10 to 12 images each, one every 12 days) and mapped where the ground got
-   more than 3 dB brighter, the radar signature of new buildings and steel: 315 acres at Vantage Frontier (Shackelford County, Texas), 286 acres
-   at Project Jupiter (Doña Ana County, New Mexico) and 1 acre at Stargate Lordstown (Ohio), where
-   the data center is going inside an existing factory and radar sees only its roof. The newest
-   aerial photo of Project Jupiter (2025-09-21) still shows bare desert; NISAR already shows the
-   ground lighting up as buildings go up.
-3. **Water (EPA, SWOT, OPERA DISP-S1, NISAR).** Each campus is linked to the drinking-water
-   utility whose EPA service area it sits in, followed to the seller when the utility buys its
-   water, and then to the named river, lake or aquifer. We compare each campus's estimated water
-   need with the utility's supply. Five utilities would need to supply more than their whole
-   current supply to linked campuses by 2035 if the announced campuses are built, for example
-   11x for Bell Milam Falls WSC (6,885 people, Lake Belton and Stillhouse Hollow Lake) and 9.2x
-   for Camino Real Regional Utility Authority (21,930 people, Mesilla Bolson). SWOT gives river
-   and lake level trends where it has at least 10 good passes (for example the Potomac River,
-   falling 6.3 cm a year over 124 passes since 2023). Over 8 aquifers, OPERA DISP-S1 gives a
-   2016-2026 ground-motion rate (for example West Memphis wells, sinking 14.1 mm a year) and NISAR
-   adds June-October 2026; at the 5 aquifers where NISAR's record was clear enough to read, it
-   shows no change larger than its noise yet. The map says "linked to", never "caused by": a trend
-   describes the water body, not why it changed.
-4. **2035.** Announced megawatts (or dollars, converted to megawatts) become land and water using
-   rates measured at the built campuses, each in a low, middle and high scenario. By 2035 the 46
-   campuses in the study would cover 28,598 acres (range 19,309 to 38,894), about 45 square
-   miles, and use as much water as about 1.0 million people use in a year (range 193,000 to
-   1.8 million). A
-   separate dashed "what if the pace continues" line repeats the last two years' announcements
-   (7,410 MW a year) and would add the water of 2.4 million more people; it is never added into
-   the site values.
-
-### How it works
-
-- **F1, footprint from radar:** Sentinel-1 RTC from Microsoft Planetary Computer, converted to dB.
-  A pixel counts as converted when VV or VH changes by more than a threshold (starting at 3 dB)
-  against a 12-month baseline for at least 2 consecutive months; the threshold is raised in 0.5 dB
-  steps when too much "change" shows up before construction began. Converted area over time is
-  fitted with a logistic curve to get build speed.
-- **NISAR:** L2 GCOV provisional HH images read with HTTP range requests from ASF; the first 3 and
-  last 3 images of one track are averaged to calm speckle, and "much brighter" means over 3 dB.
-  For aquifers, NISAR L2 GUNW 12-day interferogram pairs are chained, ionosphere-corrected, and a
-  6 km window is compared with 40 km surroundings; a change only counts if it is larger than its
-  noise.
-- **F2-F4, from megawatts to water:** acres per MW, dollars per MW, build months and water per MW
-  (Google's per-site reports) are measured at built campuses; missing MW is derived from capex.
-- **F5, share:** campus water divided by the utility's supply (people served times the state's
-  average use, USGS 2015), and a second share against the wholesale system for utilities that buy
-  their water.
-- **F6-F9:** source trend score, a pressure index, the build ramp toward the operation date, and
-  the "if the pace continues" line.
-
-Every number on the map traces to a CSV in `data/` with a source link, and every judgment call is
-logged with its date and reason in `DECISIONS.md`.
-
-### Benefits
-
-- Anyone can check from space, every 12 days, whether announced money is turning into buildings,
-  without waiting for aerial photos, permits or company reports.
-- It puts land, water and investment in one picture, at the scale of the small town utility that
-  actually serves the campus, rather than as national totals.
-- It is open and reproducible: free satellite data, public EPA and USGS records, open code.
-
-### What we hope to achieve
-
-We want residents, local water boards and planners to see, before a campus is built, which water
-source it would depend on and how large its need is next to the town's supply, so the questions
-get asked while there is still time to plan. The same method extends to any new site as it is
-announced, and to other large infrastructure such as power plants and chip factories.
-
-### Tools, languages and software
-
-Python (pandas, numpy, geopandas, shapely, pyproj, xarray, rasterio, h5py, stackstac,
-pystac-client, planetary-computer, earthaccess, asf_search, requests, pillow, matplotlib);
-JavaScript with MapLibre GL JS 4 over Esri World Imagery and Esri World Imagery Wayback; HTML/CSS;
-GitHub Pages and GitHub Actions for hosting. No special hardware.
-
-### Limits we state on the map
-
-- Linked to is not caused by: we do not claim any data center caused a change in a water source.
-- SWOT trends cover only the few years since 2023; NISAR covers only June-November 2026.
-- The 2035 projection rests on few calibration sites (for example, dollars per MW from 6 sites),
-  so every value is shown as low / middle / high.
-- Sites with no matched utility stay in the land model but are left out of water shares.
+Why it matters: residents and water boards can check from space, every 12 days, whether announced
+money is turning into buildings, and see which water source a campus would depend on before it is
+built. Built with Python (pandas, xarray, rasterio, geopandas, earthaccess, asf_search), JavaScript
+with MapLibre GL, and free NASA, ESA, EPA and USGS data.
 
 ---
 
@@ -224,9 +142,9 @@ used beyond the attributed basemap imagery under its terms of use.
 ## Before you press "Submit for Judging"
 
 - [ ] Paste the demo link and check it opens in a private browser window with no login.
-- [ ] Open https://acho5750.github.io/NASA_Deserto/ in a private window.
+- [ ] Open https://deserto-map.onrender.com/#land in a private window.
 - [ ] Team name and member names are on the title slide.
-- [ ] Optional: request a FortiGuard Web Filter Classification for the github.io site.
+- [ ] Optional: request a FortiGuard Web Filter Classification for the onrender.com site.
 - [ ] Tick "Terms and Conditions" and "Confirm All Work is Original", then Submit for Judging
       before 11:59 p.m. local time of your Local Event (or the Team Owner's time zone for the
       Universal Event).
