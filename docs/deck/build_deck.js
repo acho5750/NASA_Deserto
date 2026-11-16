@@ -24,20 +24,20 @@ s.addImage({ path:'title_map.jpg', x:6.35, y:0, w:6.983, h:7.5, sizing:{ type:'c
 tb(s, '2026 NASA SPACE APPS CHALLENGE  ·  DANCING WITH THE SARs', { x:M, y:0.75, w:5.5, h:0.3, fontSize:12, bold:true, color:PURPLE, charSpacing:1 });
 tb(s, 'Deserto', { x:M, y:1.2, w:5.5, h:1.0, fontSize:54, bold:true });
 tb(s, 'Radar-tracking data centers and the water they depend on', { x:M, y:2.35, w:5.4, h:0.9, fontSize:22, color:C.text2 });
-tb(s, 'Radar satellites show the land AI data centers have taken, and which towns’ water each campus will depend on.', { x:M, y:3.55, w:5.3, h:0.8, fontSize:16 });
-card(s, M, 4.6, 5.3, 1.35);
+tb(s, 'Radar satellites show the land AI data centers have converted, and which towns’ water each campus will depend on.', { x:M, y:3.55, w:5.3, h:0.8, fontSize:16 });
+card(s, M, 4.8, 5.3, 1.35);
 tb(s, [ {text:'Team  ', options:{bold:true,color:C.text2}}, {text:'[Team name]', options:{breakLine:true}},
         {text:'Members  ', options:{bold:true,color:C.text2}}, {text:'[Full names of team members]', options:{breakLine:true}},
         {text:'Live map  ', options:{bold:true,color:C.text2}}, {text:LINK, options:{hyperlink:{url:'https://'+LINK}, color:PURPLE}} ],
-   { x:M+0.25, y:4.75, w:4.9, h:1.1, fontSize:15, paraSpaceAfter:4 });
+   { x:M+0.25, y:4.95, w:4.9, h:1.1, fontSize:15, paraSpaceAfter:4 });
 s.addNotes('Title. Fill in team name and member names before submitting.');
 
 // 2 Problem
 pres.addSection({ title:'Problem' });
 s = pres.addSlide({ masterName:'Content', sectionTitle:'Problem' });
 s.addText('AI data centers are going up fast, and most people can’t see it', { placeholder:'title' });
-const stats = [['54','data center campuses tracked: 30 built, 24 announced'],['8,462','acres of land changed at 29 built campuses since 2017'],['5','town water utilities would need to supply more to linked campuses by 2035 than to all their customers today']];
-stats.forEach((st,i)=>{ const y=1.6+i*1.35; tb(s, st[0], {x:M,y,w:2.1,h:0.8,fontSize:44,bold:true,color: i==2?RED:C.text1}); tb(s, st[1], {x:M+2.2,y:y+0.1,w:3.4,h:1.0,fontSize:15,color:C.text1}); });
+const stats = [['54','data center campuses tracked: 30 built, 24 announced'],['8,462','acres of land changed at 29 built campuses since 2017'],['5','town water utilities would need to supply more to linked campuses by 2035 than to all their customers today, if the announced campuses are built']];
+stats.forEach((st,i)=>{ const y=1.6+i*1.35; tb(s, st[0], {x:M,y,w:2.1,h:0.8,fontSize:44,bold:true,color: i==2?RED:C.text1}); tb(s, st[1], {x:M+2.0,y:y+0.1,w:3.5,h:1.2,fontSize:15,color:C.text1}); });
 s.addImage({ path:'abilene.png', x:6.55, y:1.55, w:6.18, h:2.79, altText:'Sentinel-1 radar of Stargate Abilene before and after construction' });
 tb(s, 'Stargate Abilene, Texas, seen by Sentinel-1 radar: shrubland in 2023, a 1,094-acre campus about two years later.', { x:6.55, y:4.42, w:6.18, h:0.6, fontSize:12, color:C.text2 });
 card(s, 6.55, 5.25, 6.18, 1.25, C.accent5);
@@ -111,7 +111,7 @@ s = pres.addSlide({ masterName:'Content', sectionTitle:'Findings' });
 s.addText('What we found', { placeholder:'title' });
 card(s, M, 1.5, 6.6, 5.2);
 tb(s, 'Campus water need vs. the town utility’s whole supply today, 2035 (median)', { x:M+0.3, y:1.7, w:6.0, h:0.7, fontSize:16, bold:true });
-s.addChart(pres.charts.BAR, [{ name:'Times the town supply', labels:['Bell Milam Falls WSC, TX','Camino Real RUA, NM','Hawley WSC, TX','Montgomery Co PWSD 1, MO','Boling MWD, TX'], values:[11,9.2,6.0,3.1,2.4] }],
+s.addChart(pres.charts.BAR, [{ name:'Times the town supply', labels:['Bell Milam Falls WSC, TX','Camino Real RUA, NM','Hawley WSC, TX','Montgomery Co PWSD 1, MO','Boling MWD, TX'], values:[10.67,9.2,6.0,3.1,2.4] }],
   { x:M+0.2, y:2.4, w:6.2, h:3.5, barDir:'bar', catAxisOrientation:'maxMin', chartColors:[THEME.colors.accent2], showValue:true, dataLabelPosition:'outEnd', dataLabelFormatCode:'0.0"×"', dataLabelFontSize:13, dataLabelColor:THEME.colors.dk1, dataLabelFontFace:'+mn-lt',
     catAxisLabelFontSize:13, catAxisLabelColor:THEME.colors.dk1, catAxisLabelFontFace:'+mn-lt', valAxisHidden:true, valGridLine:{style:'none'}, catGridLine:{style:'none'}, showLegend:false, barGapWidthPct:45, valAxisMaxVal:13, valAxisMinVal:0 });
 tb(s, 'If the announced campuses are built. Ranges are wide (Bell Milam: 2.0× to 19×). Two of these towns buy water from a larger wholesale system.', { x:M+0.3, y:5.9, w:6.0, h:0.7, fontSize:12, color:C.text2 });
