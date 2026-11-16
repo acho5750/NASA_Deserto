@@ -191,6 +191,21 @@
   dialog::backdrop { background: rgba(29, 28, 26, .4); }
   dialog p { font-size: 13px; }
 
+  /* first-visit intro: three short cards, dismissible, re-open from the header */
+  dialog.intro { width: min(460px, calc(100vw - 32px)); max-width: none; padding: 0; border-top: 4px solid var(--c, var(--ink)); }
+  .intro .pg { padding: 22px 24px 6px; min-height: 236px; }
+  .intro .pg[hidden] { display: none; }
+  .intro h2 { font-size: 20px; line-height: 1.25; margin: 6px 0 10px; }
+  .intro p { font-size: 14px; color: var(--ink2); margin: 0 0 10px; }
+  .intro ol { margin: 0 0 10px; padding: 0; list-style: none; }
+  .intro li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 5px 0; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--ink2); }
+  .intro li b.n { font: 600 11px/20px var(--mono); width: 20px; height: 20px; text-align: center; border: 1px solid var(--rule2); border-radius: 50%; color: var(--muted); }
+  .intro li.nis b.n { border-color: var(--nisar); color: var(--nisar); }
+  .intro .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px 18px; }
+  .intro .dots { display: flex; gap: 6px; } .intro .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--rule2); } .intro .dots i.on { background: var(--c, var(--ink)); }
+  .intro .skip { border: 0; background: none; cursor: pointer; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 4px; }
+  .intro .x { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }
+
   .mtitle { display: none; }
   @media (max-width: 1180px) { nav.chapters button small { display: none; } .main { grid-template-columns: 380px 1fr; } }
   @media (max-width: 860px) {
@@ -224,6 +239,7 @@
     <button data-ch="water"><b>3</b><span>Water<small>SWOT · OPERA · NISAR</small></span></button>
     <button data-ch="future"><b>4</b><span>2035<small>Projection</small></span></button>
   </nav>
+  <button class="aboutbtn" id="introBtn">Intro</button>
   <button class="aboutbtn" id="aboutBtn">About the data</button>
 </header>
 
@@ -252,6 +268,37 @@
 </div>
 
 <dialog id="about"></dialog>
+<dialog id="intro" class="intro" aria-labelledby="introH0">
+  <button class="x" aria-label="Close intro" data-close>&times;</button>
+  <div class="pg" style="--c:var(--ink)">
+    <span class="cap">Why this map</span>
+    <h2 id="introH0">AI data centers need land and water</h2>
+    <p>Companies are pouring money into new data center campuses. Each one paves over land and depends on a local water supply.</p>
+    <p>This map uses satellite radar to show how much land past campuses took, which water sources they depend on, and what announced projects could add by 2035.</p>
+  </div>
+  <div class="pg" style="--c:var(--nisar)" hidden>
+    <span class="chip nisar">NISAR radar</span>
+    <h2>What NASA's NISAR adds</h2>
+    <p>NISAR is a NASA-ISRO radar satellite. It sees through clouds, day or night, and passes over every 12 days.</p>
+    <p>Its long L-band waves show new buildings rising and tiny ground motion over the aquifers campuses depend on. Anything purple on the map is NISAR.</p>
+  </div>
+  <div class="pg" style="--c:var(--ink)" hidden>
+    <span class="cap">How to use it</span>
+    <h2>Four steps, left to right</h2>
+    <ol>
+      <li><b class="n">1</b><span><b>Land:</b> what the campuses replaced</span></li>
+      <li class="nis"><b class="n">2</b><span><b>NISAR now:</b> the latest radar view</span></li>
+      <li><b class="n">3</b><span><b>Water:</b> the sources each campus depends on</span></li>
+      <li><b class="n">4</b><span><b>2035:</b> what announced projects add</span></li>
+    </ol>
+    <p>Press <b>Play</b> or drag the time bar. Click a campus, then <b>Replay</b> to watch it get built.</p>
+  </div>
+  <div class="foot">
+    <button class="skip" data-close>Skip</button>
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <span style="display:flex;gap:8px"><button class="btn" id="introBack">Back</button><button class="btn solid" id="introNext">Next</button></span>
+  </div>
+</dialog>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="data.js"></script>
@@ -1136,6 +1183,27 @@ document.getElementById("aboutBtn").onclick = () => {
   <p style="margin-top:14px"><button class="btn solid" onclick="document.getElementById('about').close()">Close</button></p>`;
   about.showModal();
 };
+
+/* ---------------- intro ---------------- */
+const intro = document.getElementById("intro"), pages = [...intro.querySelectorAll(".pg")], dots = [...intro.querySelectorAll(".dots i")];
+let ipg = 0;
+function introShow(i) {
+  ipg = i; pages.forEach((p, k) => p.hidden = k !== i); dots.forEach((d, k) => d.classList.toggle("on", k === i));
+  intro.style.setProperty("--c", i === 1 ? "var(--nisar)" : "var(--ink)");
+  document.getElementById("introBack").style.visibility = i ? "visible" : "hidden";
+  document.getElementById("introNext").textContent = i === pages.length - 1 ? "Explore the map" : "Next";
+}
+function introOpen() { introShow(0); if (!intro.open) intro.showModal(); document.getElementById("introNext").focus(); }
+function introClose() { intro.close(); }
+intro.addEventListener("close", () => { try { localStorage.setItem("introSeen", "1"); } catch (e) {} });
+intro.querySelectorAll("[data-close]").forEach(b => b.onclick = introClose);
+intro.addEventListener("click", e => { if (e.target === intro) introClose(); });
+document.getElementById("introNext").onclick = () => ipg < pages.length - 1 ? introShow(ipg + 1) : introClose();
+document.getElementById("introBack").onclick = () => introShow(Math.max(0, ipg - 1));
+intro.addEventListener("keydown", e => { if (e.key === "ArrowRight" && ipg < pages.length - 1) introShow(ipg + 1); if (e.key === "ArrowLeft" && ipg) introShow(ipg - 1); });
+document.getElementById("introBtn").onclick = introOpen;
+let seen = false; try { seen = localStorage.getItem("introSeen") === "1"; } catch (e) {}
+if (!seen || /[?&]intro\b/.test(location.search)) introOpen();
 
 const start = (location.hash || "").slice(1);
 goChapter(CH[start] ? start : "land");
